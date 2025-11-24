@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -95,7 +95,6 @@ const ProfileScreen = ({ user, onBack, onLogout }) => {
 };
 
 
-// Vui lòng thêm styles từ tệp gốc của bạn vào đây
 const styles = StyleSheet.create({
   profileContainer: {
     flex: 1,
@@ -124,7 +123,7 @@ const styles = StyleSheet.create({
     margin: 20,
     padding: 20,
     borderRadius: 16,
-    marginTop: -40,
+    marginTop: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

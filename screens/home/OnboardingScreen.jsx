@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import React, { useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const OnboardingScreen = ({ onComplete }) => {
   const [step, setStep] = useState(0);
@@ -105,6 +105,36 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         opacity: 0.9,
       },
+      onboardingButtonText: {
+        color: '#FFFFFF',
+        fontSize: 18,
+        fontWeight: '600',
+        // borderCurve: 'continuous',
+      },
+      onboardingButton: {
+        width: '10%',
+        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        paddingVertical: 15,
+        borderRadius: 30,
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center',
+      }, 
+      skipText: {
+        color: '#FFFFFF',
+        fontSize: 18,
+      },  
+      onboardingDots: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+      },
+      // dot: {
+      //   width: 10,
+      //   height: 10, 
+      //   borderRadius: 5,
+      //   backgroundColor: 'rgba(255, 255, 255, 0.5)',
+      //   marginHorizontal: 5,
+      // },
 });
 
 export default OnboardingScreen;

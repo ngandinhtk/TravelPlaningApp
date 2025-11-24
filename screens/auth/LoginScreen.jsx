@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  ScrollView,
-  Alert,
+  View,
 } from 'react-native';
+import { authService } from '../../services/authService';
 
 const LoginScreen = ({ onLogin, onSignUp }) => {
   const [email, setEmail] = useState('');
@@ -22,15 +23,13 @@ const LoginScreen = ({ onLogin, onSignUp }) => {
     }
 
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const { user } = await authService.login(email, password);
+    } catch (error) {
+      Alert.alert('Login Failed', error.message);
+    } finally {
       setLoading(false);
-      onLogin({
-        id: '1',
-        name: email.split('@')[0],
-        email: email,
-        avatar: '👤',
-      });
-    }, 1500);
+    }
   };
 
   return (

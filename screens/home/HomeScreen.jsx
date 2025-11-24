@@ -1,28 +1,55 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useState } from 'react';
+import {
+  Animated,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-const HomeScreen = ({ user, trips, onCreateTrip, onViewTrip, onProfile }) => {
+const SkeletonPlaceholder = ({ width, height, style }) => {
+  const pulseAnim = new Animated.Value(0);
+
+  useEffect(() => {
+    const sharedAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 750,
+          useNativeDriver: false,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0,
+          duration: 750,
+          useNativeDriver: false,
+        }),
+      ])
+    );
+    sharedAnimation.start();
+    return () => sharedAnimation.stop();
+  }, []);
+
+  const backgroundColor = pulseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#E0E0E0', '#F0F0F0'],
+  });
+
+  return <Animated.View style={[{ width, height, backgroundColor, borderRadius: 4 }, style]} />;
+};
+
+const HomeScreen = ({ onCreateTrip, onViewTrip, onProfile }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [trips, setTrips] = useState([]);
+
   return (
     <View style={styles.homeContainer}>
       {/* Header */}
       <LinearGradient colors={['#667eea', '#764ba2']} style={styles.homeHeader}>
-        <View>
-          <Text style={styles.greeting}>Hello, {user.name}! 👋</Text>
-          <Text style={styles.subGreeting}>Where to next?</Text>
-        </View>
-        <TouchableOpacity onPress={onProfile}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatar}>{user.avatar}</Text>
-          </View>
-        </TouchableOpacity>
+        {isLoading ? <HeaderSkeleton /> : <HeaderContent user={user} onProfile={onProfile} />}
       </LinearGradient>
 
       {/* Search Bar */}
@@ -39,18 +66,7 @@ const HomeScreen = ({ user, trips, onCreateTrip, onViewTrip, onProfile }) => {
 
       {/* Quick Stats */}
       <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{trips.length}</Text>
-          <Text style={styles.statLabel}>Trips</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>12</Text>
-          <Text style={styles.statLabel}>Countries</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>48</Text>
-          <Text style={styles.statLabel}>Days</Text>
-        </View>
+        {isLoading ? <StatsSkeleton /> : <StatsContent trips={trips} />}
       </View>
 
       {/* Create Trip Button */}
@@ -74,30 +90,7 @@ const HomeScreen = ({ user, trips, onCreateTrip, onViewTrip, onProfile }) => {
           </TouchableOpacity>
         </View>
 
-        {trips.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🗺️</Text>
-            <Text style={styles.emptyText}>No trips yet</Text>
-            <Text style={styles.emptySubtext}>Create your first trip to get started!</Text>
-          </View>
-        ) : (
-          trips.map((trip, index) => (
-            <TouchableOpacity key={index} style={styles.tripCard} onPress={() => onViewTrip(trip)}>
-              <LinearGradient colors={['#ffffff', '#f8f9fa']} style={styles.tripCardGradient}>
-                <View style={styles.tripCardHeader}>
-                  <Text style={styles.tripDestination}>{trip.destination}</Text>
-                  <Text style={styles.tripStatus}>{trip.status}</Text>
-                </View>
-                <Text style={styles.tripDates}>{trip.dates}</Text>
-                <View style={styles.tripMeta}>
-                  <Text style={styles.tripMetaItem}>👥 {trip.travelers}</Text>
-                  <Text style={styles.tripMetaItem}>💰 ${trip.budget}</Text>
-                  <Text style={styles.tripMetaItem}>📅 {trip.days} days</Text>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))
-        )}
+        {isLoading ? <TripsSkeleton /> : <TripsContent trips={trips} onViewTrip={onViewTrip} />}
 
         {/* Recommended Destinations */}
         <View style={styles.sectionHeader}>
@@ -129,6 +122,101 @@ const HomeScreen = ({ user, trips, onCreateTrip, onViewTrip, onProfile }) => {
     </View>
   );
 };
+
+const HeaderSkeleton = () => (
+  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+    <View>
+      <SkeletonPlaceholder width={180} height={28} style={{ marginBottom: 8 }} />
+      <SkeletonPlaceholder width={120} height={16} />
+    </View>
+    <SkeletonPlaceholder width={50} height={50} style={{ borderRadius: 25 }} />
+  </View>
+);
+
+const HeaderContent = ({ user, onProfile }) => (
+  <>
+    <View>
+      <Text style={styles.greeting}>Hello, {user.name}! 👋</Text>
+      <Text style={styles.subGreeting}>Where to next?</Text>
+    </View>
+    <TouchableOpacity onPress={onProfile}>
+      <View style={styles.avatarCircle}>
+        <Text style={styles.avatar}>{user.avatar}</Text>
+      </View>
+    </TouchableOpacity>
+  </>
+);
+
+const StatsSkeleton = () => (
+  <>
+    <View style={styles.statCard}><SkeletonPlaceholder width={40} height={28} /><SkeletonPlaceholder width={60} height={14} style={{ marginTop: 6 }} /></View>
+    <View style={styles.statCard}><SkeletonPlaceholder width={40} height={28} /><SkeletonPlaceholder width={60} height={14} style={{ marginTop: 6 }} /></View>
+    <View style={styles.statCard}><SkeletonPlaceholder width={40} height={28} /><SkeletonPlaceholder width={60} height={14} style={{ marginTop: 6 }} /></View>
+  </>
+);
+
+const StatsContent = ({ trips }) => (
+  <>
+    <View style={styles.statCard}>
+      <Text style={styles.statNumber}>{trips.length}</Text>
+      <Text style={styles.statLabel}>Trips</Text>
+    </View>
+    <View style={styles.statCard}>
+      <Text style={styles.statNumber}>12</Text>
+      <Text style={styles.statLabel}>Countries</Text>
+    </View>
+    <View style={styles.statCard}>
+      <Text style={styles.statNumber}>48</Text>
+      <Text style={styles.statLabel}>Days</Text>
+    </View>
+  </>
+);
+
+const TripsSkeleton = () => (
+  <>
+    {[1, 2].map(i => (
+      <View key={i} style={[styles.tripCard, { backgroundColor: '#FFFFFF', padding: 16 }]}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <SkeletonPlaceholder width={120} height={20} />
+          <SkeletonPlaceholder width={60} height={14} />
+        </View>
+        <SkeletonPlaceholder width={'70%'} height={16} style={{ marginBottom: 16 }} />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <SkeletonPlaceholder width={50} height={14} />
+          <SkeletonPlaceholder width={70} height={14} />
+          <SkeletonPlaceholder width={60} height={14} />
+        </View>
+      </View>
+    ))}
+  </>
+);
+
+const TripsContent = ({ trips, onViewTrip }) => (
+  trips.length === 0 ? (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyIcon}>🗺️</Text>
+      <Text style={styles.emptyText}>No trips yet</Text>
+      <Text style={styles.emptySubtext}>Create your first trip to get started!</Text>
+    </View>
+  ) : (
+    trips.map((trip, index) => (
+      <TouchableOpacity key={index} style={styles.tripCard} onPress={() => onViewTrip(trip)}>
+        <LinearGradient colors={['#ffffff', '#f8f9fa']} style={styles.tripCardGradient}>
+          <View style={styles.tripCardHeader}>
+            <Text style={styles.tripDestination}>{trip.destination}</Text>
+            <Text style={styles.tripStatus}>{trip.status}</Text>
+          </View>
+          <Text style={styles.tripDates}>{trip.dates}</Text>
+          <View style={styles.tripMeta}>
+            <Text style={styles.tripMetaItem}>👥 {trip.travelers}</Text>
+            <Text style={styles.tripMetaItem}>💰 ${trip.budget}</Text>
+            <Text style={styles.tripMetaItem}>📅 {trip.days} days</Text>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+    ))
+  )
+);
 
 // Vui lòng thêm styles từ tệp gốc của bạn vào đây
 const styles = StyleSheet.create({
