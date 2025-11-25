@@ -40,10 +40,9 @@ const SkeletonPlaceholder = ({ width, height, style }) => {
   return <Animated.View style={[{ width, height, backgroundColor, borderRadius: 4 }, style]} />;
 };
 
-const HomeScreen = ({ onCreateTrip, onViewTrip, onProfile }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState(null);
-  const [trips, setTrips] = useState([]);
+const HomeScreen = ({ onCreateTrip, onViewTrip, onProfile, user, trips }) => {
+  const [isLoading, setIsLoading] = useState(!user || !trips);
+  useEffect(() => setIsLoading(!user || !trips), [user, trips]);
 
   return (
     <View style={styles.homeContainer}>

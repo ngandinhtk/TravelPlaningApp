@@ -51,26 +51,28 @@ const OnboardingScreen = ({ onComplete }) => {
         ))}
       </View>
 
-      <TouchableOpacity
-        style={styles.onboardingButton}
-        onPress={() => {
-          if (step < slides.length - 1) {
-            setStep(step + 1);
-          } else {
-            onComplete();
-          }
-        }}
-      >
-        <Text style={styles.onboardingButtonText}>
-          {step < slides.length - 1 ? 'Next' : 'Get Started'}
-        </Text>
-      </TouchableOpacity>
-
-      {step > 0 && (
-        <TouchableOpacity onPress={() => setStep(step - 1)} style={{ marginTop: 10 }}>
-          <Text style={styles.skipText}>Back</Text>
+      <View style={styles.buttonContainer}>
+        {step > 0 && (
+          <TouchableOpacity
+            style={styles.onboardingButton}
+            onPress={() => setStep(step - 1)}>
+            <Text style={styles.onboardingButtonText}>Back</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          style={styles.onboardingButton}
+          onPress={() => {
+            if (step < slides.length - 1) {
+              setStep(step + 1);
+            } else {
+              onComplete();
+            }
+          }}>
+          <Text style={styles.onboardingButtonText}>
+            {step < slides.length - 1 ? 'Next' : 'Get Started'}
+          </Text>
         </TouchableOpacity>
-      )}
+      </View>
     </LinearGradient>
   );
 };
@@ -107,34 +109,29 @@ const styles = StyleSheet.create({
       },
       onboardingButtonText: {
         color: '#FFFFFF',
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: '600',
-        // borderCurve: 'continuous',
       },
       onboardingButton: {
-        width: '10%',
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-        paddingVertical: 15,
-        borderRadius: 30,
+        backgroundColor: 'rgba(255, 255, 255, 0.47)',
+        // LinearGradient: '#FFFFFF',
+        paddingVertical: 16,
+        paddingHorizontal: 30,
+        borderRadius: 25,
         alignItems: 'center',
+        marginHorizontal: 10,
+      },
+      buttonContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
-      }, 
-      skipText: {
-        color: '#FFFFFF',
-        fontSize: 18,
-      },  
+        alignItems: 'center',
+      },
       onboardingDots: {
         flexDirection: 'row',
         justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
       },
-      // dot: {
-      //   width: 10,
-      //   height: 10, 
-      //   borderRadius: 5,
-      //   backgroundColor: 'rgba(255, 255, 255, 0.5)',
-      //   marginHorizontal: 5,
-      // },
 });
 
 export default OnboardingScreen;

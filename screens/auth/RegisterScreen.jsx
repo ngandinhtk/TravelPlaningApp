@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  ScrollView,
-  Alert,
+  View,
 } from 'react-native';
+import { authService } from '../../services/authService';
 
 const RegisterScreen = ({ onRegister, onBack }) => {
   const [name, setName] = useState('');
@@ -23,15 +24,19 @@ const RegisterScreen = ({ onRegister, onBack }) => {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const firebaseUser = await authService.register(email, password, name);
       onRegister({
-        id: '1',
+        id: firebaseUser.uid,
         name: name,
         email: email,
         avatar: '👤',
       });
-    }, 1500);
+    } catch (error) {
+      Alert.alert('Registration Failed', error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

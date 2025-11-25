@@ -8,28 +8,61 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from 'react-native'; // Import Alert
 import { authService } from '../../services/authService';
 
-const LoginScreen = ({ onLogin, onSignUp }) => {
+const LoginScreen = ({ onLogin, onSignUp, onForgotPassword, onMockLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({})
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Validate email
+    if (!email) {
+      newErrors.email = 'Email không được để trống';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Email không hợp lệ';
     }
 
+    // Validate password
+    if (!password) {
+      newErrors.password = 'Mật khẩu không được để trống';
+    } else if (password.length < 6) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+
+  const handleLogin = async () => {
+    if (!validateForm()) {
+      Alert.alert('Error', 'Please fill in all fields');
+      console.log(email, password);
+      return
+    } 
+
     setLoading(true);
+    setErrors({});
+
     try {
-      const { user } = await authService.login(email, password);
+      const user = await authService.login(email, password);
+      onLogin(user);
     } catch (error) {
       Alert.alert('Login Failed', error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+
+
+  const handleForgetPassword = () => {
+    onForgotPassword(email);
   };
 
   return (
@@ -46,8 +79,13 @@ const LoginScreen = ({ onLogin, onSignUp }) => {
           <TextInput
             style={styles.input}
             placeholder="your@email.com"
-            value={email}
-            onChangeText={setEmail}
+            value={email} // Đảm bảo giá trị hiển thị là email
+            onChangeText={(text) => {
+              setEmail(text); // Sửa lỗi: Cập nhật trạng thái email
+              if (errors.email) {
+                setErrors({...errors, email: null});
+              }
+            }}
             keyboardType="email-address"
             autoCapitalize="none"
             placeholderTextColor="#999"
@@ -67,12 +105,12 @@ const LoginScreen = ({ onLogin, onSignUp }) => {
         </View>
 
         <TouchableOpacity style={styles.forgotPassword}>
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          <Text style={styles.forgotPasswordText} onPress={handleForgetPassword}>Forgot Password?</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.primaryButton, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
+          onPress={handleLogin} // Sửa lỗi: Đảm bảo handleLogin được gọi
           disabled={loading}>
           {loading ? (
             <ActivityIndicator color="white" />
@@ -87,6 +125,12 @@ const LoginScreen = ({ onLogin, onSignUp }) => {
           <View style={styles.dividerLine} />
         </View>
 
+        {/* Nút Đăng nhập giả */}
+        <TouchableOpacity
+          style={[styles.primaryButton, { backgroundColor: '#4CAF50' }]} // Màu xanh lá cây cho nút mock
+          onPress={onMockLogin}>
+          <Text style={styles.primaryButtonText}>Login as Mock User</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.socialButton}>
           <Text style={styles.socialButtonText}>🔵 Continue with Google</Text>
         </TouchableOpacity>

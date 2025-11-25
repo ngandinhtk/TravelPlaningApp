@@ -1,38 +1,67 @@
-import React, { useState, useEffect } from 'react';
-import {  SafeAreaView, StyleSheet, Platform,Dimensions } from 'react-native';
+import auth from '@react-native-firebase/auth';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
+import React, { useEffect, useState } from 'react';
+import { Platform, SafeAreaView, StyleSheet } from 'react-native';
 
-import SplashScreen from '../../screens/home/SplashScreen'
-import OnboardingScreen from '../../screens/home/OnboardingScreen';
+import ForgetPasswordScreen from '@/screens/auth/ForgetPasswordScreen';
 import LoginScreen from '@/screens/auth/LoginScreen';
 import RegisterScreen from '@/screens/auth/RegisterScreen';
 import HomeScreen from '@/screens/home/HomeScreen';
-import CreateTripScreen from '@/screens/trip/CreateTripScreen';
-import GeneratingScreen from '../../screens/home/GeneratingScreen';
-import TripDetailScreen from '@/screens/trip/TripDetailScreen';
 import ProfileScreen from '@/screens/profile/ProfileScreen';
-import  generateMockItinerary  from '../../lib/data';
-const { width, height } = Dimensions.get('window');
+import CreateTripScreen from '@/screens/trip/CreateTripScreen';
+import TripDetailScreen from '@/screens/trip/TripDetailScreen';
+import generateMockItinerary from '../../lib/data';
+import GeneratingScreen from '../../screens/home/GeneratingScreen';
+import OnboardingScreen from '../../screens/home/OnboardingScreen';
+import SplashScreen from '../../screens/home/SplashScreen';
+import { authService } from '../../services/authService';
+import { Trip, User } from '../../types/index';
+// const { width, height } = Dimensions.get('window');
 
 // ============================================
 // MAIN APP COMPONENT
 // ============================================
 
 export default function TabLayout() {
-  const [currentScreen, setCurrentScreen] = useState('profile');
-  const [user, setUser] = useState({ name: 'K Ngan', email: 'k.ngan@example.com', avatar: '👩‍💻' });
-  const [trips, setTrips] = useState([]);
-  const [currentTrip, setCurrentTrip] = useState(null);
+  const mockUser: User = {
+    id: 'mock-user-123',
+    name: 'Mock User',
+    email: 'mock@example.com',
+    avatar: '🤖',
+  };
+
+  const [currentScreen, setCurrentScreen] = useState('splash');
+  const [user, setUser] = useState<User | null>(null);
+  const [initializing, setInitializing] = useState(true);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [currentTrip, setCurrentTrip] = useState<Trip | null>(null);
   const [itinerary, setItinerary] = useState(null);
 
   useEffect(() => {
-    // Simulate splash screen
-    setTimeout(() => {
-      setCurrentScreen('onboarding');
-    }, 2000);
+    const subscriber = auth().onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        // Người dùng đã đăng nhập, lấy thông tin chi tiết từ Firestor
+        const userDetails = await authService.getUserDetails(firebaseUser.uid);
+        setUser(userDetails);
+        setCurrentScreen('home');
+      } else {
+        // Người dùng đã đăng xuất hoặc chưa đăng nhập
+        setUser(null);
+        setCurrentScreen('onboarding');
+      }
+      if (initializing) {
+        setInitializing(false);
+      }
+    });
+
+    return subscriber; // Hủy đăng ký khi component unmount
   }, []);
 
   const renderScreen = () => {
+    if (initializing) {
+      return <SplashScreen />;
+    }
+
     switch (currentScreen) {
       case 'splash':
         return <SplashScreen />;
@@ -46,6 +75,11 @@ export default function TabLayout() {
               setCurrentScreen('home');
             }}
             onSignUp={() => setCurrentScreen('register')}
+            onForgotPassword={(email:any) => setCurrentScreen('forgotPassword')}
+            onMockLogin={() => {
+              setUser(mockUser);
+              setCurrentScreen('home');
+            }}
           />
         );
       case 'register':
@@ -58,6 +92,12 @@ export default function TabLayout() {
             onBack={() => setCurrentScreen('login')}
           />
         );
+      case 'forgotPassword':
+        return (
+          <ForgetPasswordScreen
+            onBack={() => setCurrentScreen('login')} route={{ params: { email: user?.email || '' } }} />
+        );
+
       case 'home':
         return (
           <HomeScreen
@@ -77,8 +117,8 @@ export default function TabLayout() {
             onBack={() => setCurrentScreen('home')}
             onTripCreated={(trip: any) => {
               const newTrip = { ...trip, itinerary: generateMockItinerary(trip) };
-              setCurrentTrip(newTrip);
-              const updatedTrips = [...trips as any, newTrip];
+              setCurrentTrip(newTrip as Trip);
+              const updatedTrips = [...trips, newTrip];
               setTrips(updatedTrips as any);
               setCurrentScreen('generating');
             }}
@@ -108,7 +148,7 @@ export default function TabLayout() {
             user={user}
             onBack={() => setCurrentScreen('home')}
             onLogout={() => {
-              setUser([] as any);
+              setUser(null);
               setCurrentScreen('login');
             }}
           />
