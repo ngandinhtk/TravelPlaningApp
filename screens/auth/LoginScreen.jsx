@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'; // Import Alert
-import { authService } from '../../services/authService';
+import { authService } from '../../services/firebase';
 
 const LoginScreen = ({ onLogin, onSignUp, onForgotPassword, onMockLogin }) => {
   const [email, setEmail] = useState('');

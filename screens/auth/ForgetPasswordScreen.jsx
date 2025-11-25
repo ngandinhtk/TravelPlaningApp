@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { authService } from '../../services/authService';
+import { authService } from '../../services/firebase';
 
 const ForgetPasswordScreen = ({ onBack, route }) => {
   const [email, setEmail] = useState(route?.params?.email || '');

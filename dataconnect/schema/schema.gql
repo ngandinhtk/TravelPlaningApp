@@ -1,0 +1,57 @@
+type User @table {
+  displayName: String!
+  createdAt: Timestamp!
+  email: String
+  photoUrl: String
+}
+
+type Trip @table {
+  owner: User!
+  name: String!
+  startDate: Date!
+  endDate: Date!
+  createdAt: Timestamp!
+  description: String
+  destination: String
+}
+
+type Activity @table {
+  trip: Trip!
+  name: String!
+  activityDate: Date!
+  startTime: String!
+  endTime: String!
+  location: String
+  notes: String
+  cost: Float
+}
+
+type Accommodation @table {
+  trip: Trip!
+  name: String!
+  checkInDate: Date!
+  checkOutDate: Date!
+  address: String
+  bookingReference: String
+  notes: String
+  cost: Float
+}
+
+type Transportation @table {
+  trip: Trip!
+  type: String!
+  departureDate: Date!
+  departureTime: String!
+  details: String
+  arrivalDate: Date
+  arrivalTime: String
+  notes: String
+  cost: Float
+}
+
+type TripCollaborator @table(key: ["user", "trip"]) {
+  user: User!
+  trip: Trip!
+  role: String!
+  addedAt: Timestamp
+}

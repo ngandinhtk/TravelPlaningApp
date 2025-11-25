@@ -74,6 +74,11 @@ export default function HomeScreen() {
           <ThemedText type="defaultSemiBold">app-example</ThemedText>.
         </ThemedText>
       </ThemedView>
+      <ThemedView style={styles.stepContainer}>
+        <Link href="/explore" style={styles.link}>
+          <ThemedText type="link">Go to Explore Screen</ThemedText>
+        </Link>
+      </ThemedView>
     </ParallaxScrollView>
   );
 }
@@ -94,5 +99,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
+  },
+  link: {
+    marginTop: 15,
+    paddingVertical: 15,
+    textAlign: 'center',
   },
 });

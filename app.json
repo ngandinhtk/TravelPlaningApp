@@ -25,9 +25,7 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
-      "expo-router",
-      "@react-native-firebase/app",
+    "plugins": [ "expo-router",
       [
         "expo-splash-screen",
         {

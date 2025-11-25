@@ -1,0 +1,40 @@
+mutation CreateDemoUser @auth(level: PUBLIC, insecureReason: "This mutation is for demo purposes and can be accessed publicly.") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      displayName: "demouser1",
+      createdAt: "2024-04-08T12:00:00Z"
+    },
+    {
+      id: "660e8400-e29b-41d4-a716-446655440001",
+      displayName: "demouser2",
+      createdAt: "2024-04-08T12:00:00Z"
+    }
+  ])
+}
+
+query ListTripsForUser($ownerId: UUID!) @auth(level: USER) {
+  trips(where: {ownerId: {eq: $ownerId}}) {
+    id
+    name
+    destination
+    startDate
+    endDate
+  }
+}
+
+mutation CreateNewTrip($name: String!, $destination: String!, $startDate: Date!, $endDate: Date!, $description: String) @auth(level: USER) {
+  trip_insert(data: {
+    name: $name,
+    destination: $destination,
+    startDate: $startDate,
+    endDate: $endDate,
+    description: $description,
+    ownerId_expr: "auth.uid",
+    createdAt_expr: "request.time"
+  })
+}
+
+mutation DeleteTrip($id: UUID!) @auth(level: USER) {
+  trip_delete(key: {id: $id})
+}

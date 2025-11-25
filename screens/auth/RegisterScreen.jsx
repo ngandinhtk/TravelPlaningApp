@@ -1,3 +1,4 @@
+import { doc, setDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,31 +10,69 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { authService } from '../../services/authService';
+import { authService, db } from '../../services/firebase';
+
 
 const RegisterScreen = ({ onRegister, onBack }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!name) newErrors.name = 'Họ và tên không được để trống';
+
+    if (!email) {
+      newErrors.email = 'Email không được để trống';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Email không hợp lệ';
+    }
+
+    if (!password) {
+      newErrors.password = 'Mật khẩu không được để trống';
+    } else if (password.length < 8) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleRegister = async () => {
-    if (!name || !email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+    if (!validateForm()) {
       return;
     }
 
     setLoading(true);
     try {
-      const firebaseUser = await authService.register(email, password, name);
-      onRegister({
-        id: firebaseUser.uid,
-        name: name,
-        email: email,
-        avatar: '👤',
+      const firebaseUser = await authService.register(email.trim(), password);
+      const user = firebaseUser.user
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        displayName: name,
+        email: user.email,
+        photoURL: null,
+        createdAt: new Date().toISOString(),
+        role: 'user', // có thể dùng để phân quyền sau này
       });
+
+      Alert.alert(
+        'Đăng ký thành công',
+        'Chào mừng bạn! Tài khoản của bạn đã được tạo.',
+        [{ text: 'OK', onPress: () => onRegister(user) }]
+      );
     } catch (error) {
-      Alert.alert('Registration Failed', error.message);
+      if (error.code === 'auth/email-already-in-use') {
+        Alert.alert(
+          'Đăng ký thất bại',
+          'Địa chỉ email này đã được sử dụng bởi một tài khoản khác.'
+        );
+      } else {
+        Alert.alert('Đăng ký thất bại', error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -58,10 +97,16 @@ const RegisterScreen = ({ onRegister, onBack }) => {
             style={styles.input}
             placeholder="John Doe"
             value={name}
-            onChangeText={setName}
+            onChangeText={(text) => {
+              setName(text);
+              if (errors.name) {
+                setErrors({ ...errors, name: null });
+              }
+            }}
             placeholderTextColor="#999"
           />
         </View>
+        {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Email</Text>
@@ -69,12 +114,18 @@ const RegisterScreen = ({ onRegister, onBack }) => {
             style={styles.input}
             placeholder="your@email.com"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (errors.email) {
+                setErrors({ ...errors, email: null });
+              }
+            }}
             keyboardType="email-address"
             autoCapitalize="none"
             placeholderTextColor="#999"
           />
         </View>
+        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Password</Text>
@@ -82,11 +133,17 @@ const RegisterScreen = ({ onRegister, onBack }) => {
             style={styles.input}
             placeholder="Min. 8 characters"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(text) => {
+              setPassword(text);
+              if (errors.password) {
+                setErrors({ ...errors, password: null });
+              }
+            }}
             secureTextEntry
             placeholderTextColor="#999"
           />
         </View>
+        {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
         <TouchableOpacity
           style={[styles.primaryButton, loading && styles.buttonDisabled]}
@@ -136,7 +193,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   authForm: {
-    padding: 30,
+    paddingHorizontal: 30,
   },
   inputGroup: {
     marginBottom: 20,
@@ -170,6 +227,11 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+    marginTop: -10,
   },
 });
 

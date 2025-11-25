@@ -1,9 +1,9 @@
-import auth from '@react-native-firebase/auth';
+import { signOut } from "firebase/auth";
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import LoginScreen from './screens/auth/LoginScreen';
 import HomeScreen from './screens/home/HomeScreen';
-import { authService } from './services/authService';
+import { auth } from './services/firebase';
 
 const App = () => {
   const [initializing, setInitializing] = useState(true);
@@ -18,17 +18,20 @@ const App = () => {
   }
 
   useEffect(() => {
-    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
-    return subscriber; // Hủy đăng ký khi component unmount
+    const unsubscribe = onAuthStateChanged(auth, onAuthStateChanged);
+    return unsubscribe; // Hủy đăng ký khi component unmount
   }, []);
 
-  const handleLogin = (loggedInUser) => {
-    setUser(loggedInUser);
+  const handleLogin = async (email, password) => {
+    try {
+    } catch (e) {
+      console.error(e.message);
+    }
   };
 
   const handleLogout = async () => {
-    await authService.logout();
-    setUser(null);
+    await signOut(auth);
+    // setUser(null) will be handled by the onAuthStateChanged listener
   };
 
   if (initializing) {

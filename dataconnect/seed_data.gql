@@ -1,0 +1,18 @@
+mutation CreateSeedData @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  # Example seed data insertion, replace with your actual data and types
+  # This assumes you have a type called "Product" with fields "id", "name", and "price"
+
+  product_insertMany(data: [
+    {
+      id: "1",
+      name: "Example Product 1",
+      price: 19.99
+    },
+    {
+      id: "2",
+      name: "Example Product 2",
+      price: 29.99
+    }
+  ])
+  # You can add more insertMany operations for other types here
+}

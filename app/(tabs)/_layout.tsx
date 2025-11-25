@@ -1,51 +1,52 @@
-import auth from '@react-native-firebase/auth';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Platform, SafeAreaView, StyleSheet } from 'react-native';
-
-import ForgetPasswordScreen from '@/screens/auth/ForgetPasswordScreen';
-import LoginScreen from '@/screens/auth/LoginScreen';
-import RegisterScreen from '@/screens/auth/RegisterScreen';
-import HomeScreen from '@/screens/home/HomeScreen';
-import ProfileScreen from '@/screens/profile/ProfileScreen';
-import CreateTripScreen from '@/screens/trip/CreateTripScreen';
-import TripDetailScreen from '@/screens/trip/TripDetailScreen';
-import generateMockItinerary from '../../lib/data';
-import GeneratingScreen from '../../screens/home/GeneratingScreen';
 import OnboardingScreen from '../../screens/home/OnboardingScreen';
-import SplashScreen from '../../screens/home/SplashScreen';
-import { authService } from '../../services/authService';
-import { Trip, User } from '../../types/index';
+import { auth, db } from '../../services/firebase';
+import { User } from '../../types/index';
 // const { width, height } = Dimensions.get('window');
+
+const authService = {
+  getUserDetails: async (uid: string) => {
+    const userDocRef = doc(db, 'users', uid);
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+      return { id: userDoc.id, ...userDoc.data() } as User;
+    }
+    return null;
+  },
+};
 
 // ============================================
 // MAIN APP COMPONENT
 // ============================================
 
 export default function TabLayout() {
-  const mockUser: User = {
-    id: 'mock-user-123',
-    name: 'Mock User',
-    email: 'mock@example.com',
-    avatar: '🤖',
-  };
+  // const mockUser: User = {
+  //   id: 'mock-user-123',
+  //   name: 'Mock User',
+  //   email: 'mock@example.com',
+  //   avatar: '🤖',
+  // };
 
-  const [currentScreen, setCurrentScreen] = useState('splash');
+  const [currentScreen, setCurrentScreen] = useState('onboarding');
   const [user, setUser] = useState<User | null>(null);
   const [initializing, setInitializing] = useState(true);
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [currentTrip, setCurrentTrip] = useState<Trip | null>(null);
-  const [itinerary, setItinerary] = useState(null);
+  // const [trips, setTrips] = useState<Trip[]>([]);
+  // const [currentTrip, setCurrentTrip] = useState<Trip | null>(null);
+  // const [itinerary, setItinerary] = useState(null);
 
   useEffect(() => {
-    const subscriber = auth().onAuthStateChanged(async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         // Người dùng đã đăng nhập, lấy thông tin chi tiết từ Firestor
         const userDetails = await authService.getUserDetails(firebaseUser.uid);
-        setUser(userDetails);
-        setCurrentScreen('home');
+        setUser(userDetails); // User is logged in
+        setCurrentScreen('home'); // Show Tabs for logged-in user
       } else {
-        // Người dùng đã đăng xuất hoặc chưa đăng nhập
+        // User is logged out or not logged in
         setUser(null);
         setCurrentScreen('onboarding');
       }
@@ -54,108 +55,17 @@ export default function TabLayout() {
       }
     });
 
-    return subscriber; // Hủy đăng ký khi component unmount
+    return unsubscribe; // Hủy đăng ký khi component unmount
   }, []);
+
 
   const renderScreen = () => {
     if (initializing) {
-      return <SplashScreen />;
+      // You can return a splash screen or a loading indicator here
+      return <OnboardingScreen onComplete={() => setCurrentScreen('onboarding')} />; // Or a proper splash screen component
     }
 
-    switch (currentScreen) {
-      case 'splash':
-        return <SplashScreen />;
-      case 'onboarding':
-        return <OnboardingScreen onComplete={() => setCurrentScreen('login')} />;
-      case 'login':
-        return (
-          <LoginScreen
-            onLogin={(userData : any) => {
-              setUser(userData);
-              setCurrentScreen('home');
-            }}
-            onSignUp={() => setCurrentScreen('register')}
-            onForgotPassword={(email:any) => setCurrentScreen('forgotPassword')}
-            onMockLogin={() => {
-              setUser(mockUser);
-              setCurrentScreen('home');
-            }}
-          />
-        );
-      case 'register':
-        return (
-          <RegisterScreen
-            onRegister={(userData : any) => {
-              setUser(userData);
-              setCurrentScreen('home');
-            }}
-            onBack={() => setCurrentScreen('login')}
-          />
-        );
-      case 'forgotPassword':
-        return (
-          <ForgetPasswordScreen
-            onBack={() => setCurrentScreen('login')} route={{ params: { email: user?.email || '' } }} />
-        );
 
-      case 'home':
-        return (
-          <HomeScreen
-            user={user}
-            trips={trips}
-            onCreateTrip={() => setCurrentScreen('createTrip')}
-            onViewTrip={(trip: any) => {
-              setCurrentTrip(trip);
-              setCurrentScreen('tripDetail');
-            }}
-            onProfile={() => setCurrentScreen('profile')}
-          />
-        );
-      case 'createTrip':
-        return (
-          <CreateTripScreen
-            onBack={() => setCurrentScreen('home')}
-            onTripCreated={(trip: any) => {
-              const newTrip = { ...trip, itinerary: generateMockItinerary(trip) };
-              setCurrentTrip(newTrip as Trip);
-              const updatedTrips = [...trips, newTrip];
-              setTrips(updatedTrips as any);
-              setCurrentScreen('generating');
-            }}
-          />
-        );
-      case 'generating':
-        return (
-          <GeneratingScreen
-            trip={currentTrip}
-            onComplete={(itinerary: any) => {
-              setItinerary(itinerary);
-              setCurrentScreen('tripDetail');
-            }}
-          />
-        );
-      case 'tripDetail':
-        return (
-          <TripDetailScreen
-            trip={currentTrip}
-            onBack={() => setCurrentScreen('home')}
-            onEdit={() => setCurrentScreen('editItinerary')}
-          />
-        );
-      case 'profile':
-        return (
-          <ProfileScreen
-            user={user}
-            onBack={() => setCurrentScreen('home')}
-            onLogout={() => {
-              setUser(null);
-              setCurrentScreen('login');
-            }}
-          />
-        );
-      default:
-        return <SplashScreen />;
-    }
   };
 
   return (
