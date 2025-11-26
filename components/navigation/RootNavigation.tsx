@@ -1,14 +1,14 @@
 // src/navigation/RootNavigator.tsx
+import HomeScreen from '@/screens/home/HomeScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Redirect } from 'expo-router'; // Import Redirect from expo-router
-import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
-import { auth } from '../../services/firebase';
-
 import LoginScreen from '../../screens/auth/LoginScreen';
 import RegisterScreen from '../../screens/auth/RegisterScreen';
 import OnboardingScreen from '../../screens/home/OnboardingScreen';
+import ProfileScreen from '../../screens/profile/ProfileScreen';
+import { auth } from '../../services/firebase';
 
 const Stack = createNativeStackNavigator();
 
@@ -17,17 +17,17 @@ export default function RootNavigator() {
   const [loading, setLoading] = useState(true);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
+   // Listen for authentication state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      console.log('Firebase connection successful. Auth state received.');
-      setUser(currentUser);
-      console.log('Current User:', currentUser ? currentUser.uid : 'No user is signed in.');
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      setUser(firebaseUser);
       setLoading(false);
     });
-    return () => unsubscribe();
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
+
     // Check if onboarding has been completed
     const checkOnboarding = async () => {
       const value = await AsyncStorage.getItem('@onboardingCompleted');
@@ -81,16 +81,20 @@ export default function RootNavigator() {
           {(props) => <OnboardingScreen {...props} onComplete={handleOnboardingComplete} />}
         </Stack.Screen>
       ) : user ? (
-        // If user is logged in, redirect to the expo-router (tabs) route
-        <Stack.Screen name="AppTabs" options={{ headerShown: false }}>
-          {/* Redirect to the (tabs) route which is handled by expo-router */}
-          {() => <Redirect href="/(tabs)" />}
-        </Stack.Screen>
+        <>
+          {/* If user is logged in, show the main app screens */}
+          <Stack.Screen name="Home" options={{ headerShown: false }}>
+            {(props) => <HomeScreen {...props} onCreateTrip={[]} onProfile={() => props.navigation.navigate('Profile')} onViewTrip={[]} trips={[]} user={user} />}
+          </Stack.Screen>
+          <Stack.Screen name="Profile">
+            {(props) => <ProfileScreen {...props} user={user} onBack={() => props.navigation.goBack()} onLogout={handleLogout} />}
+          </Stack.Screen>
+        </>
       ) : (
         <>
           {/* The onSignUp prop navigates to the Register screen */}
           <Stack.Screen name="Login">
-            {(props) => <LoginScreen {...props} onLogin={handleLogin} onSignUp={() => props.navigation.navigate('Register')} onForgotPassword={() => props.navigation.navigate('ForgetPassword')} onMockLogin={() => props.navigation.navigate('MockLogin')} />}
+            {(props) => <LoginScreen {...props} onLogin={handleLogin} onSignUp={() => props.navigation.navigate('Register')} onForgotPassword={() => props.navigation.navigate('ForgetPassword')} />}
           </Stack.Screen>
           {/* The onRegister prop now navigates back to Login after completion */}
           <Stack.Screen name="Register">

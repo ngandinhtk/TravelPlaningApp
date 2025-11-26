@@ -1,8 +1,8 @@
+import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,7 +10,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { authService, db } from '../../services/firebase';
+import CustomModal from '../../components/common/Modal';
+import defaultAvatar from '../../lib/avatar-default.svg';
+import { auth, db } from '../../services/firebase';
 
 
 const RegisterScreen = ({ onRegister, onBack }) => {
@@ -19,6 +21,7 @@ const RegisterScreen = ({ onRegister, onBack }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   const validateForm = () => {
     const newErrors = {};
@@ -41,37 +44,48 @@ const RegisterScreen = ({ onRegister, onBack }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleRegister = async () => {
+  const handleRegister =  async () => {
     if (!validateForm()) {
       return;
     }
-
+    
     setLoading(true);
+    setErrors({}); // Clear previous errors
     try {
-      const firebaseUser = await authService.register(email.trim(), password);
-      const user = firebaseUser.user
-      await setDoc(doc(db, 'users', user.uid), {
+      // 1. Create user in Firebase Auth using state variables
+      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      console.log('userCredential', userCredential);
+      const user = userCredential.user;
+
+      // 2. Create user document in 'users' collection
+       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         displayName: name,
-        email: user.email,
-        photoURL: null,
+        email: email.trim().toLowerCase(), // Store email consistently
+        photoURL: defaultAvatar,
         createdAt: new Date().toISOString(),
-        role: 'user', // có thể dùng để phân quyền sau này
+        role: 'user',
       });
 
-      Alert.alert(
-        'Đăng ký thành công',
-        'Chào mừng bạn! Tài khoản của bạn đã được tạo.',
-        [{ text: 'OK', onPress: () => onRegister(user) }]
-      );
+      // 3. Create user settings document in 'userSettings' collection
+      await setDoc(doc(db, 'userSettings', user.uid), {
+        theme: 'light',
+        notificationsEnabled: true,
+      });
+
+      // Sign out the user immediately so they are redirected to the login screen
+      await signOut(auth);
+
+      // 4. Call the onRegister callback to complete the process
+      setRegistrationSuccess(true);
+
     } catch (error) {
       if (error.code === 'auth/email-already-in-use') {
-        Alert.alert(
-          'Đăng ký thất bại',
-          'Địa chỉ email này đã được sử dụng bởi một tài khoản khác.'
-        );
+        setErrors({
+          firebase: 'Địa chỉ email này đã được sử dụng bởi một tài khoản khác.',
+        });
       } else {
-        Alert.alert('Đăng ký thất bại', error.message);
+        setErrors({ firebase: error.message });
       }
     } finally {
       setLoading(false);
@@ -83,6 +97,24 @@ const RegisterScreen = ({ onRegister, onBack }) => {
       <TouchableOpacity onPress={onBack} style={styles.backButton}>
         <Text style={styles.backButtonText}>← Back</Text>
       </TouchableOpacity>
+
+        <CustomModal
+          visible={!!errors.firebase}
+          title=""
+          onClose={() => setErrors({ ...errors, firebase: null })}
+          onConfirm={() => setErrors({ ...errors, firebase: null })}
+        >
+          <Text>{errors.firebase}</Text>
+        </CustomModal>
+
+        <CustomModal
+          visible={registrationSuccess}
+          title=""
+          onClose={onBack}
+          onConfirm={onBack}
+        >
+          <Text>Tài khoản của bạn đã được tạo. Vui lòng đăng nhập.</Text>
+      </CustomModal>
 
       <View style={styles.authHeader}>
         <Text style={styles.authLogo}>✈️</Text>

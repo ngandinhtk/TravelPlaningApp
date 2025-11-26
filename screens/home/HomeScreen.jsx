@@ -43,7 +43,8 @@ const SkeletonPlaceholder = ({ width, height, style }) => {
 const HomeScreen = ({ onCreateTrip, onViewTrip, onProfile, user, trips }) => {
   const [isLoading, setIsLoading] = useState(!user || !trips);
   useEffect(() => setIsLoading(!user || !trips), [user, trips]);
-
+  console.log(user);
+  
   return (
     <View style={styles.homeContainer}>
       {/* Header */}
