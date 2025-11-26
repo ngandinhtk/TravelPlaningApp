@@ -1,6 +1,6 @@
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-const CustomModal = ({ visible, onClose, title, children, onConfirm }) => {
+const CustomModal = ({ visible, onClose, title, children, onConfirm, onNavigate }) => {
   return (
     <Modal
       transparent={true}
@@ -28,7 +28,7 @@ const CustomModal = ({ visible, onClose, title, children, onConfirm }) => {
             <TouchableOpacity style={styles.btnSecondary} onPress={onClose}>
               <Text style={styles.btnTextSecondary}>Huỷ</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.btnPrimary} onPress={onConfirm || onClose}>
+            <TouchableOpacity style={styles.btnPrimary} onPress={onConfirm || onClose || onNavigate}>
               <Text style={styles.btnTextPrimary}>Đồng ý</Text>
             </TouchableOpacity>
           </View>

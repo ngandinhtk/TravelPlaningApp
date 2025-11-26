@@ -42,7 +42,7 @@ export default function Home() {
     return () => unsubscribeAuth(); // Cleanup auth listener
   }, []);
 
-  return <HomeScreen user={user} trips={trips} onCreateTrip={[]} onViewTrip={[]} onProfile={[]} />;
+  return <HomeScreen user={user} onCreateTrip={[]} onViewTrip={[]} onProfile={[]} />;
   // This component now simply renders the HomeScreen.
   // HomeScreen will be responsible for fetching its own data or receiving it via context.
 

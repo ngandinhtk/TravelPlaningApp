@@ -8,6 +8,7 @@ import LoginScreen from '../../screens/auth/LoginScreen';
 import RegisterScreen from '../../screens/auth/RegisterScreen';
 import OnboardingScreen from '../../screens/home/OnboardingScreen';
 import ProfileScreen from '../../screens/profile/ProfileScreen';
+import CreateTripScreen from '../../screens/trip/CreateTripScreen';
 import { auth } from '../../services/firebase';
 
 const Stack = createNativeStackNavigator();
@@ -82,21 +83,29 @@ export default function RootNavigator() {
         </Stack.Screen>
       ) : user ? (
         <>
-          {/* If user is logged in, show the main app screens */}
           <Stack.Screen name="Home" options={{ headerShown: false }}>
-            {(props) => <HomeScreen {...props} onCreateTrip={[]} onProfile={() => props.navigation.navigate('Profile')} onViewTrip={[]} trips={[]} user={user} />}
+            {(props) => (
+              <HomeScreen
+                {...props}
+                user={user}
+                onProfile={() => props.navigation.navigate('Profile')}
+                onCreateTrip={() => props.navigation.navigate('CreateTrip', { user })}
+                onViewTrip={(trip: any) => props.navigation.navigate('TripDetail', { tripId: trip.id })}
+              />
+            )}
           </Stack.Screen>
           <Stack.Screen name="Profile">
             {(props) => <ProfileScreen {...props} user={user} onBack={() => props.navigation.goBack()} onLogout={handleLogout} />}
           </Stack.Screen>
+             <Stack.Screen name="CreateTrip">
+              {(props) => <CreateTripScreen {...props} onTripCreated={[]} onBack={() => props.navigation.goBack()} />}
+            </Stack.Screen>
         </>
       ) : (
         <>
-          {/* The onSignUp prop navigates to the Register screen */}
           <Stack.Screen name="Login">
             {(props) => <LoginScreen {...props} onLogin={handleLogin} onSignUp={() => props.navigation.navigate('Register')} onForgotPassword={() => props.navigation.navigate('ForgetPassword')} />}
           </Stack.Screen>
-          {/* The onRegister prop now navigates back to Login after completion */}
           <Stack.Screen name="Register">
             {(props) => <RegisterScreen {...props} onRegister={handleRegister} onBack={() => props.navigation.goBack()} />}
           </Stack.Screen>

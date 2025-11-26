@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
   Animated,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,7 +10,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
+import { MOCK_USER } from '../../api/mockApi';
+import { getTrips } from '../../services/tripService';
 const SkeletonPlaceholder = ({ width, height, style }) => {
   const pulseAnim = new Animated.Value(0);
 
@@ -40,16 +42,36 @@ const SkeletonPlaceholder = ({ width, height, style }) => {
   return <Animated.View style={[{ width, height, backgroundColor, borderRadius: 4 }, style]} />;
 };
 
-const HomeScreen = ({ onCreateTrip, onViewTrip, onProfile, user, trips }) => {
-  const [isLoading, setIsLoading] = useState(!user || !trips);
-  useEffect(() => setIsLoading(!user || !trips), [user, trips]);
+const HomeScreen = ({ onCreateTrip, onViewTrip, onProfile, user }) => {
+  const [trips, setTrips] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const currentUser = user || MOCK_USER;
   console.log(user);
+  
+  useEffect(() => {
+    const fetchTrips = async () => {
+      setIsLoading(true);
+      if (currentUser) {
+        try {
+          const userTrips = await getTrips(currentUser.uid);
+          setTrips(userTrips);
+        } catch (error) {
+          console.error("Failed to fetch trips:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchTrips();
+  }, [currentUser]);
   
   return (
     <View style={styles.homeContainer}>
       {/* Header */}
-      <LinearGradient colors={['#667eea', '#764ba2']} style={styles.homeHeader}>
-        {isLoading ? <HeaderSkeleton /> : <HeaderContent user={user} onProfile={onProfile} />}
+      <LinearGradient colors={['#5d75e2ff', '#764ba2']} style={styles.homeHeader}>
+        {isLoading ? <HeaderSkeleton /> : <HeaderContent user={currentUser} onProfile={onProfile} />}
       </LinearGradient>
 
       {/* Search Bar */}
@@ -77,7 +99,7 @@ const HomeScreen = ({ onCreateTrip, onViewTrip, onProfile, user, trips }) => {
           end={{ x: 1, y: 0 }}
           style={styles.createTripButton}>
           <Text style={styles.createTripIcon}>✨</Text>
-          <Text style={styles.createTripText}>Create New Trip with AI</Text>
+          <Text style={styles.createTripText}>Create New Trip</Text>
         </LinearGradient>
       </TouchableOpacity>
 
@@ -136,13 +158,11 @@ const HeaderSkeleton = () => (
 const HeaderContent = ({ user, onProfile }) => (
   <>
     <View>
-      <Text style={styles.greeting}>Hello, {user.name}! 👋</Text>
+      <Text style={styles.greeting}>Hello, {user?.email || 'there'}! 👋</Text>
       <Text style={styles.subGreeting}>Where to next?</Text>
     </View>
     <TouchableOpacity onPress={onProfile}>
-      <View style={styles.avatarCircle}>
-        <Text style={styles.avatar}>{user.avatar}</Text>
-      </View>
+      <Image source={user.avatar} style={styles.avatarImage} />
     </TouchableOpacity>
   </>
 );
@@ -252,6 +272,12 @@ const styles = StyleSheet.create({
   },
   avatar: {
     fontSize: 24,
+  },
+  avatarImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.3)',
   },
   searchBarContainer: {
     paddingHorizontal: 20,

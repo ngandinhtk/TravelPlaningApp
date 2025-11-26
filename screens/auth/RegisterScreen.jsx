@@ -54,11 +54,10 @@ const RegisterScreen = ({ onRegister, onBack }) => {
     try {
       // 1. Create user in Firebase Auth using state variables
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      console.log('userCredential', userCredential);
       const user = userCredential.user;
 
       // 2. Create user document in 'users' collection
-       await setDoc(doc(db, 'users', user.uid), {
+      await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         displayName: name,
         email: email.trim().toLowerCase(), // Store email consistently
@@ -110,8 +109,8 @@ const RegisterScreen = ({ onRegister, onBack }) => {
         <CustomModal
           visible={registrationSuccess}
           title=""
-          onClose={onBack}
-          onConfirm={onBack}
+          onClose={onBack} // Xử lý khi nhấn nút 'X' hoặc 'Huỷ'
+          onConfirm={onBack} // Xử lý khi nhấn nút 'Đồng ý'
         >
           <Text>Tài khoản của bạn đã được tạo. Vui lòng đăng nhập.</Text>
       </CustomModal>

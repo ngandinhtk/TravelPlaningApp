@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
 import {
-  View,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  ScrollView,
+  View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import CustomModal from '../../components/common/Modal';
+import { addTrip } from '../../services/tripService';
+
 
 const CreateTripScreen = ({ onBack, onTripCreated }) => {
   const [step, setStep] = useState(1);
@@ -17,6 +20,10 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
   const [travelers, setTravelers] = useState('2');
   const [budget, setBudget] = useState('');
   const [interests, setInterests] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [trip, setTrip] = useState(null);
+  const [error, setError] = useState(null);
 
   const interestOptions = [
     { emoji: '🏖️', name: 'Beach' },
@@ -35,22 +42,71 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
     }
   };
 
-  const handleCreate = () => {
-    const trip = {
-      id: Date.now().toString(),
-      destination,
-      dates: `${startDate} - ${endDate}`,
-      travelers: `${travelers} people`,
-      budget,
-      days: 5,
-      status: '📝 Planning',
-      interests,
-    };
+   const handleCreateTrip = async () => {
+    if (!destination || !startDate || !endDate) {
+      setError('Vui lòng điền đầy đủ các trường thông tin cần thiết.');
+      return;
+    }
+    setLoading(true);
+    
+    try {
+      // Tính toán số ngày đi
+      const parseDate = (str) => {
+        const [day, month, year] = str.split('/');
+        return new Date(year, month - 1, day);
+      };
+
+      const start = parseDate(startDate);
+      const end = parseDate(endDate);
+      const timeDiff = end.getTime() - start.getTime();
+      const calculatedDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+
+      await addTrip({
+        userId: user.uid,
+        destination,
+        dates: `${startDate} - ${endDate}`,
+        status: 'Upcoming',
+        travelers: parseInt(travelers),
+        budget: parseFloat(budget),
+        days: calculatedDays,
+      });
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error creating trip:', error);
+      alert('Failed to create trip.');
+    } finally {
+      setLoading(false);
+    }
     onTripCreated(trip);
+
   };
+
+
+  // const handleCreate = () => {
+  //   const trip = {
+  //     id: Date.now().toString(),
+  //     destination,
+  //     dates: `${startDate} - ${endDate}`,
+  //     travelers: `${travelers} people`,
+  //     budget,
+  //     days: 5,
+  //     status: '📝 Planning',
+  //     interests,
+  //   };
+  //   onTripCreated(trip);
+  // };
 
   return (
     <View style={styles.createTripContainer}>
+      <CustomModal
+        visible={!!error}
+        title="Thông Báo Lỗi"
+        onClose={() => setError(null)}
+        onConfirm={() => setError(null)}
+      >
+        <Text>{error}</Text>
+      </CustomModal>
+
       <LinearGradient colors={['#667eea', '#764ba2']} style={styles.createTripHeader}>
         <TouchableOpacity onPress={onBack}>
           <Text style={styles.backButtonTextWhite}>← Back</Text>
@@ -141,8 +197,17 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
             </View>
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(1)}>
-                <Text style={styles.secondaryButtonText}>Quay lại</Text>
+              <TouchableOpacity 
+                style={[styles.nextButton, { flex: 1, marginLeft: 10 }]}
+                onPress={() => setStep(1)}>
+                <LinearGradient
+                  colors={['#667eea', '#764ba2']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.gradientButton}>
+
+                   <Text style={styles.secondaryButtonText}>Quay lại</Text>
+                  </LinearGradient>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -187,13 +252,22 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
             </View>
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(2)}>
-                <Text style={styles.secondaryButtonText}>Back</Text>
+               <TouchableOpacity 
+                style={[styles.nextButton, { flex: 1, marginLeft: 10 }]}
+                onPress={() => setStep(1)}>
+                <LinearGradient
+                  colors={['#667eea', '#764ba2']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.gradientButton}>
+
+                   <Text style={styles.secondaryButtonText}>Quay lại</Text>
+                  </LinearGradient>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.nextButton, { flex: 1, marginLeft: 10 }]}
-                onPress={handleCreate}>
+                onPress={handleCreateTrip}>
                 <LinearGradient
                   colors={['#667eea', '#764ba2']}
                   start={{ x: 0, y: 0 }}
@@ -301,8 +375,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   secondaryButtonText: {
-    color: '#1A1A1A',
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: 18,
     fontWeight: '600',
   },
   buttonRow: {
