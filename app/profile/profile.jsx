@@ -1,16 +1,30 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { ScrollView } from 'react-native-gesture-handler';
+import { useUser } from '../../context/UserContext';
 
-const ProfileScreen = ({ user, onBack, onLogout }) => {
+const ProfileScreen = ({ onBack, onLogout }) => {
+  // Get user directly from our context
+  const { user } = useUser();
+  console.log(user, 'usser');
+  
+  if (!user) {
+    return (
+      <View style={styles.profileContainer}>
+        <Text>Loading profile...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.profileContainer}>
       <LinearGradient
         colors={['#667eea', '#764ba2']}
         style={styles.profileHeader}
       >
-        <TouchableOpacity onPress={onBack}>
+        <TouchableOpacity onPress={()=> router.back(-1)}>
           <Text style={styles.backButtonTextWhite}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.profileTitle}>Profile</Text>
@@ -19,7 +33,7 @@ const ProfileScreen = ({ user, onBack, onLogout }) => {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.profileCard}>
-          <Text style={styles.profileAvatar}>{user.avatar}</Text>
+          <Image source={user.avatar} style={styles.profileAvatarImage} />
           <Text style={styles.profileName}>{user.name}</Text>
           <Text style={styles.profileEmail}>{user.email}</Text>
           <TouchableOpacity>
@@ -129,9 +143,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  profileAvatar: {
-    fontSize: 60,
+  profileAvatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     marginBottom: 15,
+    backgroundColor: '#E0E0E0',
   },
   profileName: {
     fontSize: 22,

@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Animated,
@@ -20,19 +21,19 @@ const SkeletonPlaceholder = ({ width, height, style }) => {
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1,
-          duration: 750,
+          duration: 650,
           useNativeDriver: false,
         }),
         Animated.timing(pulseAnim, {
           toValue: 0,
-          duration: 750,
+          duration: 650,
           useNativeDriver: false,
         }),
       ])
     );
     sharedAnimation.start();
     return () => sharedAnimation.stop();
-  }, []);
+  }, [ pulseAnim ]);
 
   const backgroundColor = pulseAnim.interpolate({
     inputRange: [0, 1],
@@ -42,12 +43,12 @@ const SkeletonPlaceholder = ({ width, height, style }) => {
   return <Animated.View style={[{ width, height, backgroundColor, borderRadius: 4 }, style]} />;
 };
 
-const HomeScreen = ({ onCreateTrip, onViewTrip, onProfile, user }) => {
+const HomeScreen = ({ user, onCreateTrip, onViewTrip }) => {
   const [trips, setTrips] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+  const router = useRouter();
   const currentUser = user || MOCK_USER;
-  console.log(user);
+  console.log(currentUser.avatar);
   
   useEffect(() => {
     const fetchTrips = async () => {
@@ -71,7 +72,7 @@ const HomeScreen = ({ onCreateTrip, onViewTrip, onProfile, user }) => {
     <View style={styles.homeContainer}>
       {/* Header */}
       <LinearGradient colors={['#5d75e2ff', '#764ba2']} style={styles.homeHeader}>
-        {isLoading ? <HeaderSkeleton /> : <HeaderContent user={currentUser} onProfile={onProfile} />}
+        {isLoading ? <HeaderSkeleton /> : <HeaderContent user={currentUser} router={router} />}
       </LinearGradient>
 
       {/* Search Bar */}
@@ -155,13 +156,13 @@ const HeaderSkeleton = () => (
   </View>
 );
 
-const HeaderContent = ({ user, onProfile }) => (
+const HeaderContent = ({ user, router }) => (
   <>
     <View>
-      <Text style={styles.greeting}>Hello, {user?.email || 'there'}! 👋</Text>
+      <Text style={styles.greeting}>Hello, {user?.name || 'there'}! 👋</Text>
       <Text style={styles.subGreeting}>Where to next?</Text>
     </View>
-    <TouchableOpacity onPress={onProfile}>
+    <TouchableOpacity onPress={() => router.push('profile/profile')}>
       <Image source={user.avatar} style={styles.avatarImage} />
     </TouchableOpacity>
   </>

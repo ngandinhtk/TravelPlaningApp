@@ -33,5 +33,6 @@ export const MOCK_USER = {
   name: 'Wanderer',
 //   avatar: '🧑‍🚀',
   displayName: 'Wanderer',
+  // email: 'wanderer@example.com',
   avatar: require('../lib/character.jpg'),
 };

@@ -70,7 +70,7 @@ const LoginScreen = () => {
         await signOut(auth); // Sign out the user
       }
     } catch (error) {
-      setErrors({ firebase: 'User does not exist' });
+      setErrors({ firebase: 'User does not exist' , error: error.message});
     } finally {
       setLoading(false);
     }
