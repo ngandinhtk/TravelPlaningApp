@@ -3,7 +3,7 @@ import { User } from '@/types';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import HomeScreen from '../../screens/home/HomeScreen';
+import HomeScreen from '../../app/home/home';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);

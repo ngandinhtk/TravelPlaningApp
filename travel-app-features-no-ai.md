@@ -1,5 +1,4 @@
 # 🗺️ Travel Planning App - Tính năng thay thế AI
-
 ## 1. Thay thế AI Generator bằng gì?
 
 ### ❌ Thay vì: AI tự động tạo lịch trình
@@ -121,6 +120,7 @@ User xem và copy lịch trình của người khác:
 - Crawl từ website du lịch
 - Dùng Google Places API
 - User-generated content
+- Trending lịch trình từ các travel agency khác
 
 #### **4. Map Integration (Rất quan trọng!)**
 ```
@@ -357,7 +357,7 @@ const templates = [
 - Visual và intuitive
 - Giúp plan route tối ưu
 - Discover nearby places
-- Must-have cho travel app
+- (Must-have cho travel app)
 
 **Features:**
 - Drag & drop markers

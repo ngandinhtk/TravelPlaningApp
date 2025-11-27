@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -11,6 +12,7 @@ import {
 import { authService } from '../../services/firebase';
 
 const ForgetPasswordScreen = ({ onBack, route }) => {
+  const router = useRouter();
   const [email, setEmail] = useState(route?.params?.email || '');
   const [loading, setLoading] = useState(false);
 
@@ -36,8 +38,8 @@ const ForgetPasswordScreen = ({ onBack, route }) => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={onBack} style={styles.backButton}>
-        <Text style={styles.backButtonText}>← Back to Login</Text>
+      <TouchableOpacity onPress={() => router.back(-1)} style={styles.backButton}>
+        <Text style={styles.backButtonText}>← Back</Text>
       </TouchableOpacity>
 
       <View style={styles.header}>
@@ -78,7 +80,7 @@ const ForgetPasswordScreen = ({ onBack, route }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF', padding: 30 },
-  backButton: { paddingTop: 30, paddingBottom: 20 },
+  backButton: { paddingBottom: 30 },
   backButtonText: { color: '#667eea', fontSize: 16, fontWeight: '600' },
   header: { alignItems: 'center', paddingBottom: 40 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#1A1A1A', marginBottom: 8 },

@@ -3,8 +3,9 @@ import HomeScreen from '@/screens/home/HomeScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import React, { useEffect, useState } from 'react';
-import LoginScreen from '../../screens/auth/LoginScreen';
+import { useEffect, useState } from 'react';
+import ForgetPasswordScreen from '../../screens/auth/ForgetPasswordScreen';
+import LoginScreen from '../../screens/auth/LoginScreen.jsxx';
 import RegisterScreen from '../../screens/auth/RegisterScreen';
 import OnboardingScreen from '../../screens/home/OnboardingScreen';
 import ProfileScreen from '../../screens/profile/ProfileScreen';
@@ -108,6 +109,9 @@ export default function RootNavigator() {
           </Stack.Screen>
           <Stack.Screen name="Register">
             {(props) => <RegisterScreen {...props} onRegister={handleRegister} onBack={() => props.navigation.goBack()} />}
+          </Stack.Screen>
+          <Stack.Screen name="ForgetPassword">
+            {(props) => <ForgetPasswordScreen {...props} onBack={() => props.navigation.goBack()} route={()=> props.navigation.navigate('ForgetPassword')}/>}
           </Stack.Screen>
         </>
       )}
