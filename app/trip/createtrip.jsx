@@ -109,7 +109,7 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
 
       <LinearGradient colors={['#667eea', '#764ba2']} style={styles.createTripHeader}>
         <TouchableOpacity onPress={onBack}>
-          <Text style={styles.backButtonTextWhite}>← Back</Text>
+          <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
         </TouchableOpacity>
         <Text style={styles.createTripTitle}>Create Trip</Text>
         <Text style={styles.stepIndicator}>Step {step}/3</Text>
@@ -205,8 +205,7 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.gradientButton}>
-
-                   <Text style={styles.secondaryButtonText}>Quay lại</Text>
+                  <Text style={styles.secondaryButtonText}>Quay lại</Text>
                   </LinearGradient>
               </TouchableOpacity>
 
@@ -260,8 +259,7 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.gradientButton}>
-
-                   <Text style={styles.secondaryButtonText}>Quay lại</Text>
+                  <Text style={styles.secondaryButtonText}>Quay lại</Text>
                   </LinearGradient>
               </TouchableOpacity>
 

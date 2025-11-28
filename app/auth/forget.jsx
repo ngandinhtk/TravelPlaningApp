@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,10 +8,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import BackButton from '../../components/common/BackButton';
 import { authService } from '../../services/firebase';
 
 const ForgetPasswordScreen = ({ onBack, route }) => {
-  const router = useRouter();
   const [email, setEmail] = useState(route?.params?.email || '');
   const [loading, setLoading] = useState(false);
 
@@ -38,9 +37,10 @@ const ForgetPasswordScreen = ({ onBack, route }) => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => router.back(-1)} style={styles.backButton}>
-        <Text style={styles.backButtonText}>← Back</Text>
-      </TouchableOpacity>
+      {/* <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <Text style={styles.backButtonText}>← Back</Text> 
+      </TouchableOpacity> */}
+        <BackButton />
 
       <View style={styles.header}>
         <Text style={styles.title}>Forgot Password?</Text>
@@ -80,7 +80,7 @@ const ForgetPasswordScreen = ({ onBack, route }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF', padding: 30 },
-  backButton: { paddingBottom: 30 },
+  backButton: { paddingBottom: 40 },
   backButtonText: { color: '#667eea', fontSize: 16, fontWeight: '600' },
   header: { alignItems: 'center', paddingBottom: 40 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#1A1A1A', marginBottom: 8 },

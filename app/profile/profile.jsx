@@ -4,8 +4,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useUser } from '../../context/UserContext';
+import { auth } from '../../services/firebase';
 
-const ProfileScreen = ({ onBack, onLogout }) => {
+const ProfileScreen = () => {
   // Get user directly from our context
   const { user } = useUser();
   console.log(user, 'usser');
@@ -17,6 +18,10 @@ const ProfileScreen = ({ onBack, onLogout }) => {
       </View>
     );
   }
+const handleLogout = async () => {
+  await auth.signOut();
+  router.replace('/auth/login');
+};
 
   return (
     <View style={styles.profileContainer}>
@@ -33,8 +38,11 @@ const ProfileScreen = ({ onBack, onLogout }) => {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.profileCard}>
-          <Image source={user.avatar} style={styles.profileAvatarImage} />
-          <Text style={styles.profileName}>{user.name}</Text>
+          <Image 
+            source={(user?.photoURL && typeof user.photoURL === 'string' && user.photoURL.startsWith('http')) ? { uri: user.photoURL } : require('../../lib/character.jpg')} 
+            style={styles.profileAvatarImage} 
+          />
+          <Text style={styles.profileName}>{user.displayName}</Text>
           <Text style={styles.profileEmail}>{user.email}</Text>
           <TouchableOpacity>
             <LinearGradient
@@ -93,7 +101,7 @@ const ProfileScreen = ({ onBack, onLogout }) => {
 
           <TouchableOpacity 
             style={[styles.menuItem, styles.logoutItem]} 
-            onPress={onLogout}
+            onPress={handleLogout }
           >
             <Text style={styles.menuIcon}>🚪</Text>
             <Text style={[styles.menuText, styles.logoutText]}>Logout</Text>

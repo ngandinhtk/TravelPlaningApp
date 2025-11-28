@@ -11,12 +11,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { MOCK_USER } from '../../api/mockApi';
-import { getTrips } from '../../services/tripService';
+import { useUser } from '../../context/UserContext'; // Uncomment this line
+import { getTrips } from '../../services/tripService'; // Assuming this is correct
+import { getUserProfile } from '../../services/userService';
+
+const pulseAnim = new Animated.Value(0);
 const SkeletonPlaceholder = ({ width, height, style }) => {
-  const pulseAnim = new Animated.Value(0);
 
   useEffect(() => {
+   
     const sharedAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -43,36 +46,50 @@ const SkeletonPlaceholder = ({ width, height, style }) => {
   return <Animated.View style={[{ width, height, backgroundColor, borderRadius: 4 }, style]} />;
 };
 
-const HomeScreen = ({ user, onCreateTrip, onViewTrip }) => {
+const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
+  // Use the user and the auth loading state from the context
+  const {user, isLoading: isAuthLoading } = useUser();    
   const [trips, setTrips] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isTripsLoading, setIsTripsLoading] = useState(true);
   const router = useRouter();
-  const currentUser = user || MOCK_USER;
-  console.log(currentUser.avatar);
   
   useEffect(() => {
+    getUserProfile(user?.uid).then(profile => {
+      console.log("User profile:", profile);
+    }).catch(error => {
+      console.error("Error fetching user profile:", error);
+    });
+    // getAllUsers().then(users => {
+    //   console.log("All users:", users);
+    // }
+    // ).catch(error => {
+    //   console.error("Error fetching users:", error);
+    // });
+
     const fetchTrips = async () => {
-      setIsLoading(true);
-      if (currentUser) {
+      // Only fetch trips if authentication is complete and we have a user
+      if (!isAuthLoading && user) {
+        setIsTripsLoading(true);
         try {
-          const userTrips = await getTrips(currentUser.uid);
+          const userTrips = await getTrips(user.uid);
           setTrips(userTrips);
         } catch (error) {
           console.error("Failed to fetch trips:", error);
         } finally {
-          setIsLoading(false);
+          setIsTripsLoading(false);
         }
       }
     };
 
     fetchTrips();
-  }, [currentUser]);
+  }, [user, isAuthLoading]); // Rerun effect when user or auth state changes
   
+
   return (
     <View style={styles.homeContainer}>
       {/* Header */}
       <LinearGradient colors={['#5d75e2ff', '#764ba2']} style={styles.homeHeader}>
-        {isLoading ? <HeaderSkeleton /> : <HeaderContent user={currentUser} router={router} />}
+        {isAuthLoading ? <HeaderSkeleton /> : <HeaderContent user={user} router={router} />}
       </LinearGradient>
 
       {/* Search Bar */}
@@ -89,7 +106,7 @@ const HomeScreen = ({ user, onCreateTrip, onViewTrip }) => {
 
       {/* Quick Stats */}
       <View style={styles.statsContainer}>
-        {isLoading ? <StatsSkeleton /> : <StatsContent trips={trips} />}
+        {isTripsLoading ? <StatsSkeleton /> : <StatsContent trips={trips} />}
       </View>
 
       {/* Create Trip Button */}
@@ -113,7 +130,7 @@ const HomeScreen = ({ user, onCreateTrip, onViewTrip }) => {
           </TouchableOpacity>
         </View>
 
-        {isLoading ? <TripsSkeleton /> : <TripsContent trips={trips} onViewTrip={onViewTrip} />}
+        {isTripsLoading ? <TripsSkeleton /> : <TripsContent trips={trips} onViewTrip={onViewTrip} />}
 
         {/* Recommended Destinations */}
         <View style={styles.sectionHeader}>
@@ -156,14 +173,18 @@ const HeaderSkeleton = () => (
   </View>
 );
 
-const HeaderContent = ({ user, router }) => (
+const HeaderContent = ({ user, router }) => (  
+  // console.log('Rendering HeaderContent with user:', user),
   <>
     <View>
-      <Text style={styles.greeting}>Hello, {user?.name || 'there'}! 👋</Text>
+      <Text style={styles.greeting}>Hello, {user?.displayName || 'there'}! 👋</Text>
       <Text style={styles.subGreeting}>Where to next?</Text>
     </View>
     <TouchableOpacity onPress={() => router.push('profile/profile')}>
-      <Image source={user.avatar} style={styles.avatarImage} />
+      <Image 
+        source={(user?.photoURL && typeof user.photoURL === 'string' && user.photoURL.startsWith('http')) ? { uri: user.photoURL } : require('../../lib/character.jpg')} 
+        style={styles.avatarImage} 
+      />
     </TouchableOpacity>
   </>
 );

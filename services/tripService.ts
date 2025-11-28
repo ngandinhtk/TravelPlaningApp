@@ -16,11 +16,11 @@ export const getTrips = async (userId : any) => {
   // console.log('123');
   // return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-  console.log(`Fetching trips for user: ${userId}`);
+  // console.log(`Fetching trips for user: ${userId}`);
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(MOCK_TRIPS);
-    }, 1500); // Simulate 1.5 second network delay
+    }, 1000); // Simulate 1 second network delay
   });
 };
 

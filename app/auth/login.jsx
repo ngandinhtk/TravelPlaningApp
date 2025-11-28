@@ -74,6 +74,7 @@ const LoginScreen = () => {
     } finally {
       setLoading(false);
     }
+    router.push('/home/home');
   };
 
   return (
@@ -110,7 +111,8 @@ const LoginScreen = () => {
             autoCapitalize="none"
             placeholderTextColor="#999"
           />
-        </View> {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+        </View>
+        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Password</Text>
@@ -146,7 +148,7 @@ const LoginScreen = () => {
         </View>
 
         <TouchableOpacity style={styles.socialButton}>
-          <Text style={styles.socialButtonText}>🔵 Continue with Google</Text>
+          <Text style={styles.socialButtonText}>&#x1F535; Continue with Google</Text>
         </TouchableOpacity>
 
         <View style={styles.signupPrompt}>

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
 import {
@@ -11,19 +11,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import BackButton from '../../components/common/BackButton';
 import CustomModal from '../../components/common/Modal';
-import defaultAvatar from '../../lib/avatar-default.svg';
-import { auth, db } from '../../services/firebase';
+import { auth, db } from '../../services/firebase'; // Import cả auth và db
 
-const RegisterScreen = ({ onRegister, onBack }) => {
-  const router = useRouter();
+const RegisterScreen = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [registrationSuccess, setRegistrationSuccess] = useState(false);
-
+  const router = useRouter();
   const validateForm = () => {
     const newErrors = {};
     if (!name) newErrors.name = 'Họ và tên không được để trống';
@@ -48,18 +46,16 @@ const RegisterScreen = ({ onRegister, onBack }) => {
         uid: user.uid,
         displayName: name,
         email: email.trim().toLowerCase(),
-        photoURL: defaultAvatar,
+        photoURL: '', // Lưu một chuỗi rỗng thay vì đối tượng SVG
         createdAt: new Date().toISOString(),
         role: 'user',
       });
 
-      await setDoc(doc(db, 'userSettings', user.uid), {
-        theme: 'light',
-        notificationsEnabled: true,
-      });
+      // await setDoc(doc(db, 'userSettings', user.uid), {
+      //   theme: 'light',
+      //   notificationsEnabled: true,
+      // });
 
-      await signOut(auth);
-      setRegistrationSuccess(true);
     } catch (error) {
       if (error.code === 'auth/email-already-in-use') {
         setErrors({ firebase: 'Địa chỉ email này đã được sử dụng.' });
@@ -69,18 +65,12 @@ const RegisterScreen = ({ onRegister, onBack }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSuccessConfirm = () => {
-    setRegistrationSuccess(false);
-    router.replace('/login'); // Navigate to login after successful registration
+    router.push('/home/home');
   };
 
   return (
     <ScrollView style={styles.authContainer} showsVerticalScrollIndicator={false}>
-      <TouchableOpacity onPress={() => router.back(-1)} style={styles.backButton}>
-        <Text style={styles.backButtonText}>← Back</Text>
-      </TouchableOpacity>
+     
 
       <CustomModal
         visible={!!errors.firebase}
@@ -91,14 +81,7 @@ const RegisterScreen = ({ onRegister, onBack }) => {
         <Text>{errors.firebase}</Text>
       </CustomModal>
 
-      <CustomModal
-        visible={registrationSuccess}
-        title=""
-        onClose={handleSuccessConfirm}
-        onConfirm={handleSuccessConfirm}
-      >
-        <Text>Tài khoản của bạn đã được tạo. Vui lòng đăng nhập.</Text>
-      </CustomModal>
+      <BackButton style={{ marginTop: 40, marginLeft: 20 }} />
 
       <View style={styles.authHeader}>
         <Text style={styles.authLogo}>✈️</Text>
@@ -168,9 +151,7 @@ const RegisterScreen = ({ onRegister, onBack }) => {
 
 const styles = StyleSheet.create({
   authContainer: { flex: 1, backgroundColor: '#FFFFFF' },
-  backButton: { padding: 20, paddingTop: 40 },
-  backButtonText: { color: '#667eea', fontSize: 16, fontWeight: '600' },
-  authHeader: { alignItems: 'center', paddingTop: 20, paddingBottom: 40 },
+  authHeader: { alignItems: 'center', paddingTop: 0, paddingBottom: 40 },
   authLogo: { fontSize: 60, marginBottom: 20 },
   authTitle: { fontSize: 28, fontWeight: 'bold', color: '#1A1A1A', marginBottom: 8 },
   authSubtitle: { fontSize: 16, color: '#666' },

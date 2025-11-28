@@ -1,8 +1,7 @@
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { MOCK_USER } from '../api/mockApi';
-import { auth, db } from '../services/firebase';
+import { auth } from '../services/firebase'; // db is no longer directly needed here
+import { getUserProfile } from '../services/userService'; // Import the new function
 
 // 1. Create the context
 const UserContext = createContext();
@@ -12,20 +11,20 @@ export const useUser = () => {
   return useContext(UserContext);
 };
 
+
 // 3. Create the Provider component
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      // console.log("User loading state:", getUserProfile(firebaseUser.uid));
       if (firebaseUser) {
         // User is logged in, fetch their details from Firestore
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          setUser({ uid: firebaseUser.uid, ...userDoc.data() });
+        const userProfile = await getUserProfile(firebaseUser.uid);
+        if (userProfile) {
+          setUser({ uid: firebaseUser.uid, ...userProfile });
         }
       } else {
         // User is logged out
@@ -37,10 +36,7 @@ export const UserProvider = ({ children }) => {
     return () => unsubscribeAuth(); // Cleanup auth listener
   }, []);
 
-  // Use the mock user as a fallback during development if the user is null
-  const userToProvide = user || MOCK_USER;
-
-  const value = { user: userToProvide, isLoading };
+  const value = { user, isLoading };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };

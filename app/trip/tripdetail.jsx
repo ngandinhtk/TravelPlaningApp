@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 const TripDetailScreen = ({ trip, onBack, onEdit }) => {
   const [selectedDay, setSelectedDay] = useState(0);
@@ -21,11 +21,11 @@ const TripDetailScreen = ({ trip, onBack, onEdit }) => {
         colors={['#667eea', '#764ba2']}
         style={styles.itineraryHeader}>
         <TouchableOpacity onPress={onBack}>
-          <Text style={styles.backButtonTextWhite}>← Back</Text>
+          <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
         </TouchableOpacity>
         <Text style={styles.itineraryTitle}>{trip.destination}</Text>
         <TouchableOpacity onPress={onEdit}>
-          <Text style={styles.editButton}>✏️</Text>
+          <Text style={styles.editButton}>&#x270F;&#xFE0F;</Text>
         </TouchableOpacity>
       </LinearGradient>
 
