@@ -417,25 +417,25 @@ const templates = [
 
 ### **Phase 1 (MVP - 2 months):**
 1. ✅ Trip management (CRUD)
-2. ✅ Template system (5-10 templates/city)
-3. ✅ Manual itinerary builder
-4. ✅ Places database (top 10 cities VN)
-5. ✅ Map integration
-6. ✅ Basic budget tracker
+2.  Template system (5-10 templates/city)
+3.  Manual itinerary builder
+4.  Places database (top 10 cities VN)
+5.  Map integration
+6.  Basic budget tracker
 
 ### **Phase 2 (3-4 months):**
-7. ✅ Collaborative planning
-8. ✅ Community trips
-9. ✅ Reviews & ratings
-10. ✅ Checklist system
-11. ✅ Photo management
+7.  Collaborative planning
+8.  Community trips
+9.  Reviews & ratings
+10. Checklist system
+11.  Photo management
 
 ### **Phase 3 (5-6 months):**
-12. ✅ Advanced budget analytics
-13. ✅ Weather integration
-14. ✅ Offline mode
-15. ✅ Social features
-16. ✅ Monetization (premium features)
+12.  Advanced budget analytics
+13.  Weather integration
+14.  Offline mode
+15.  Social features
+16.  Monetization (premium features)
 
 ---
 

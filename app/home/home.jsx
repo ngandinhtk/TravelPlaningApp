@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Animated,
   Image,
@@ -53,38 +53,42 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
   const [isTripsLoading, setIsTripsLoading] = useState(true);
   const router = useRouter();
   
-  useEffect(() => {
-    getUserProfile(user?.uid).then(profile => {
-      console.log("User profile:", profile);
-    }).catch(error => {
-      console.error("Error fetching user profile:", error);
-    });
-    // getAllUsers().then(users => {
-    //   console.log("All users:", users);
-    // }
-    // ).catch(error => {
-    //   console.error("Error fetching users:", error);
-    // });
-
-    const fetchTrips = async () => {
-      // Only fetch trips if authentication is complete and we have a user
-      if (!isAuthLoading && user) {
-        setIsTripsLoading(true);
-        try {
-          const userTrips = await getTrips(user.uid);
-          setTrips(userTrips);
-        } catch (error) {
-          console.error("Failed to fetch trips:", error);
-        } finally {
-          setIsTripsLoading(false);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchTrips = async () => {
+        // Only fetch trips if authentication is complete and we have a user
+        if (!isAuthLoading && user) {
+          setIsTripsLoading(true);
+          try {
+            const userTrips =  await getTrips(user.uid);
+            console.log(userTrips);
+            getUserProfile(user.uid).then(profile => {
+            }).catch(error => {
+              console.error("Error fetching user profile:", error);
+            });          
+            setTrips(userTrips);
+          } catch (error) {
+            console.error("Failed to fetch trips:", error);
+          } finally {
+            setIsTripsLoading(false);
+          }
         }
       }
-    };
+      fetchTrips();
 
-    fetchTrips();
-  }, [user, isAuthLoading]); // Rerun effect when user or auth state changes
+    }, [user, isAuthLoading])
+  );
   
+  onCreateTrip = () => {
+    router.push('/trip/create');
+  }
 
+  onViewTrip = (trip) => {
+    router.push({
+      pathname: '/trip/detail',
+      params: { trip: JSON.stringify(trip) },
+    });
+  }
   return (
     <View style={styles.homeContainer}>
       {/* Header */}
@@ -129,9 +133,7 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
-
-        {isTripsLoading ? <TripsSkeleton /> : <TripsContent trips={trips} onViewTrip={onViewTrip} />}
-
+        {isTripsLoading ? <TripsSkeleton /> : <TripsContent trips={trips} onViewTrip={onViewTrip} /> }
         {/* Recommended Destinations */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Trending Destinations</Text>
@@ -174,7 +176,6 @@ const HeaderSkeleton = () => (
 );
 
 const HeaderContent = ({ user, router }) => (  
-  // console.log('Rendering HeaderContent with user:', user),
   <>
     <View>
       <Text style={styles.greeting}>Hello, {user?.displayName || 'there'}! 👋</Text>
@@ -182,7 +183,7 @@ const HeaderContent = ({ user, router }) => (
     </View>
     <TouchableOpacity onPress={() => router.push('profile/profile')}>
       <Image 
-        source={(user?.photoURL && typeof user.photoURL === 'string' && user.photoURL.startsWith('http')) ? { uri: user.photoURL } : require('../../lib/character.jpg')} 
+        source={(user && user.photoURL && typeof user.photoURL === 'string' && user.photoURL.startsWith('http')) ? { uri: user.photoURL } : require('../../lib/character.jpg')} 
         style={styles.avatarImage} 
       />
     </TouchableOpacity>

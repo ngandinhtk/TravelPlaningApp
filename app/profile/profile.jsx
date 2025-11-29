@@ -12,11 +12,13 @@ const ProfileScreen = () => {
   console.log(user, 'usser');
   
   if (!user) {
+    router.replace('/auth/login');
     return (
       <View style={styles.profileContainer}>
         <Text>Loading profile...</Text>
       </View>
     );
+
   }
 const handleLogout = async () => {
   await auth.signOut();

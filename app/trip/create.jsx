@@ -1,30 +1,35 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import CustomModal from '../../components/common/Modal';
+import { useUser } from '../../context/UserContext';
 import { addTrip } from '../../services/tripService';
-
 
 const CreateTripScreen = ({ onBack, onTripCreated }) => {
   const [step, setStep] = useState(1);
   const [destination, setDestination] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
   const [travelers, setTravelers] = useState('2');
   const [budget, setBudget] = useState('');
+  const [tripId, setTripId] = useState(Date.now());
   const [interests, setInterests] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState(null);
-  const [trip, setTrip] = useState(null);
-  const [error, setError] = useState(null);
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
 
+  const { user } = useUser();
+  const [error, setError] = useState(null);
   const interestOptions = [
     { emoji: '🏖️', name: 'Beach' },
     { emoji: '🏔️', name: 'Mountain' },
@@ -33,7 +38,8 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
     { emoji: '🏛️', name: 'History' },
     { emoji: '🎢', name: 'Adventure' },
   ];
-
+  // console.log(Platform.OS === 'web' ? 'Running on Web' : 'Running on Native');
+  
   const toggleInterest = (interest) => {
     if (interests.includes(interest)) {
       setInterests(interests.filter((i) => i !== interest));
@@ -42,60 +48,148 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
     }
   };
 
-   const handleCreateTrip = async () => {
-    if (!destination || !startDate || !endDate) {
+  const handleCreateTrip = async () => {
+    if (!destination || !startDate.toDateString() || !endDate.toDateString()) {
       setError('Vui lòng điền đầy đủ các trường thông tin cần thiết.');
       return;
     }
-    setLoading(true);
     
     try {
-      // Tính toán số ngày đi
-      const parseDate = (str) => {
-        const [day, month, year] = str.split('/');
-        return new Date(year, month - 1, day);
-      };
-
-      const start = parseDate(startDate);
-      const end = parseDate(endDate);
+      const start = startDate;
+      const end = endDate;
       const timeDiff = end.getTime() - start.getTime();
       const calculatedDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
 
+      const formatDate = (date) => {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      };
+
+      if (end < start) {
+        setError('Ngày kết thúc không thể trước ngày bắt đầu.');
+        return;
+      }
+      const startStr = formatDate(startDate);
+      const endStr = formatDate(endDate);
+      
+      // setTripId(tripId + 1);
       await addTrip({
         userId: user.uid,
         destination,
-        dates: `${startDate} - ${endDate}`,
+        dates: `${startStr} - ${endStr}`,
         status: 'Upcoming',
         travelers: parseInt(travelers),
         budget: parseFloat(budget),
         days: calculatedDays,
+        interests,
+        tripId,
       });
-      navigation.goBack();
+      setSuccessMessage('Trip created successfully!');
+      setTimeout(() => {
+        setSuccessMessage(null);
+        router.push('/');
+      }, 2000);
+      
     } catch (error) {
       console.error('Error creating trip:', error);
-      alert('Failed to create trip.');
-    } finally {
-      setLoading(false);
+      setError('Failed to create trip.');
     }
-    onTripCreated(trip);
 
   };
 
+  onBack = () => {
+    router.push('/');
+  }
 
-  // const handleCreate = () => {
-  //   const trip = {
-  //     id: Date.now().toString(),
-  //     destination,
-  //     dates: `${startDate} - ${endDate}`,
-  //     travelers: `${travelers} people`,
-  //     budget,
-  //     days: 5,
-  //     status: '📝 Planning',
-  //     interests,
-  //   };
-  //   onTripCreated(trip);
-  // };
+if (Platform.OS === 'web') {
+  require('react-datepicker/dist/react-datepicker.css');
+}
 
+let DatePicker; // Will be assigned conditionally
+if (Platform.OS === 'web') {
+  const ReactDatePicker = require('react-datepicker').default;
+  DatePicker = ReactDatePicker;
+}
+
+  const handleStartDateChange = (date) => {
+    setStartDate(date);
+    setShowStartDatePicker(false);
+  };
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+  const handleEndDateChange = (date) => {
+    setEndDate(date);
+    setShowEndDatePicker(false);
+  };
+
+  const renderNativePicker = () => (
+    <>
+      {showStartDatePicker && (
+        <DateTimePickerModal
+          isVisible={showStartDatePicker}
+          mode="date"
+          onConfirm={handleStartDateChange}
+          onCancel={() => setShowStartDatePicker(false)}
+          date={startDate}
+        />
+      )}
+      {showEndDatePicker && (
+        <DateTimePickerModal
+          isVisible={showEndDatePicker}
+          mode="date"
+          onConfirm={handleEndDateChange}
+          onCancel={() => setShowEndDatePicker(false)}
+          date={endDate}
+          minimumDate={startDate}
+        />
+      )}
+    </>
+  );
+
+  const renderWebPicker = () => (
+    <>
+      {showStartDatePicker && (
+        <div style={styles.webPickerOverlay} onClick={() => setShowStartDatePicker(false)}>
+          <div style={styles.webPickerContainer} onClick={(e) => e.stopPropagation()}>
+            <DatePicker
+              selected={startDate}
+              onChange={handleStartDateChange}
+              dateFormat="MM/dd/yyyy"
+              inline
+            />
+            <button 
+              onClick={() => setShowStartDatePicker(false)}
+              style={styles.webPickerButton}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      {showEndDatePicker && (
+        <div style={styles.webPickerOverlay} onClick={() => setShowEndDatePicker(false)}>
+          <div style={styles.webPickerContainer} onClick={(e) => e.stopPropagation()}>
+            <DatePicker
+              selected={endDate}
+              onChange={handleEndDateChange}
+              dateFormat="MM/dd/yyyy"
+              minDate={startDate}
+              inline
+            />
+            <button 
+              onClick={() => setShowEndDatePicker(false)}
+              style={styles.webPickerButton}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  
   return (
     <View style={styles.createTripContainer}>
       <CustomModal
@@ -105,6 +199,15 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
         onConfirm={() => setError(null)}
       >
         <Text>{error}</Text>
+      </CustomModal>
+
+      <CustomModal
+        visible={!!successMessage}
+        title="Thành Công"
+        onClose={() => setSuccessMessage(null)}
+        onConfirm={() => setSuccessMessage(null)}
+      >
+        <Text>{successMessage}</Text>
       </CustomModal>
 
       <LinearGradient colors={['#667eea', '#764ba2']} style={styles.createTripHeader}>
@@ -134,24 +237,18 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
             <View style={styles.inputRow}>
               <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
                 <Text style={styles.inputLabel}>Start Date</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="DD/MM/YYYY"
-                  value={startDate}
-                  onChangeText={setStartDate}
-                  placeholderTextColor="#999"
-                />
+                <TouchableOpacity onPress={() => setShowStartDatePicker(true)} style={styles.input}>
+                  <Text style={styles.dateText}>{startDate.toLocaleDateString()}</Text>
+                </TouchableOpacity>
+                {Platform.OS === 'web' ? renderWebPicker() : renderNativePicker()}
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={styles.inputLabel}>End Date</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="DD/MM/YYYY"
-                  value={endDate}
-                  onChangeText={setEndDate}
-                  placeholderTextColor="#999"
-                />
+                <TouchableOpacity onPress={() => setShowEndDatePicker(true)} style={styles.input}>
+                  <Text style={styles.dateText}>{endDate.toLocaleDateString()}</Text>
+                </TouchableOpacity>
+                {Platform.OS === 'web' ? renderWebPicker() : renderNativePicker()}
               </View>
             </View>
 
@@ -294,7 +391,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    paddingTop: 40,
+    paddingTop: 50,
   },
   backButtonTextWhite: {
     color: '#FFFFFF',
@@ -314,6 +411,7 @@ const styles = StyleSheet.create({
   createTripForm: {
     flex: 1,
     padding: 20,
+    marginTop: 10,
   },
   stepContainer: {
     flex: 1,
@@ -346,6 +444,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
     backgroundColor: '#F8F9FA',
+    justifyContent: 'center',
+  },
+  dateText: {
+    fontSize: 16,
   },
   inputRow: {
     flexDirection: 'row',
@@ -354,6 +456,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     borderRadius: 12,
     overflow: 'hidden',
+    zIndex: -1
   },
   gradientButton: {
     paddingVertical: 16,
@@ -413,6 +516,39 @@ const styles = StyleSheet.create({
   },
   interestChipTextActive: {
     color: '#FFFFFF',
+  },
+  // Web Date Picker Styles
+  webPickerOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  webPickerContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 20,
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    maxWidth: 400,
+  },
+  webPickerButton: {
+    marginTop: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#667eea',
+    color: '#FFFFFF',
+    border: 'none',
+    borderRadius: 8,
+    fontSize: 16,
+    fontWeight: '600',
+    cursor: 'pointer',
+    width: '100%',
   },
 });
 

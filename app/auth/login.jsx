@@ -61,6 +61,8 @@ const LoginScreen = () => {
 
       if (userDoc.exists()) {
         // The root layout will automatically redirect to the main app.
+        router.push('/');
+
       } else {
         // Handle case where user exists in Auth but not in Firestore
         Alert.alert(
@@ -74,7 +76,6 @@ const LoginScreen = () => {
     } finally {
       setLoading(false);
     }
-    router.push('/home/home');
   };
 
   return (

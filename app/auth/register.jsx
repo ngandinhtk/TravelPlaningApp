@@ -19,6 +19,7 @@ const RegisterScreen = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordconfirm, setPasswordConfirm] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const router = useRouter();
@@ -28,6 +29,8 @@ const RegisterScreen = () => {
     if (!email) newErrors.email = 'Email không được để trống';
     else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email không hợp lệ';
     if (!password) newErrors.password = 'Mật khẩu không được để trống';
+    if (!passwordconfirm) newErrors.passwordconfirm = 'Mật khẩu không được để trống';
+    if (password !== passwordconfirm) newErrors.passwordconfirm = 'Mật khẩu không khớp';
     else if (password.length < 6) newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -56,6 +59,9 @@ const RegisterScreen = () => {
       //   notificationsEnabled: true,
       // });
 
+      // Điều hướng đến trang chủ sau khi đăng ký thành công
+      router.push('/');
+
     } catch (error) {
       if (error.code === 'auth/email-already-in-use') {
         setErrors({ firebase: 'Địa chỉ email này đã được sử dụng.' });
@@ -65,13 +71,10 @@ const RegisterScreen = () => {
     } finally {
       setLoading(false);
     }
-    router.push('/home/home');
   };
 
   return (
     <ScrollView style={styles.authContainer} showsVerticalScrollIndicator={false}>
-     
-
       <CustomModal
         visible={!!errors.firebase}
         title=""
@@ -137,6 +140,22 @@ const RegisterScreen = () => {
           />
         </View>
         {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+
+         <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Password Confirm</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Min. 6 characters"
+            value={passwordconfirm}
+            onChangeText={(text) => {
+              setPasswordConfirm(text);
+              if (errors.passwordconfirm) setErrors({ ...errors, passwordconfirm: null });
+            }}
+            secureTextEntry
+            placeholderTextColor="#999"
+          />
+        </View>
+        {errors.passwordconfirm && <Text style={styles.errorText}>{errors.passwordconfirm}</Text>}
 
         <TouchableOpacity
           style={[styles.primaryButton, loading && styles.buttonDisabled]}
