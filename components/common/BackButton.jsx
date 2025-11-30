@@ -20,7 +20,7 @@ export default function BackButton() {
       className="flex-row items-center -ml-3 px-3 py-2 active:opacity-60"
       hitSlop={20}
     >
-      <ChevronLeft style={{ marginBottom: 40 }} size={26} color="#007AFF" strokeWidth={2.5} /> 
+      <ChevronLeft style={{ marginTop: 40 }} size={26} color="#007AFF" strokeWidth={2.5} /> 
     </Pressable>
   );
 }

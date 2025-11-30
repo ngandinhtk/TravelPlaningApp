@@ -22,6 +22,7 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
   const [endDate, setEndDate] = useState(new Date());
   const [travelers, setTravelers] = useState('2');
   const [budget, setBudget] = useState('');
+  const [notes, setNotes] = useState('');
   const [tripId, setTripId] = useState(Date.now());
   const [interests, setInterests] = useState([]);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
@@ -79,12 +80,13 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
         userId: user.uid,
         destination,
         dates: `${startStr} - ${endStr}`,
-        status: 'Upcoming',
+        status: updateTripStatus({ startDate, endDate, status: 'planning' }),
         travelers: parseInt(travelers),
         budget: parseFloat(budget),
         days: calculatedDays,
         interests,
         tripId,
+        notes: notes || '',
       });
       setSuccessMessage('Trip created successfully!');
       setTimeout(() => {
@@ -112,6 +114,24 @@ if (Platform.OS === 'web') {
   const ReactDatePicker = require('react-datepicker').default;
   DatePicker = ReactDatePicker;
 }
+
+
+const updateTripStatus = (trip) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Handle both Date objects and Firebase Timestamps
+  const endDate = trip.endDate.toDate ? trip.endDate.toDate() : new Date(trip.endDate);
+  endDate.setHours(23, 59, 59, 999);
+
+  const startDate = trip.startDate.toDate ? trip.startDate.toDate() : new Date(trip.startDate);
+
+  if (trip.status === "archived") return "archived";
+  if (endDate < today) return "past";
+  if (startDate > today) return "upcoming";
+  return "upcoming";
+};
+
 
   const handleStartDateChange = (date) => {
     setStartDate(date);
@@ -289,6 +309,18 @@ if (Platform.OS === 'web') {
                 value={budget}
                 onChangeText={setBudget}
                 keyboardType="numeric"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+             <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Ghi chú</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="ví dụ: mang theo áo ấm"
+                value={notes}
+                onChangeText={setNotes}
+                keyboardType="default"
                 placeholderTextColor="#999"
               />
             </View>

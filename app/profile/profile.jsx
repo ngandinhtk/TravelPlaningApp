@@ -9,7 +9,7 @@ import { auth } from '../../services/firebase';
 const ProfileScreen = () => {
   // Get user directly from our context
   const { user } = useUser();
-  console.log(user, 'usser');
+  // console.log(user, 'user');
   
   if (!user) {
     router.replace('/auth/login');

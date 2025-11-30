@@ -1,3 +1,6 @@
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,27 +12,56 @@ import {
   View,
 } from 'react-native';
 import BackButton from '../../components/common/BackButton';
-import { authService } from '../../services/firebase';
+import CustomModal from '../../components/common/Modal';
+import { auth, db } from '../../services/firebase';
 
-const ForgetPasswordScreen = ({ onBack, route }) => {
-  const [email, setEmail] = useState(route?.params?.email || '');
+const ForgetPasswordScreen = () => {
+  const router = useRouter();
+  const [errors, setErrors] = useState({});
+  const params = useLocalSearchParams();
+  const [email, setEmail] = useState(params?.email || '');
   const [loading, setLoading] = useState(false);
 
+  const validateForm = () => {
+    const newErrors = {};
+    if (!email) newErrors.email = 'Email không được để trống';
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email không hợp lệ';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSendResetLink = async () => {
-    if (!email) {
-      Alert.alert('Error', 'Please enter your email address.');
+    if (!validateForm()) {
       return;
     }
     setLoading(true);
     try {
-      await authService.sendPasswordResetEmail(email);
+      setErrors({});
+
+      // Kiểm tra xem email có tồn tại trong collection 'users' của Firestore không
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', email.trim().toLowerCase()));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        setErrors({ firebase: 'Không tìm thấy người dùng với địa chỉ email này.' });
+        return;
+      }
+
+      await sendPasswordResetEmail(auth, email.trim());
       Alert.alert(
-        'Check Your Email',
-        'A link to reset your password has been sent to your email address.',
-        [{ text: 'OK', onPress: onBack }]
+        'Kiểm tra Email của bạn',
+        'Một liên kết để đặt lại mật khẩu đã được gửi đến địa chỉ email của bạn.',
+        [{ text: 'OK', onPress: () => router.back() }]
       );
     } catch (error) {
-      Alert.alert('Error', error.message);
+      let errorMessage = 'Đã xảy ra lỗi. Vui lòng thử lại.';
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'Không tìm thấy người dùng với địa chỉ email này.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Địa chỉ email không hợp lệ.';
+      }
+      setErrors({ firebase: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -37,15 +69,22 @@ const ForgetPasswordScreen = ({ onBack, route }) => {
 
   return (
     <View style={styles.container}>
-      {/* <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-        <Text style={styles.backButtonText}>← Back</Text> 
-      </TouchableOpacity> */}
-        <BackButton />
+
+         <CustomModal
+              visible={!!errors.firebase}
+              title="Notification"
+              onClose={() => setErrors({ ...errors, firebase: null })}
+              onConfirm={() => setErrors({ ...errors, firebase: null })}
+            >
+              <Text>{errors.firebase}</Text>
+            </CustomModal>
+
+      <BackButton  />
 
       <View style={styles.header}>
         <Text style={styles.title}>Forgot Password?</Text>
         <Text style={styles.subtitle}>
-          Enter your email and we will send you a link to reset your password.
+          Nhập email của bạn và chúng tôi sẽ gửi cho bạn một liên kết để đặt lại mật khẩu.
         </Text>
       </View>
 
@@ -56,12 +95,16 @@ const ForgetPasswordScreen = ({ onBack, route }) => {
             style={styles.input}
             placeholder="your@email.com"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => {
+              setEmail(text);
+              if (errors.email) setErrors({ ...errors, email: null });
+            }}
             keyboardType="email-address"
             autoCapitalize="none"
             placeholderTextColor="#999"
           />
         </View>
+        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
         <TouchableOpacity
           style={[styles.primaryButton, loading && styles.buttonDisabled]}
@@ -79,7 +122,7 @@ const ForgetPasswordScreen = ({ onBack, route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF', padding: 30 },
+  container: { flex: 1, backgroundColor: '#FFFFFF', paddingHorizontal: 30 },
   backButton: { paddingBottom: 40 },
   backButtonText: { color: '#667eea', fontSize: 16, fontWeight: '600' },
   header: { alignItems: 'center', paddingBottom: 40 },
@@ -106,6 +149,11 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: { color: '#FFFFFF', fontSize: 18, fontWeight: '600' },
   buttonDisabled: { opacity: 0.6 },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+    marginTop: -10,
+  },
 });
 
 export default ForgetPasswordScreen;

@@ -54,11 +54,6 @@ const RegisterScreen = () => {
         role: 'user',
       });
 
-      // await setDoc(doc(db, 'userSettings', user.uid), {
-      //   theme: 'light',
-      //   notificationsEnabled: true,
-      // });
-
       // Điều hướng đến trang chủ sau khi đăng ký thành công
       router.push('/');
 
@@ -84,7 +79,7 @@ const RegisterScreen = () => {
         <Text>{errors.firebase}</Text>
       </CustomModal>
 
-      <BackButton style={{ marginTop: 40, marginLeft: 20 }} />
+      <BackButton />
 
       <View style={styles.authHeader}>
         <Text style={styles.authLogo}>✈️</Text>

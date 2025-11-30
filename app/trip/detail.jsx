@@ -1,38 +1,29 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
+import Loading from '../../components/common/Loading';
 import CustomModal from '../../components/common/Modal';
+import { useTrip } from '../../context/TripContext';
 import { deleteTrip } from '../../services/tripService';
 
 const TripDetailScreen = () => {
-  const { trip: tripStr } = useLocalSearchParams();
+  const { trip } = useTrip(); // Lấy toàn bộ đối tượng trip từ Context
   const router = useRouter();
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
 
-  // Parse trip data from params
-  let trip = null;
-  try {
-    trip = tripStr ? JSON.parse(tripStr) : null;
-  } catch (error) {
-    console.error('Error parsing trip data:', error);
-  }
-
+  // Nếu trip chưa được tải xong (do context đang fetch), hiển thị loading
+  // console.log('Trip in Detail Screen:', trip);
   if (!trip) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Trip not found</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.errorButton}>
-          <Text style={styles.errorButtonText}>Go Back</Text>
-        </TouchableOpacity>
-      </View>
+      <Loading />
     );
   }
 
@@ -41,10 +32,7 @@ const TripDetailScreen = () => {
   };
 
   const handleEdit = () => {
-    router.push({
-      pathname: '/trip/edit',
-      params: { trip: tripStr },
-    });
+    router.push('/trip/edit'); // Không cần truyền params nữa
   };
 
   const handleDelete = () => {
@@ -113,6 +101,10 @@ const TripDetailScreen = () => {
             <Text style={styles.summaryLabel}>Status</Text>
             <Text style={styles.summaryValue}>{trip.status}</Text>
           </View>
+            <View style={styles}>
+            <Text style={styles.summaryLabel}>Note</Text>
+            <Text style={styles.summaryValue}>📝 {trip.notes}</Text>
+          </View>
         </View>
 
         {/* Trip Details */}
@@ -133,6 +125,11 @@ const TripDetailScreen = () => {
 // Vui lòng thêm styles từ tệp gốc của bạn vào đây
 const styles = StyleSheet.create({
   itineraryContainer: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  center: {
+    justifyContent: 'center',
     flex: 1,
     backgroundColor: '#F8F9FA',
   },

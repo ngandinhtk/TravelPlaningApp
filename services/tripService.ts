@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
@@ -58,3 +59,43 @@ export const deleteTrip = async (tripId: any) => {
   const tripDoc = doc(db, 'trips', tripId);
   await deleteDoc(tripDoc);
 };  
+
+// Get a single trip by its ID
+export const getTrip = async (tripId: any) => {
+  const tripDocRef = doc(db, 'trips', tripId);
+  const docSnap = await getDoc(tripDocRef);
+  // console.log('Fetched trip data:', docSnap.data());
+  if (docSnap.exists()) {
+    return { id: docSnap.id, ...docSnap.data() };
+  } else {
+    throw new Error("No such trip found!");
+  }
+};
+
+// Get all trip templates
+export const getTripTemplates = async () => {
+  const templatesCollection = collection(db, 'tripTemplates');
+  const q = query(templatesCollection, orderBy('name')); // Sắp xếp theo tên
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+};
+
+
+
+// get all trips form all users (for admin)
+
+export const getAllTrips = async () => {
+  try {
+    const tripsCollectionRef = collection(db, 'trips');
+    
+    const querySnapshot = await getDocs(tripsCollectionRef);
+    const trips: any[] = [];
+    querySnapshot.forEach((doc) => {
+      trips.push({ id: doc.id, ...doc.data() });
+    });
+    return trips;
+  } catch (error) {
+    console.error("Error fetching all tríp:", error);
+    throw error;
+  }
+};

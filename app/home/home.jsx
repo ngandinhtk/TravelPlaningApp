@@ -11,8 +11,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useUser } from '../../context/UserContext'; // Uncomment this line
-import { getTrips } from '../../services/tripService'; // Assuming this is correct
+import { useTrip } from '../../context/TripContext';
+import { useUser } from '../../context/UserContext';
+import { getTrips, getTripTemplates } from '../../services/tripService';
 import { getUserProfile } from '../../services/userService';
 
 const pulseAnim = new Animated.Value(0);
@@ -51,6 +52,8 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
   const {user, isLoading: isAuthLoading } = useUser();    
   const [trips, setTrips] = useState([]);
   const [isTripsLoading, setIsTripsLoading] = useState(true);
+  const [templates, setTemplates] = useState([]);
+  const { setSelectedTripId } = useTrip(); // Lấy hàm để set ID từ context
   const router = useRouter();
   
   useFocusEffect(
@@ -61,7 +64,7 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
           setIsTripsLoading(true);
           try {
             const userTrips =  await getTrips(user.uid);
-            console.log(userTrips);
+            // console.log(userTrips);
             getUserProfile(user.uid).then(profile => {
             }).catch(error => {
               console.error("Error fetching user profile:", error);
@@ -72,6 +75,14 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
           } finally {
             setIsTripsLoading(false);
           }
+        }
+
+        // Fetch templates
+        try {
+          const fetchedTemplates = await getTripTemplates();
+          setTemplates(fetchedTemplates);
+        } catch (error) {
+          console.error("Failed to fetch templates:", error);
         }
       }
       fetchTrips();
@@ -84,10 +95,10 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
   }
 
   onViewTrip = (trip) => {
-    router.push({
-      pathname: '/trip/detail',
-      params: { trip: JSON.stringify(trip) },
-    });
+    // 1. Set ID của chuyến đi được chọn vào context
+    setSelectedTripId(trip.id);
+    // 2. Điều hướng đến trang chi tiết mà không cần params
+    router.push('/trip/detail');
   }
   return (
     <View style={styles.homeContainer}>
@@ -134,6 +145,22 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
           </TouchableOpacity>
         </View>
         {isTripsLoading ? <TripsSkeleton /> : <TripsContent trips={trips} onViewTrip={onViewTrip} /> }
+
+        {/* Recommended Templates Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Gợi ý lịch trình</Text>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.trendingScroll}>
+          {templates.map((template, index) => (
+            <TouchableOpacity key={index} onPress={() => {/* TODO: Navigate to template detail */}}>
+              <LinearGradient colors={['#667eea', '#764ba2']} style={styles.trendingCard}>
+                <Text style={styles.trendingEmoji}>🗺️</Text>
+                <Text style={styles.trendingText}>{template.name}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
         {/* Recommended Destinations */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Trending Destinations</Text>
@@ -198,22 +225,28 @@ const StatsSkeleton = () => (
   </>
 );
 
-const StatsContent = ({ trips }) => (
-  <>
-    <View style={styles.statCard}>
-      <Text style={styles.statNumber}>{trips.length}</Text>
-      <Text style={styles.statLabel}>Trips</Text>
-    </View>
-    <View style={styles.statCard}>
-      <Text style={styles.statNumber}>12</Text>
-      <Text style={styles.statLabel}>Countries</Text>
-    </View>
-    <View style={styles.statCard}>
-      <Text style={styles.statNumber}>48</Text>
-      <Text style={styles.statLabel}>Days</Text>
-    </View>
-  </>
-);
+const StatsContent = ({ trips }) => {
+  const totalDays = trips.reduce((sum, trip) => sum + (trip.days || 0), 0);
+  const uniqueCountries = new Set(trips.map(trip => trip.destination));
+  const totalCountries = uniqueCountries.size;
+
+  return (
+    <>
+      <View style={styles.statCard}>
+        <Text style={styles.statNumber}>{trips.length}</Text>
+        <Text style={styles.statLabel}>Trips</Text>
+      </View>
+      <View style={styles.statCard}>
+        <Text style={styles.statNumber}>{totalCountries}</Text>
+        <Text style={styles.statLabel}>Countries</Text>
+      </View>
+      <View style={styles.statCard}>
+        <Text style={styles.statNumber}>{totalDays}</Text>
+        <Text style={styles.statLabel}>Days</Text>
+      </View>
+    </>
+  );
+};
 
 const TripsSkeleton = () => (
   <>

@@ -24,7 +24,11 @@ export const UserProvider = ({ children }) => {
         // User is logged in, fetch their details from Firestore
         const userProfile = await getUserProfile(firebaseUser.uid);
         if (userProfile) {
-          setUser({ uid: firebaseUser.uid, ...userProfile });
+          setUser({ 
+            uid: firebaseUser.uid, 
+            role: userProfile.role || 'user', // Mặc định là 'user' nếu không có role
+            ...userProfile 
+          });
         }
       } else {
         // User is logged out

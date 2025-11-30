@@ -1,7 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,39 +12,40 @@ import {
 } from 'react-native';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import CustomModal from '../../components/common/Modal';
+import { useTrip } from '../../context/TripContext';
 import { updateTrip } from '../../services/tripService';
 
 const EditTripScreen = () => {
   const router = useRouter();
-  const { trip: tripStr } = useLocalSearchParams();
+  const { trip, setTrip: setTripInContext } = useTrip(); // Lấy trip từ Context
 
-  const [trip, setTrip] = useState(null);
   const [destination, setDestination] = useState('');
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [travelers, setTravelers] = useState('');
   const [budget, setBudget] = useState('');
+  const [notes, setNotes] = useState('');
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-
+  
   useEffect(() => {
-    if (tripStr) {
-      const parsedTrip = JSON.parse(tripStr);
-      setTrip(parsedTrip);
-      setDestination(parsedTrip.destination);
-      setTravelers(String(parsedTrip.travelers));
-      setBudget(String(parsedTrip.budget));
+    // Khi trip từ context có sẵn, cập nhật state của form
+    if (trip) {
+      setDestination(trip.destination);
+      setTravelers(String(trip.travelers));
+      setBudget(String(trip.budget));
+      setNotes(trip.notes);
 
       // Chuyển đổi chuỗi ngày tháng 'DD/MM/YYYY' thành đối tượng Date
-      const dateParts = parsedTrip.dates.split(' - ');
+      const dateParts = trip.dates.split(' - ');
       const [startDay, startMonth, startYear] = dateParts[0].split('/');
       const [endDay, endMonth, endYear] = dateParts[1].split('/');
       setStartDate(new Date(`${startYear}-${startMonth}-${startDay}`));
       setEndDate(new Date(`${endYear}-${endMonth}-${endDay}`));
     }
-  }, [tripStr]);
+  }, [trip]);
 
   const handleUpdateTrip = async () => {
     if (!destination || !startDate || !endDate) {
@@ -67,10 +69,15 @@ const EditTripScreen = () => {
       travelers: parseInt(travelers, 10),
       budget: parseFloat(budget),
       days: calculatedDays,
+      notes: notes,
+      
     };
 
     try {
       await updateTrip(trip.id, updatedData);
+      // Cập nhật lại trip trong context để các màn hình khác có dữ liệu mới
+      setTripInContext({ ...trip, ...updatedData });
+
       setSuccessMessage('Cập nhật chuyến đi thành công!');
       setTimeout(() => {
         setSuccessMessage(null);
@@ -92,10 +99,12 @@ const EditTripScreen = () => {
     setEndDate(date);
   };
 
+  // Nếu trip chưa được tải xong, hiển thị loading
   if (!trip) {
     return (
       <View style={styles.container}>
-        <Text>Đang tải thông tin chuyến đi...</Text>
+        <ActivityIndicator size="large" color="#667eea" />
+        <Text style={{ marginTop: 10 }}>Đang tải thông tin chuyến đi...</Text>
       </View>
     );
   }
@@ -111,7 +120,7 @@ const EditTripScreen = () => {
 
       <LinearGradient colors={['#667eea', '#764ba2']} style={styles.createTripHeader}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButtonTextWhite}>&larr; Quay lại</Text>
+          <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
         </TouchableOpacity>
         <Text style={styles.createTripTitle}>Chỉnh sửa chuyến đi</Text>
         <View style={{ width: 80 }} />
@@ -146,6 +155,11 @@ const EditTripScreen = () => {
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Ngân sách ($)</Text>
           <TextInput style={styles.input} value={budget} onChangeText={setBudget} keyboardType="numeric" />
+        </View>
+
+           <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Ghi chú</Text>
+          <TextInput style={styles.input} value={notes} onChangeText={setNotes} multiline />
         </View>
 
         <TouchableOpacity style={styles.nextButton} onPress={handleUpdateTrip}>
