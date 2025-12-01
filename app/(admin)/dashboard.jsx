@@ -28,6 +28,14 @@ const AdminDashboardScreen = () => {
           </LinearGradient>
         </TouchableOpacity>
 
+           <TouchableOpacity onPress={() => router.push('/(admin)/reports')}>
+          <LinearGradient colors={['#f6d365', '#fda085']} style={styles.card}>
+            <Text style={styles.cardIcon}>📊</Text>
+            <Text style={styles.cardTitle}>View Reports</Text>
+            <Text style={styles.cardDescription}>Access system reports and analytics.</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={onViewTrips}>
           <LinearGradient colors={['#ca7bd3ff', '#ee8694ff']} style={styles.card}>
             <Text style={styles.cardIcon}>✈️</Text>
@@ -42,6 +50,10 @@ const AdminDashboardScreen = () => {
             <Text style={styles.cardTitle}>Manage Templates</Text>
             <Text style={styles.cardDescription}>View and edit trip templates.</Text>
           </LinearGradient>
+        </TouchableOpacity>
+     
+        <TouchableOpacity style={styles.bottonLogout} onPress={() => router.push('/auth/login')}>           
+            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -68,5 +80,6 @@ const styles = StyleSheet.create({
     cardIcon: { fontSize: 30, marginBottom: 10 },
     cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFF', marginBottom: 5 },
     cardDescription: { fontSize: 14, color: '#FFF' },
+    bottonLogout: { width: '40%', alignSelf: 'flex-end', marginTop: 60, padding: 15, backgroundColor: '#667eea', borderRadius: 10, alignItems: 'center'}
 });
 

@@ -350,7 +350,6 @@ const templates = [
     ]
   }
 ];
-```
 
 #### **#2: Map-First Interface** ⭐⭐⭐⭐⭐
 **Tại sao nổi bật:**

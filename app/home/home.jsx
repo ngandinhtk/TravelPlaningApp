@@ -149,6 +149,10 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
         {/* Recommended Templates Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Gợi ý lịch trình</Text>
+          <TouchableOpacity onPress={() => router.push('template/templates')}>
+            <Text style={styles.seeAll}>Xem tất cả</Text>
+          </TouchableOpacity>
+
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.trendingScroll}>
           {templates.map((template, index) => (

@@ -24,6 +24,8 @@ export default function AdminLayout() {
       <Stack.Screen name="dashboard" />
       <Stack.Screen name="users" />
       <Stack.Screen name="trips" />
+      <Stack.Screen name="templates" />
+      <Stack.Screen name="create-templates" />
     </Stack>
   );
 }
