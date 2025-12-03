@@ -53,6 +53,7 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
   const [trips, setTrips] = useState([]);
   const [isTripsLoading, setIsTripsLoading] = useState(true);
   const [templates, setTemplates] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const { setSelectedTripId } = useTrip(); // Lấy hàm để set ID từ context
   const router = useRouter();
   
@@ -100,6 +101,10 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
     // 2. Điều hướng đến trang chi tiết mà không cần params
     router.push('/trip/detail');
   }
+
+  const filteredTrips = trips.filter(trip =>
+    trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   return (
     <View style={styles.homeContainer}>
       {/* Header */}
@@ -114,6 +119,8 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
           <TextInput
             style={styles.searchInput}
             placeholder="Search destinations..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
             placeholderTextColor="#999"
           />
         </View>
@@ -121,7 +128,7 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
 
       {/* Quick Stats */}
       <View style={styles.statsContainer}>
-        {isTripsLoading ? <StatsSkeleton /> : <StatsContent trips={trips} />}
+        {isTripsLoading ? <StatsSkeleton /> : <StatsContent trips={filteredTrips} />}
       </View>
 
       {/* Create Trip Button */}
@@ -140,11 +147,11 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
       <ScrollView style={styles.tripsSection} showsVerticalScrollIndicator={false}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Your Trips</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={()=> router.push('trip/all-trips')}>
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
-        {isTripsLoading ? <TripsSkeleton /> : <TripsContent trips={trips} onViewTrip={onViewTrip} /> }
+        {isTripsLoading ? <TripsSkeleton /> : <TripsContent trips={filteredTrips} onViewTrip={onViewTrip} /> }
 
         {/* Recommended Templates Section */}
         <View style={styles.sectionHeader}>
@@ -279,7 +286,7 @@ const TripsContent = ({ trips, onViewTrip }) => (
       <Text style={styles.emptySubtext}>Create your first trip to get started!</Text>
     </View>
   ) : (
-    trips.map((trip, index) => (
+    trips.slice(0, 3).map((trip, index) => (
       <TouchableOpacity key={index} style={styles.tripCard} onPress={() => onViewTrip(trip)}>
         <LinearGradient colors={['#ffffff', '#f8f9fa']} style={styles.tripCardGradient}>
           <View style={styles.tripCardHeader}>

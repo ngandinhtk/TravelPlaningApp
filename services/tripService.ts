@@ -72,14 +72,6 @@ export const getTrip = async (tripId: any) => {
   }
 };
 
-// Get all trip templates
-export const getTripTemplates = async () => {
-  const templatesCollection = collection(db, 'tripTemplates');
-  const q = query(templatesCollection, orderBy('name')); // Sắp xếp theo tên
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-};
-
 
 
 // get all trips form all users (for admin)

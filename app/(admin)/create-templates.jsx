@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,11 +11,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BackButton from '../../components/common/BackButton';
+import CustomModal from '../../components/common/Modal';
 import { checkTemplateNameExists, createTemplate } from '../../services/templateService';
 
 const CreateTemplateScreen = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [template, setTemplate] = useState({
     name: '',
     destination: '',
@@ -32,42 +34,47 @@ const CreateTemplateScreen = () => {
   };
 
   const handleSaveTemplate = async () => {
+    console.log(template.name);
+    
     if (!template.name || !template.destination || !template.duration) {
-      Alert.alert('Lỗi', 'Vui lòng điền các trường bắt buộc: Tên, Điểm đến, Số ngày.');
+      setError('Vui lòng điền các trường bắt buộc: Tên, Điểm đến, Số ngày.');
       return;
     }
 
     setLoading(true);
     try {
-      // Check if template name already exists
-      const nameExists = await checkTemplateNameExists(template.name.trim());
-      if (nameExists) {
-        Alert.alert('Lỗi', 'Tên template này đã tồn tại. Vui lòng chọn một tên khác.');
-        setLoading(false); // Stop loading because we are showing an alert
+
+      const nameExist = await checkTemplateNameExists(template.name.trim());
+      if(nameExist){
+        setError('permission-denied, Temolate name already exists');
         return;
       }
+
       const newTemplate = {
+        id: 'template-' + Date.now(), // ID sẽ được Firestore tạo tự động
         name: template.name,
         destination: template.destination,
         duration: parseInt(template.duration, 10),
         tripType: template.tripType,
-        budget: {
-          min: parseInt(template.budgetMin, 10) || 0,
-          max: parseInt(template.budgetMax, 10) || 0,
+        budget:{
+        budgetMin: parseInt(template.budgetMin, 10) || 0,
+        budgetMax: parseInt(template.budgetMax, 10) || 0,
         },
         highlights: template.highlights.split(',').map(h => h.trim()),
         itinerary: [], // Itinerary creation can be a future enhancement
       };
-
+      // c \ onsole.log(newTemplate);
       await createTemplate(newTemplate);
 
-      Alert.alert('Thành công', 'Đã tạo template mới thành công!', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+      setSuccessMessage('Đã tạo template mới thành công!');
 
     } catch (error) {
       console.error("Failed to create template:", error);
-      Alert.alert('Lỗi', 'Không thể tạo template. Vui lòng thử lại.');
+      if (error.message.includes('permission-denied')) {
+        setError('Tên template này đã tồn tại hoặc bạn không có quyền tạo template.');
+      } else {
+        setError('Không thể tạo template. Vui lòng thử lại.');
+      }
     } finally {
       setLoading(false);
     }
@@ -75,6 +82,31 @@ const CreateTemplateScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+
+ <CustomModal
+        visible={!!error}
+        title="Thông Báo Lỗi"
+        onClose={() => setError(null)}
+        onConfirm={() => setError(null)}
+      >
+        <Text>{error}</Text>
+      </CustomModal>
+
+      <CustomModal
+        visible={!!successMessage}
+        title="Thành Công"
+        onClose={() => {
+          setSuccessMessage(null);
+          router.back();
+        }}
+        onConfirm={() => {
+          setSuccessMessage(null);
+          router.back();
+        }}
+      >
+        <Text>{successMessage}</Text>
+      </CustomModal>
+
       <View style={styles.header}>
         <BackButton />
         <Text style={styles.headerTitle}>Tạo Template Mới</Text>

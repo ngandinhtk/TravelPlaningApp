@@ -5,81 +5,94 @@ import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native
 import BackButton from '../../components/common/BackButton';
 import CustomModal from '../../components/common/Modal';
 import { deleteTemplate, getAllTemplates } from '../../services/templateService';
-
+  
 
 const AdminTemplateScreen = () => {
   const router = useRouter();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modalState, setModalState] = useState({
-    visible: false,
-    title: '',
-    message: '',
-    onConfirm: () => {},
-  });
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState(null);
+  const [error, setError] = useState(null);
+  const [deleteError, setDeleteError] = useState(null); 
 
-  const handleConfirmAction = () => {
-    modalState.onConfirm();
-    setModalState({ ...modalState, visible: false });
-  }
+
+  const fetchTemplates = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getAllTemplates();
+      setTemplates(data);
+    } catch (error) {
+      console.error("Failed to fetch templates:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      const fetchTemplates = async () => {
-        setLoading(true);
-        try {
-          const data = await getAllTemplates();
-          setTemplates(data);
-        } catch (error) {
-          console.error("Failed to fetch templates:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
       fetchTemplates();
-    }, [])
+    }, [fetchTemplates])
   );
 
-  const handleDeleteTemplate = (template) => {
-    // console.log(template, templates);
-    
-    setModalState({
-      visible: true,
-      title: 'Xác nhận xóa template',
-      message: `Bạn có chắc muốn xóa vĩnh viễn template ${template.name}? Hành động này không thể hoàn tác.`,
-      onConfirm: async () => {
-        try {
-          await deleteTemplate(template.id);
-          setTemplates(currentTemplates => currentTemplates.filter(t => t.id !== template.id));
-        } catch (error) {
-          console.error("Error deleting template:", error);
-          // Có thể hiển thị một modal lỗi khác ở đây
-        }
-      },
-    });
-  };
 
-
+    const handleDelete = (id) => {  
+      setTemplateToDelete(id);
+      setIsDeleteModalVisible(true);
+    };
+  
+    const confirmDelete = async () => {
+      if (!templateToDelete) return;
+      try {
+        await deleteTemplate(templateToDelete);
+        // Tải lại danh sách templates từ database để đảm bảo dữ liệu luôn mới nhất
+        await fetchTemplates();
+      } catch (e) {
+        console.error('Lỗi khi xóa template:', e);
+        setError('Không thể xóa template. Vui lòng thử lại.');
+      } finally {
+        setIsDeleteModalVisible(false); // Đóng modal
+        setTemplateToDelete(null); // Reset ID
+      }
+    };
+  
+ 
   const renderTemplateItem = ({ item }) => (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{item.name}</Text>
-      <Text style={styles.cardDescription}>Điểm đến: {item.destination}</Text>
-      <Text style={styles.cardDescription}>Thời gian: {item.duration} ngày</Text>
-      <TouchableOpacity onPress={() => handleDeleteTemplate(item)} style={styles.deleteButton}>
-        <Text style={styles.deleteButtonText}>Xóa</Text>
-      </TouchableOpacity>
+      <View style={styles.cardContent}>
+        <View>
+          <Text style={styles.cardDescription}>Điểm đến: {item.destination}</Text>
+          <Text style={styles.cardDescription}>Thời gian: {item.duration} ngày</Text>
+        </View>
+        <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.deleteButton}>
+          <Text style={styles.deleteButtonText}>Xóa</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      <CustomModal
-        visible={modalState.visible}
-        title={modalState.title}
-        onClose={() => setModalState({ ...modalState, visible: false })}
-        onConfirm={handleConfirmAction}
+       <CustomModal
+        visible={!!error}
+        title="Thông Báo Lỗi"
+        onClose={() => setError(null)}
+        onConfirm={() => setError(null)}
       >
-        <Text>{modalState.message}</Text>
+        <Text>{error || deleteError}</Text>
+      </CustomModal>
+
+       <CustomModal
+        visible={isDeleteModalVisible}
+        title="Xác nhận xóa"
+        onClose={() => {
+          setIsDeleteModalVisible(false);
+          setTemplateToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+      >
+        <Text>Bạn có chắc chắn muốn xóa chuyến đi này không? Hành động này không thể hoàn tác.</Text>
       </CustomModal>
 
       <LinearGradient colors={['#93c7a5ff', '#68dfc9ff']} style={styles.header}>
@@ -107,7 +120,7 @@ const AdminTemplateScreen = () => {
           </>
         }
         refreshing={loading}
-        onRefresh={() => {}} // You can re-implement fetch logic here if needed
+        onRefresh={fetchTemplates}
       />
     </View>
   );
@@ -128,20 +141,24 @@ const styles = StyleSheet.create({
         shadowRadius: 5,
         elevation: 3,
     },
+    cardContent: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
     cardIcon: { fontSize: 30, marginBottom: 10 },
     cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 5 },
     cardTitleAction: { fontSize: 18, fontWeight: 'bold', color: '#005249', marginBottom: 5 },
     cardDescription: { fontSize: 14, color: '#555' },
     cardDescriptionAction: { fontSize: 14, color: '#005249' },
     deleteButton: {
-      backgroundColor: '#d45b4dff',
+      // backgroundColor: '#d45b4dff',
       padding: 8,
       borderRadius: 5,
       marginTop: 10,
       width: 80,
     },
     deleteButtonText: {
-      color: '#fff',
+      color: '#341cc0ff',
       textAlign: 'center',
     },
 });

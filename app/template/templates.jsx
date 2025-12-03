@@ -1,4 +1,3 @@
-import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   FlatList,
@@ -15,8 +14,6 @@ import LoadingScreen from '../../components/common/Loading';
 
 
 const TemplateListScreen = () => {
-  // const router = useRouter();
-  const params = useLocalSearchParams();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
 

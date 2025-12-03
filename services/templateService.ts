@@ -11,12 +11,9 @@ export const getAllTemplates = async () => {
   return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 };
 
-/**
- * Creates a new trip template.
- * @param {object} newTemplate - The new template data.
- * @returns {Promise<string>} A promise that resolves to the new document's ID.
- */
+
 export const createTemplate = async (newTemplate: any) => {
+  // console.log('Creating template:', newTemplate);
   const docRef = await addDoc(templatesCollection, {
     ...newTemplate,
     createdAt: new Date().toISOString(),
@@ -38,30 +35,21 @@ export const checkTemplateNameExists = async (name: string): Promise<boolean> =>
   return !querySnapshot.empty;
 };
 
-/**
- * Fetches trip templates based on user criteria.
- * @param {object} criteria - The user's preferences.
- * @param {string} criteria.destination - The desired destination.
- * @param {number} criteria.duration - The number of days for the trip.
- * @returns {Promise<Array>} A promise that resolves to an array of matching templates.
- */
-export const getTemplatesByCriteria = async (criteria: any) => {
-  console.log('Filtering with criteria:', criteria);
 
-  const q = query(
-    templatesCollection,
-    where('destination', '==', criteria.destination),
-    where('duration', '==', Number(criteria.duration))
-  );
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-};
+// export const getTemplatesByCriteria = async (criteria: any) => {
+//   console.log('Filtering with criteria:', criteria);
 
-export const deleteTemplate = async (templateId: string) => {
-  
+//   const q = query(
+//     templatesCollection,
+//     where('destination', '==', criteria.destination),
+//     where('duration', '==', Number(criteria.duration))
+//   );
+//   const querySnapshot = await getDocs(q);
+//   return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+// };
+
+export const deleteTemplate = async (templateId: string) => {  
   const templateDoc = doc(db, 'templates', templateId);
-  console.log(templateDoc);
-  
   await deleteDoc(templateDoc);
 };
 
