@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   orderBy,
   query,
   updateDoc,
@@ -12,6 +13,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '../services/firebase';
 const tripsCollection = collection(db, 'trips');
+
+const templatesCollection = collection(db, 'templates');
 
 // Get all trips for a specific user
 export const getTrips = async (userId: any) => {
@@ -72,6 +75,30 @@ export const getTrip = async (tripId: any) => {
   }
 };
 
+// Map a template document into a trip payload suitable for `addTrip` or `updateTrip`.
+export const mapTemplateToTrip = (template: any, userId: any) => {
+  const budgetMin = template?.budget?.budgetMin || 0;
+  const budgetMax = template?.budget?.budgetMax || 0;
+  const avgBudget = (budgetMin || 0) && (budgetMax || 0) ? (budgetMin + budgetMax) / 2 : (budgetMin || budgetMax || 0);
+
+  const tripPayload: any = {
+    userId,
+    destination: template.destination || template.name || '',
+    dates: template.dates || '',
+    status: template.status || 'planning',
+    travelers: template.travelers || 1,
+    budget: typeof avgBudget === 'number' ? avgBudget : parseFloat(avgBudget) || 0,
+    days: template.duration || template.days || 1,
+    interests: template.highlights || [],
+    notes: template.notes || '',
+    itinerary: template.itinerary || [],
+    tripType: template.tripType || '',
+    createdFromTemplateId: template.id || null,
+  };
+
+  return tripPayload;
+};
+
 
 
 // get all trips form all users (for admin)
@@ -90,4 +117,58 @@ export const getAllTrips = async () => {
     console.error("Error fetching all tríp:", error);
     throw error;
   }
+};
+
+// Fetch a small list of templates (used on home screen for recommendations)
+export const getTripTemplates = async (limitCount = 5) => {
+  try {
+    const q = query(templatesCollection, limit(limitCount));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error fetching templates:', error);
+    return [];
+  }
+};
+
+// Apply a template to an existing trip. This merges template fields into the trip
+// while preserving trip ownership (`userId`) and `createdAt`.
+export const applyTemplateToTrip = async (userId: any, tripId: any, templateId: any) => {
+  // Get template
+  const templateDocRef = doc(db, 'templates', templateId);
+  const templateSnap = await getDoc(templateDocRef);
+  if (!templateSnap.exists()) {
+    throw new Error('Template not found');
+  }
+
+  // Get trip
+  const tripDocRef = doc(db, 'trips', tripId);
+  const tripSnap = await getDoc(tripDocRef);
+  if (!tripSnap.exists()) {
+    throw new Error('Trip not found');
+  }
+
+  const tripData: any = tripSnap.data();
+  // Ensure the user owns the trip
+  if (tripData.userId !== userId) {
+    throw new Error('Not authorized to modify this trip');
+  }
+
+  const templateData: any = templateSnap.data();
+
+  // Map template to trip shape
+  const mapped = mapTemplateToTrip(templateData, userId);
+
+  // Choose which keys are safe to update on an existing trip
+  const allowedUpdateKeys = ['destination', 'days', 'itinerary', 'budget', 'interests', 'tripType', 'notes'];
+  const updateFields: any = {};
+  allowedUpdateKeys.forEach((k) => {
+    if (mapped[k] !== undefined) updateFields[k] = mapped[k];
+  });
+
+  updateFields.updatedAt = new Date().toISOString();
+
+  // Update trip with mapped fields
+  await updateDoc(tripDocRef, updateFields);
+  return { success: true };
 };

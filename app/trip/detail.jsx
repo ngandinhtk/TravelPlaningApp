@@ -11,13 +11,19 @@ import {
 import Loading from '../../components/common/Loading';
 import CustomModal from '../../components/common/Modal';
 import { useTrip } from '../../context/TripContext';
-import { deleteTrip } from '../../services/tripService';
+import { useUser } from '../../context/UserContext';
+import { applyTemplateToTrip, deleteTrip, getTrip, getTripTemplates } from '../../services/tripService';
 
 const TripDetailScreen = () => {
-  const { trip } = useTrip(); // Lấy toàn bộ đối tượng trip từ Context
+  const { trip, setTrip } = useTrip(); // Lấy toàn bộ đối tượng trip từ Context
   const router = useRouter();
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [deleteError, setDeleteError] = useState(null);
+  const [isTemplateModalVisible, setIsTemplateModalVisible] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [isTemplatesLoading, setIsTemplatesLoading] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
+  const [applyError, setApplyError] = useState(null);
+  const { user } = useUser();
 
   // Nếu trip chưa được tải xong (do context đang fetch), hiển thị loading
   // console.log('Trip in Detail Screen:', trip);
@@ -39,6 +45,43 @@ const TripDetailScreen = () => {
     setIsDeleteModalVisible(true);
   };
 
+  const openTemplateModal = async () => {
+    setIsTemplatesLoading(true);
+    try {
+      const fetched = await getTripTemplates();
+      setTemplates(fetched);
+      setIsTemplateModalVisible(true);
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+    } finally {
+      setIsTemplatesLoading(false);
+    }
+  };
+
+  const handleApplyTemplate = async (templateId) => {
+    // console.log(templateId);
+    
+    if (!user) return;
+
+    setIsApplying(true);
+    setApplyError(null);
+    try {
+      // console.log(user.uid, trip.id, templateId);
+      await applyTemplateToTrip(user.uid, trip.id, templateId);
+      console.log('Template applied successfully');
+      // Refresh trip in context
+      const updated = await getTrip(trip.id);
+      // console.log(updated)
+      setTrip(updated);
+      setIsTemplateModalVisible(false);
+    } catch (error) {
+      console.error('Failed to apply template:', error);
+      setApplyError('Không thể áp template. Vui lòng thử lại.');
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
   const confirmDelete = async () => {
     setIsDeleteModalVisible(false);
     try {
@@ -46,10 +89,10 @@ const TripDetailScreen = () => {
       router.push('/home/home'); // Quay về trang chủ và làm mới
     } catch (error) {
       console.error('Lỗi khi xóa chuyến đi:', error);
-      setDeleteError('Không thể xóa chuyến đi. Vui lòng thử lại.');
     }
   };
-
+  // console.log(templates);
+  
   return (
     <View style={styles.itineraryContainer}>
       <CustomModal
@@ -71,6 +114,9 @@ const TripDetailScreen = () => {
         <View style={styles.headerActions}>
           <TouchableOpacity onPress={handleEdit}>
             <Text style={styles.editButton}>✏️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={openTemplateModal}>
+            <Text style={styles.applyButton}>📥</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleDelete}>
             <Text style={styles.deleteButton}>🗑️</Text>
@@ -101,7 +147,7 @@ const TripDetailScreen = () => {
             <Text style={styles.summaryLabel}>Status</Text>
             <Text style={styles.summaryValue}>{trip.status}</Text>
           </View>
-            <View style={styles}>
+          <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Note</Text>
             <Text style={styles.summaryValue}>📝 {trip.notes}</Text>
           </View>
@@ -118,6 +164,31 @@ const TripDetailScreen = () => {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <CustomModal
+        visible={isTemplateModalVisible}
+        title="Chọn template để áp vào chuyến đi"
+        onClose={() => setIsTemplateModalVisible(false)}
+      >
+        {isTemplatesLoading ? (
+          <Text>Loading...</Text>
+        ) : (
+          <>
+            {applyError && <Text style={{ color: 'red' }}>{applyError}</Text>}
+            {templates.length === 0 ? (
+              <Text>Không có template nào</Text>
+            ) : (
+              templates.map((t) => (
+                             
+                <TouchableOpacity key={t.id} onPress={() => handleApplyTemplate(t.id)} style={{ paddingVertical: 10 }}>
+                  <Text style={{ fontSize: 16 }}>{t.name}</Text>
+                </TouchableOpacity>
+              ))
+            )}
+            {isApplying && <Text>Applying...</Text>}
+          </>
+        )}
+      </CustomModal>
     </View>
   );
 };
@@ -160,6 +231,10 @@ const styles = StyleSheet.create({
   deleteButton: {
     fontSize: 20,
     marginLeft: 16,
+  },
+  applyButton: {
+    fontSize: 18,
+    marginLeft: 8,
   },
   headerActions: {
     flexDirection: 'row',

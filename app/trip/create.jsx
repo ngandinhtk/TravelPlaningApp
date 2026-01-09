@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Platform,
   ScrollView,
@@ -11,13 +11,16 @@ import {
   View
 } from 'react-native';
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import RNPickerSelect from 'react-native-picker-select';
 import CustomModal from '../../components/common/Modal';
 import { useUser } from '../../context/UserContext';
+import { getAllCountries } from '../../services/countryService';
 import { addTrip } from '../../services/tripService';
 
-const CreateTripScreen = ({ onBack, onTripCreated }) => {
+const CreateTripScreen = ({ onBack }) => {
   const [step, setStep] = useState(1);
-  const [destination, setDestination] = useState('');
+  const [countries, setCountries] = useState([]);
+  const [selectedCountryId, setSelectedCountryId] = useState(null);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [travelers, setTravelers] = useState('2');
@@ -40,6 +43,20 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
     { emoji: '🎢', name: 'Adventure' },
   ];
   // console.log(Platform.OS === 'web' ? 'Running on Web' : 'Running on Native');
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const countryData = await getAllCountries();
+        // Format for RNPickerSelect
+        const pickerItems = countryData.map(c => ({ label: `${c.name}`, value: c.id }));
+        setCountries(pickerItems);
+      } catch (e) {
+        console.error("Failed to fetch countries:", e);
+      }
+    };
+    fetchCountries();
+  }, []);
   
   const toggleInterest = (interest) => {
     if (interests.includes(interest)) {
@@ -50,7 +67,7 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
   };
 
   const handleCreateTrip = async () => {
-    if (!destination || !startDate.toDateString() || !endDate.toDateString()) {
+    if (!selectedCountryId || !startDate.toDateString() || !endDate.toDateString()) {
       setError('Vui lòng điền đầy đủ các trường thông tin cần thiết.');
       return;
     }
@@ -75,11 +92,14 @@ const CreateTripScreen = ({ onBack, onTripCreated }) => {
       const startStr = formatDate(startDate);
       const endStr = formatDate(endDate);
       
+      const selectedCountry = countries.find(c => c.value === selectedCountryId);
+
       // setTripId(tripId + 1);
       await addTrip({
         userId: user.uid,
-        destination,
+        destination: selectedCountry ? selectedCountry.label : '',
         dates: `${startStr} - ${endStr}`,
+        countryCode: selectedCountryId,
         status: updateTripStatus({ startDate, endDate, status: 'planning' }),
         travelers: parseInt(travelers),
         budget: parseFloat(budget),
@@ -245,13 +265,16 @@ const updateTripStatus = (trip) => {
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Destination</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., Paris, Tokyo, New York"
-                value={destination}
-                onChangeText={setDestination}
-                placeholderTextColor="#999"
-              />
+              <View style={styles.input}>
+                <RNPickerSelect style={pickerSelectStyles}
+                  onValueChange={(value) => setSelectedCountryId(value)}
+                  items={countries}
+                  
+                  placeholder={{ label: 'Select a country...', value: null }}
+                  useNativeAndroidPickerStyle={false}
+                  value={selectedCountryId}
+                />
+              </View>
             </View>
 
             <View style={styles.inputRow}>
@@ -583,5 +606,23 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 });
+
+const pickerSelectStyles = StyleSheet.create({
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 2, // Adjust vertical padding to align text
+    color: 'transparent',
+
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingVertical: 2, // Adjust vertical padding to align text
+    color: 'black',
+  },
+  placeholder: {
+    color: '#999',
+  },
+});
+
 
 export default CreateTripScreen;
