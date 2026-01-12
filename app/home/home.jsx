@@ -131,17 +131,30 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
         {isTripsLoading ? <StatsSkeleton /> : <StatsContent trips={filteredTrips} />}
       </View>
 
-      {/* Create Trip Button */}
-      <TouchableOpacity onPress={onCreateTrip}>
-        <LinearGradient
-          colors={['#667eea', '#764ba2']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.createTripButton}>
-          <Text style={styles.createTripIcon}>✨</Text>
-          <Text style={styles.createTripText}>Create New Trip</Text>
-        </LinearGradient>
-      </TouchableOpacity>
+      {/* Action Buttons */}
+      <View style={styles.actionButtonsContainer}>
+        <TouchableOpacity onPress={onCreateTrip} style={styles.actionButton}>
+          <LinearGradient
+            colors={['#667eea', '#764ba2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.actionButtonGradient}>
+            <Text style={styles.createTripIcon}>✨</Text>
+            <Text style={styles.createTripText}>New Trip</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => router.push('/places/discover')} style={styles.actionButton}>
+          <LinearGradient
+            colors={['#f093fb', '#f5576c']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.actionButtonGradient}>
+            <Text style={styles.createTripIcon}>🌏</Text>
+            <Text style={styles.createTripText}>Discover</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </View>
 
       {/* Trips List */}
       <ScrollView style={styles.tripsSection} showsVerticalScrollIndicator={false}>
@@ -154,6 +167,13 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
         {isTripsLoading ? <TripsSkeleton /> : <TripsContent trips={filteredTrips} onViewTrip={onViewTrip} /> }
 
         {/* Recommended Templates Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Khám phá địa điểm mới</Text>
+          <TouchableOpacity onPress={() => router.push('places/discover')}>
+            <Text style={styles.seeAll}>Xem tất cả</Text>
+          </TouchableOpacity>
+
+        </View>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Gợi ý lịch trình</Text>
           <TouchableOpacity onPress={() => router.push('template/templates')}>
@@ -400,14 +420,22 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 4,
   },
-  createTripButton: {
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  actionButton: {
+    flex: 0.48,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  actionButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 20,
     paddingVertical: 16,
-    borderRadius: 12,
-    marginBottom: 20,
   },
   createTripIcon: {
     fontSize: 20,
