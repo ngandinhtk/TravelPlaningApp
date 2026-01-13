@@ -210,7 +210,7 @@ const DiscoverPlacesScreen = () => {
         <FlatList
           data={filteredPlaces}
           renderItem={renderPlaceItem}
-          keyExtractor={(item) => item.id || item.name}
+          keyExtractor={(item, index) => item.id || item.googleId || index.toString()}
           contentContainerStyle={styles.placesList}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>

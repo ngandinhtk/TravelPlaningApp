@@ -159,7 +159,7 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
       {/* Trips List */}
       <ScrollView style={styles.tripsSection} showsVerticalScrollIndicator={false}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Your Trips</Text>
+          <Text style={styles.sectionTitle}>Your Trips</Text> 
           <TouchableOpacity onPress={()=> router.push('trip/all-trips')}>
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
@@ -167,13 +167,7 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
         {isTripsLoading ? <TripsSkeleton /> : <TripsContent trips={filteredTrips} onViewTrip={onViewTrip} /> }
 
         {/* Recommended Templates Section */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Khám phá địa điểm mới</Text>
-          <TouchableOpacity onPress={() => router.push('places/discover')}>
-            <Text style={styles.seeAll}>Xem tất cả</Text>
-          </TouchableOpacity>
-
-        </View>
+     
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Gợi ý lịch trình</Text>
           <TouchableOpacity onPress={() => router.push('template/templates')}>
