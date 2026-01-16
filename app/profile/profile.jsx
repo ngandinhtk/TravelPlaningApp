@@ -88,6 +88,11 @@ const handleLogout = async () => {
             <Text style={styles.menuText}>Travel History</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuIcon}>💰</Text>
+            <Text style={styles.menuText}>Budget</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>❓</Text>

@@ -1,0 +1,112 @@
+{
+  "name": "Admin Payroll – Type A & B",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyX",
+              "value": 60,
+              "unit": "minutes"
+            }
+          ]
+        }
+      },
+      "id": "Schedule",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "sheetId": "GOOGLE_SHEET_ID",
+        "range": "Tất cả khách hàng!A:K"
+      },
+      "id": "ReadSheet",
+      "name": "Read Customer Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [220, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Input: rows from Google Sheet\nlet typeASeconds = 0;\nlet typeBSeconds = 0;\nlet typeACount = 0;\nlet typeBCount = 0;\n\nitems.forEach(item => {\n  const row = item.json;\n\n  // Cột E – Nhận diện đầy đủ\n  if (row.E && row.E.toString().trim() !== '') {\n    typeASeconds += 30;\n    typeACount += 1;\n  }\n\n  // Các cột hành vi xử lý sâu (F → K)\n  ['F', 'G', 'H', 'I', 'J', 'K'].forEach(col => {\n    if (row[col] && row[col].toString().trim() !== '') {\n      typeBSeconds += 30;\n      typeBCount += 1;\n    }\n  });\n});\n\nreturn [{\n  typeACount,\n  typeASeconds,\n  typeBCount,\n  typeBSeconds,\n  totalSeconds: typeASeconds + typeBSeconds,\n  totalMinutes: (typeASeconds + typeBSeconds) / 60\n}];"
+      },
+      "id": "CalculatePayroll",
+      "name": "Calculate Type A & B Payroll",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "GOOGLE_SHEET_ID",
+        "range": "KPI_Log!A:F",
+        "valueInputMode": "USER_ENTERED",
+        "data": [
+          [
+            "={{$json.typeACount}}",
+            "={{$json.typeASeconds}}",
+            "={{$json.typeBCount}}",
+            "={{$json.typeBSeconds}}",
+            "={{$json.totalMinutes}}",
+            "={{$now}}"
+          ]
+        ]
+      },
+      "id": "WriteLog",
+      "name": "Write KPI Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [760, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_CREDENTIAL_ID",
+          "name": "Google Sheets OAuth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "TELEGRAM_CHAT_ID",
+        "text": "📊 BÁO CÁO CÔNG ADMIN\n\n🔹 Loại A (nghe & nhập): {{$json.typeACount}} task = {{$json.typeASeconds}}s\n🔹 Loại B (xử lý sâu): {{$json.typeBCount}} hành vi = {{$json.typeBSeconds}}s\n\n➡️ Tổng: {{$json.totalMinutes}} phút"
+      },
+      "id": "TelegramReport",
+      "name": "Telegram Payroll Report",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1040, 300],
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "Read Customer Sheet", "type": "main", "index": 0 }]]
+    },
+    "Read Customer Sheet": {
+      "main": [[{ "node": "Calculate Type A & B Payroll", "type": "main", "index": 0 }]]
+    },
+    "Calculate Type A & B Payroll": {
+      "main": [[{ "node": "Write KPI Log", "type": "main", "index": 0 }]]
+    },
+    "Write KPI Log": {
+      "main": [[{ "node": "Telegram Payroll Report", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false
+}

@@ -138,6 +138,7 @@ const TripDetailScreen = () => {
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Budget</Text>
             <Text style={styles.summaryValue}>💰 ${trip.budget}</Text>
+            <Text onPress={() => router.push('/budget/budget')} style={{ color: 'blue', textDecorationLine: 'underline' }}>View Budget</Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Duration</Text>
