@@ -1,6 +1,6 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Animated,
   Image,
@@ -10,17 +10,15 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { useTrip } from '../../context/TripContext';
-import { useUser } from '../../context/UserContext';
-import { getTrips, getTripTemplates } from '../../services/tripService';
-import { getUserProfile } from '../../services/userService';
+} from "react-native";
+import { useTrip } from "../../context/TripContext";
+import { useUser } from "../../context/UserContext";
+import { getTrips, getTripTemplates } from "../../services/tripService";
+import { getUserProfile } from "../../services/userService";
 
 const pulseAnim = new Animated.Value(0);
 const SkeletonPlaceholder = ({ width, height, style }) => {
-
   useEffect(() => {
-   
     const sharedAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -33,30 +31,34 @@ const SkeletonPlaceholder = ({ width, height, style }) => {
           duration: 650,
           useNativeDriver: false,
         }),
-      ])
+      ]),
     );
     sharedAnimation.start();
     return () => sharedAnimation.stop();
-  }, [ pulseAnim ]);
+  }, [pulseAnim]);
 
   const backgroundColor = pulseAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['#E0E0E0', '#F0F0F0'],
+    outputRange: ["#E0E0E0", "#F0F0F0"],
   });
 
-  return <Animated.View style={[{ width, height, backgroundColor, borderRadius: 4 }, style]} />;
+  return (
+    <Animated.View
+      style={[{ width, height, backgroundColor, borderRadius: 4 }, style]}
+    />
+  );
 };
 
-const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
+const HomeScreen = ({ onCreateTrip, onViewTrip }) => {
   // Use the user and the auth loading state from the context
-  const {user, isLoading: isAuthLoading } = useUser();    
+  const { user, isLoading: isAuthLoading } = useUser();
   const [trips, setTrips] = useState([]);
   const [isTripsLoading, setIsTripsLoading] = useState(true);
   const [templates, setTemplates] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const { setSelectedTripId } = useTrip(); // Lấy hàm để set ID từ context
   const router = useRouter();
-  
+
   useFocusEffect(
     useCallback(() => {
       const fetchTrips = async () => {
@@ -64,12 +66,13 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
         if (!isAuthLoading && user) {
           setIsTripsLoading(true);
           try {
-            const userTrips =  await getTrips(user.uid);
+            const userTrips = await getTrips(user.uid);
             // console.log(userTrips);
-            getUserProfile(user.uid).then(profile => {
-            }).catch(error => {
-              console.error("Error fetching user profile:", error);
-            });          
+            getUserProfile(user.uid)
+              .then((profile) => {})
+              .catch((error) => {
+                console.error("Error fetching user profile:", error);
+              });
             setTrips(userTrips);
           } catch (error) {
             console.error("Failed to fetch trips:", error);
@@ -85,31 +88,37 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
         } catch (error) {
           console.error("Failed to fetch templates:", error);
         }
-      }
+      };
       fetchTrips();
-
-    }, [user, isAuthLoading])
+    }, [user, isAuthLoading]),
   );
-  
+
   onCreateTrip = () => {
-    router.push('/trip/create');
-  }
+    router.push("/trip/create");
+  };
 
   onViewTrip = (trip) => {
     // 1. Set ID của chuyến đi được chọn vào context
     setSelectedTripId(trip.id);
     // 2. Điều hướng đến trang chi tiết mà không cần params
-    router.push('/trip/detail');
-  }
+    router.push("/trip/detail");
+  };
 
-  const filteredTrips = trips.filter(trip =>
-    trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredTrips = trips.filter((trip) =>
+    trip.destination.toLowerCase().includes(searchQuery.toLowerCase()),
   );
   return (
     <View style={styles.homeContainer}>
       {/* Header */}
-      <LinearGradient colors={['#5d75e2ff', '#764ba2']} style={styles.homeHeader}>
-        {isAuthLoading ? <HeaderSkeleton /> : <HeaderContent user={user} router={router} />}
+      <LinearGradient
+        colors={["#5d75e2ff", "#764ba2"]}
+        style={styles.homeHeader}
+      >
+        {isAuthLoading ? (
+          <HeaderSkeleton />
+        ) : (
+          <HeaderContent user={user} router={router} />
+        )}
       </LinearGradient>
 
       {/* Search Bar */}
@@ -128,28 +137,37 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
 
       {/* Quick Stats */}
       <View style={styles.statsContainer}>
-        {isTripsLoading ? <StatsSkeleton /> : <StatsContent trips={filteredTrips} />}
+        {isTripsLoading ? (
+          <StatsSkeleton />
+        ) : (
+          <StatsContent trips={filteredTrips} />
+        )}
       </View>
 
       {/* Action Buttons */}
       <View style={styles.actionButtonsContainer}>
         <TouchableOpacity onPress={onCreateTrip} style={styles.actionButton}>
           <LinearGradient
-            colors={['#667eea', '#764ba2']}
+            colors={["#667eea", "#764ba2"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={styles.actionButtonGradient}>
+            style={styles.actionButtonGradient}
+          >
             <Text style={styles.createTripIcon}>✨</Text>
             <Text style={styles.createTripText}>New Trip</Text>
           </LinearGradient>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push('/places/discover')} style={styles.actionButton}>
+        <TouchableOpacity
+          onPress={() => router.push("/places/discover")}
+          style={styles.actionButton}
+        >
           <LinearGradient
-            colors={['#f093fb', '#f5576c']}
+            colors={["#f093fb", "#f5576c"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={styles.actionButtonGradient}>
+            style={styles.actionButtonGradient}
+          >
             <Text style={styles.createTripIcon}>🌏</Text>
             <Text style={styles.createTripText}>Discover</Text>
           </LinearGradient>
@@ -157,28 +175,46 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
       </View>
 
       {/* Trips List */}
-      <ScrollView style={styles.tripsSection} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.tripsSection}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Your Trips</Text> 
-          <TouchableOpacity onPress={()=> router.push('trip/all-trips')}>
+          <Text style={styles.sectionTitle}>Your Trips</Text>
+          <TouchableOpacity onPress={() => router.push("trip/all-trips")}>
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
-        {isTripsLoading ? <TripsSkeleton /> : <TripsContent trips={filteredTrips} onViewTrip={onViewTrip} /> }
+        {isTripsLoading ? (
+          <TripsSkeleton />
+        ) : (
+          <TripsContent trips={filteredTrips} onViewTrip={onViewTrip} />
+        )}
 
         {/* Recommended Templates Section */}
-     
+
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Gợi ý lịch trình</Text>
-          <TouchableOpacity onPress={() => router.push('template/templates')}>
+          <TouchableOpacity onPress={() => router.push("template/templates")}>
             <Text style={styles.seeAll}>Xem tất cả</Text>
           </TouchableOpacity>
-
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.trendingScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.trendingScroll}
+        >
           {templates.map((template, index) => (
-            <TouchableOpacity key={index} onPress={() => {/* TODO: Navigate to template detail */}}>
-              <LinearGradient colors={['#667eea', '#764ba2']} style={styles.trendingCard}>
+            <TouchableOpacity
+              key={index}
+              onPress={() => {
+                /* TODO: Navigate to template detail */
+              }}
+            >
+              <LinearGradient
+                colors={["#667eea", "#764ba2"]}
+                style={styles.trendingCard}
+              >
                 <Text style={styles.trendingEmoji}>🗺️</Text>
                 <Text style={styles.trendingText}>{template.name}</Text>
               </LinearGradient>
@@ -191,15 +227,22 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
           <Text style={styles.sectionTitle}>Trending Destinations</Text>
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.trendingScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.trendingScroll}
+        >
           {[
-            { emoji: '🗼', name: 'Paris', color: '#FF6B6B' },
-            { emoji: '🗽', name: 'New York', color: '#4ECDC4' },
-            { emoji: '🏯', name: 'Tokyo', color: '#95E1D3' },
-            { emoji: '🏖️', name: 'Bali', color: '#F38181' },
+            { emoji: "🗼", name: "Paris", color: "#FF6B6B" },
+            { emoji: "🗽", name: "New York", color: "#4ECDC4" },
+            { emoji: "🏯", name: "Tokyo", color: "#95E1D3" },
+            { emoji: "🏖️", name: "Bali", color: "#F38181" },
           ].map((dest, index) => (
             <TouchableOpacity key={index}>
-              <LinearGradient colors={[dest.color, dest.color + 'CC']} style={styles.trendingCard}>
+              <LinearGradient
+                colors={[dest.color, dest.color + "CC"]}
+                style={styles.trendingCard}
+              >
                 <Text style={styles.trendingEmoji}>{dest.emoji}</Text>
                 <Text style={styles.trendingText}>{dest.name}</Text>
               </LinearGradient>
@@ -210,33 +253,51 @@ const HomeScreen = ({  onCreateTrip, onViewTrip }) => {
       </ScrollView>
 
       {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        {/* ... navigation items ... */}
-      </View>
+      <View style={styles.bottomNav}>{/* ... navigation items ... */}</View>
     </View>
   );
 };
 
 const HeaderSkeleton = () => (
-  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+  <View
+    style={{
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      width: "100%",
+    }}
+  >
     <View>
-      <SkeletonPlaceholder width={180} height={28} style={{ marginBottom: 8 }} />
+      <SkeletonPlaceholder
+        width={180}
+        height={28}
+        style={{ marginBottom: 8 }}
+      />
       <SkeletonPlaceholder width={120} height={16} />
     </View>
     <SkeletonPlaceholder width={50} height={50} style={{ borderRadius: 25 }} />
   </View>
 );
 
-const HeaderContent = ({ user, router }) => (  
+const HeaderContent = ({ user, router }) => (
   <>
     <View>
-      <Text style={styles.greeting}>Hello, {user?.displayName || 'there'}! 👋</Text>
+      <Text style={styles.greeting}>
+        Hello, {user?.displayName || "there"}! 👋
+      </Text>
       <Text style={styles.subGreeting}>Where to next?</Text>
     </View>
-    <TouchableOpacity onPress={() => router.push('profile/profile')}>
-      <Image 
-        source={(user && user.photoURL && typeof user.photoURL === 'string' && user.photoURL.startsWith('http')) ? { uri: user.photoURL } : require('../../lib/character.jpg')} 
-        style={styles.avatarImage} 
+    <TouchableOpacity onPress={() => router.push("profile/profile")}>
+      <Image
+        source={
+          user &&
+          user.photoURL &&
+          typeof user.photoURL === "string" &&
+          user.photoURL.startsWith("http")
+            ? { uri: user.photoURL }
+            : require("../../lib/character.jpg")
+        }
+        style={styles.avatarImage}
       />
     </TouchableOpacity>
   </>
@@ -244,16 +305,24 @@ const HeaderContent = ({ user, router }) => (
 
 const StatsSkeleton = () => (
   <>
-    <View style={styles.statCard}><SkeletonPlaceholder width={40} height={28} /><SkeletonPlaceholder width={60} height={14} style={{ marginTop: 6 }} /></View>
-    <View style={styles.statCard}><SkeletonPlaceholder width={40} height={28} /><SkeletonPlaceholder width={60} height={14} style={{ marginTop: 6 }} /></View>
-    <View style={styles.statCard}><SkeletonPlaceholder width={40} height={28} /><SkeletonPlaceholder width={60} height={14} style={{ marginTop: 6 }} /></View>
+    <View style={styles.statCard}>
+      <SkeletonPlaceholder width={40} height={28} />
+      <SkeletonPlaceholder width={60} height={14} style={{ marginTop: 6 }} />
+    </View>
+    <View style={styles.statCard}>
+      <SkeletonPlaceholder width={40} height={28} />
+      <SkeletonPlaceholder width={60} height={14} style={{ marginTop: 6 }} />
+    </View>
+    <View style={styles.statCard}>
+      <SkeletonPlaceholder width={40} height={28} />
+      <SkeletonPlaceholder width={60} height={14} style={{ marginTop: 6 }} />
+    </View>
   </>
 );
 
 const StatsContent = ({ trips }) => {
   const totalDays = trips.reduce((sum, trip) => sum + (trip.days || 0), 0);
-  const uniqueCountries = new Set(trips.map(trip => trip.destination));
-  const totalCountries = uniqueCountries.size;
+  const totalBudget = trips.reduce((sum, trip) => sum + (trip.budget || 0), 0);
 
   return (
     <>
@@ -261,13 +330,16 @@ const StatsContent = ({ trips }) => {
         <Text style={styles.statNumber}>{trips.length}</Text>
         <Text style={styles.statLabel}>Trips</Text>
       </View>
-      <View style={styles.statCard}>
-        <Text style={styles.statNumber}>{totalCountries}</Text>
-        <Text style={styles.statLabel}>Countries</Text>
-      </View>
+
       <View style={styles.statCard}>
         <Text style={styles.statNumber}>{totalDays}</Text>
         <Text style={styles.statLabel}>Days</Text>
+      </View>
+      <View style={styles.statCard}>
+        <Text style={[styles.statNumber, { color: "#667eea", fontSize: 20 }]}>
+          ${totalBudget.toLocaleString()}
+        </Text>
+        <Text style={styles.statLabel}>Budget</Text>
       </View>
     </>
   );
@@ -275,14 +347,28 @@ const StatsContent = ({ trips }) => {
 
 const TripsSkeleton = () => (
   <>
-    {[1, 2].map(i => (
-      <View key={i} style={[styles.tripCard, { backgroundColor: '#FFFFFF', padding: 16 }]}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+    {[1, 2].map((i) => (
+      <View
+        key={i}
+        style={[styles.tripCard, { backgroundColor: "#FFFFFF", padding: 16 }]}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 12,
+          }}
+        >
           <SkeletonPlaceholder width={120} height={20} />
           <SkeletonPlaceholder width={60} height={14} />
         </View>
-        <SkeletonPlaceholder width={'70%'} height={16} style={{ marginBottom: 16 }} />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <SkeletonPlaceholder
+          width={"70%"}
+          height={16}
+          style={{ marginBottom: 16 }}
+        />
+        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <SkeletonPlaceholder width={50} height={14} />
           <SkeletonPlaceholder width={70} height={14} />
           <SkeletonPlaceholder width={60} height={14} />
@@ -292,17 +378,26 @@ const TripsSkeleton = () => (
   </>
 );
 
-const TripsContent = ({ trips, onViewTrip }) => (
+const TripsContent = ({ trips, onViewTrip }) =>
   trips.length === 0 ? (
     <View style={styles.emptyState}>
       <Text style={styles.emptyIcon}>🗺️</Text>
       <Text style={styles.emptyText}>No trips yet</Text>
-      <Text style={styles.emptySubtext}>Create your first trip to get started!</Text>
+      <Text style={styles.emptySubtext}>
+        Create your first trip to get started!
+      </Text>
     </View>
   ) : (
     trips.slice(0, 3).map((trip, index) => (
-      <TouchableOpacity key={index} style={styles.tripCard} onPress={() => onViewTrip(trip)}>
-        <LinearGradient colors={['#ffffff', '#f8f9fa']} style={styles.tripCardGradient}>
+      <TouchableOpacity
+        key={index}
+        style={styles.tripCard}
+        onPress={() => onViewTrip(trip)}
+      >
+        <LinearGradient
+          colors={["#ffffff", "#f8f9fa"]}
+          style={styles.tripCardGradient}
+        >
           <View style={styles.tripCardHeader}>
             <Text style={styles.tripDestination}>{trip.destination}</Text>
             <Text style={styles.tripStatus}>{trip.status}</Text>
@@ -316,30 +411,29 @@ const TripsContent = ({ trips, onViewTrip }) => (
         </LinearGradient>
       </TouchableOpacity>
     ))
-  )
-);
+  );
 
 // Vui lòng thêm styles từ tệp gốc của bạn vào đây
 const styles = StyleSheet.create({
   homeContainer: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
   },
   homeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingTop: 40,
   },
   greeting: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
   },
   subGreeting: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     marginTop: 4,
     opacity: 0.9,
   },
@@ -347,9 +441,9 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255,255,255,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatar: {
     fontSize: 24,
@@ -358,20 +452,20 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: "rgba(255,255,255,0.3)",
   },
   searchBarContainer: {
     paddingHorizontal: 20,
     marginTop: -10,
   },
   searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     paddingHorizontal: 15,
     paddingVertical: 12,
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -386,19 +480,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   statsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 20,
     marginTop: 20,
     marginBottom: 20,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     padding: 15,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginHorizontal: 5,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -406,29 +500,29 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#667eea',
+    fontWeight: "bold",
+    color: "#667eea",
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
     marginTop: 4,
   },
   actionButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     marginBottom: 20,
   },
   actionButton: {
     flex: 0.48,
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   actionButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 16,
   },
   createTripIcon: {
@@ -436,31 +530,31 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   createTripText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   tripsSection: {
     flex: 1,
     paddingHorizontal: 20,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
+    fontWeight: "bold",
+    color: "#1A1A1A",
   },
   seeAll: {
-    color: '#667eea',
+    color: "#667eea",
     fontSize: 14,
   },
   emptyState: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 60,
   },
   emptyIcon: {
@@ -469,49 +563,49 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
+    fontWeight: "600",
+    color: "#1A1A1A",
     marginBottom: 8,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   tripCard: {
     marginBottom: 15,
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   tripCardGradient: {
     padding: 16,
   },
   tripCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   tripDestination: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
+    fontWeight: "bold",
+    color: "#1A1A1A",
   },
   tripStatus: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
   },
   tripDates: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 12,
   },
   tripMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   tripMetaItem: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
   },
   trendingScroll: {
     marginBottom: 20,
@@ -521,7 +615,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 16,
     marginRight: 12,
-    alignItems: 'center',
+    alignItems: "center",
     minWidth: 100,
   },
   trendingEmoji: {
@@ -530,15 +624,15 @@ const styles = StyleSheet.create({
   },
   trendingText: {
     fontSize: 14,
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
   bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: "#E0E0E0",
   },
 });
 

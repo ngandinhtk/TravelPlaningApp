@@ -164,6 +164,64 @@ const TripDetailScreen = () => {
             </View>
           </View>
           <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Packing List</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text style={styles.summaryValue}>
+                🎒{" "}
+                {trip.packingList
+                  ? trip.packingList.filter((i) => i.isChecked).length
+                  : 0}
+                /{trip.packingList ? trip.packingList.length : 0} items
+              </Text>
+              <Text
+                onPress={() =>
+                  router.push({
+                    pathname: "/trip/packing",
+                    params: { initialTab: "packing" },
+                  })
+                }
+                style={{ color: "blue", textDecorationLine: "none" }}
+              >
+                Manage
+              </Text>
+            </View>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>To-Do List</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text style={styles.summaryValue}>
+                ✅{" "}
+                {trip.todoList
+                  ? trip.todoList.filter((i) => i.isChecked).length
+                  : 0}
+                /{trip.todoList ? trip.todoList.length : 0} tasks
+              </Text>
+              <Text
+                onPress={() =>
+                  router.push({
+                    pathname: "/trip/packing",
+                    params: { initialTab: "todo" },
+                  })
+                }
+                style={{ color: "blue", textDecorationLine: "none" }}
+              >
+                Manage
+              </Text>
+            </View>
+          </View>
+          <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Duration</Text>
             <Text style={styles.summaryValue}>📅 {trip.days} days</Text>
           </View>

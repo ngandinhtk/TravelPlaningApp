@@ -42,6 +42,8 @@ const BudgetScreen = () => {
   const [amountError, setAmountError] = useState("");
   const [descriptionError, setDescriptionError] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isOverBudgetModalVisible, setIsOverBudgetModalVisible] =
+    useState(false);
   const [analysisData, setAnalysisData] = useState([]);
   const [isAnalysisVisible, setIsAnalysisVisible] = useState(false);
   const expenses = useMemo(() => trip?.expenses || [], [trip]);
@@ -115,6 +117,34 @@ const BudgetScreen = () => {
     router.back();
   };
 
+  const processAddExpense = async (amount) => {
+    const newExpense = {
+      id: Date.now().toString(),
+      amount,
+      category: newExpenseCategory,
+      description: newExpenseDescription,
+      date: new Date().toISOString(),
+    };
+
+    const updatedExpenses = [newExpense, ...expenses];
+    const originalTrip = trip; // backup để revert nếu lỗi
+
+    try {
+      setTrip({ ...trip, expenses: updatedExpenses });
+      setNewExpenseAmount("");
+      setNewExpenseDescription("");
+      setNewExpenseCategory(Object.keys(CATEGORIES)[0]);
+      setIsModalVisible(false);
+      setIsOverBudgetModalVisible(false);
+      await updateTrip(trip.id, { expenses: updatedExpenses });
+      showToast("Đã thêm chi tiêu thành công!");
+    } catch (error) {
+      console.error("Failed to save expense:", error);
+      setTrip(originalTrip); // Hoàn tác nếu lưu thất bại
+      Alert.alert("Lỗi", "Không thể lưu chi tiêu. Vui lòng thử lại.");
+    }
+  };
+
   const handleAddExpense = async () => {
     // Reset errors
     setAmountError("");
@@ -135,50 +165,18 @@ const BudgetScreen = () => {
     }
     if (hasError) return;
 
-    const executeAddExpense = async () => {
-      const newExpense = {
-        id: Date.now().toString(),
-        amount,
-        category: newExpenseCategory,
-        description: newExpenseDescription,
-        date: new Date().toISOString(),
-      };
-
-      const updatedExpenses = [newExpense, ...expenses];
-      const originalTrip = trip; // backup để revert nếu lỗi
-
-      try {
-        // Cập nhật UI ngay lập tức (Optimistic update)
-        setTrip({ ...trip, expenses: updatedExpenses });
-
-        // Reset form và đóng modal ngay để trải nghiệm mượt mà
-        setNewExpenseAmount("");
-        setNewExpenseDescription("");
-        setNewExpenseCategory(Object.keys(CATEGORIES)[0]);
-        setIsModalVisible(false);
-
-        await updateTrip(trip.id, { expenses: updatedExpenses });
-        showToast("Đã thêm chi tiêu thành công!");
-      } catch (error) {
-        console.error("Failed to save expense:", error);
-        setTrip(originalTrip); // Hoàn tác nếu lưu thất bại
-        Alert.alert("Lỗi", "Không thể lưu chi tiêu. Vui lòng thử lại.");
-      }
-    };
-
     // Check for over budget
     if (remainingBudget - amount < 0) {
-      Alert.alert(
-        "Cảnh báo vượt ngân sách",
-        "Khoản chi này sẽ khiến bạn vượt quá ngân sách dự kiến. Bạn có chắc chắn muốn thêm?",
-        [
-          { text: "Hủy", style: "cancel" },
-          { text: "Vẫn thêm", onPress: executeAddExpense },
-        ],
-      );
+      setIsOverBudgetModalVisible(true);
     } else {
-      await executeAddExpense();
+      await processAddExpense(amount);
     }
+  };
+
+  const handleConfirmOverBudget = () => {
+    const cleanAmount = newExpenseAmount.replace(/[^0-9]/g, "");
+    const amount = parseInt(cleanAmount, 10);
+    processAddExpense(amount);
   };
 
   const handleAnalyzeBudget = () => {
@@ -504,6 +502,20 @@ const BudgetScreen = () => {
           <Text style={styles.modalLabel}>Chọn danh mục:</Text>
           {renderCategoryPicker()}
         </View>
+      </CustomModal>
+
+      {/* Over Budget Warning Modal */}
+      <CustomModal
+        visible={isOverBudgetModalVisible}
+        title="Cảnh báo vượt ngân sách"
+        onClose={() => setIsOverBudgetModalVisible(false)}
+        onConfirm={handleConfirmOverBudget}
+        confirmText="Vẫn thêm"
+      >
+        <Text style={{ fontSize: 16, color: "#333", padding: 10 }}>
+          Khoản chi này sẽ khiến bạn vượt quá ngân sách dự kiến. Bạn có chắc
+          chắn muốn thêm?
+        </Text>
       </CustomModal>
 
       {/* Analysis Modal */}
