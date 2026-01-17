@@ -1,18 +1,23 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
-} from 'react-native';
-import Loading from '../../components/common/Loading';
-import CustomModal from '../../components/common/Modal';
-import { useTrip } from '../../context/TripContext';
-import { useUser } from '../../context/UserContext';
-import { applyTemplateToTrip, deleteTrip, getTrip, getTripTemplates } from '../../services/tripService';
+  View,
+} from "react-native";
+import Loading from "../../components/common/Loading";
+import CustomModal from "../../components/common/Modal";
+import { useTrip } from "../../context/TripContext";
+import { useUser } from "../../context/UserContext";
+import {
+  applyTemplateToTrip,
+  deleteTrip,
+  getTrip,
+  getTripTemplates,
+} from "../../services/tripService";
 
 const TripDetailScreen = () => {
   const { trip, setTrip } = useTrip(); // Lấy toàn bộ đối tượng trip từ Context
@@ -28,9 +33,7 @@ const TripDetailScreen = () => {
   // Nếu trip chưa được tải xong (do context đang fetch), hiển thị loading
   // console.log('Trip in Detail Screen:', trip);
   if (!trip) {
-    return (
-      <Loading />
-    );
+    return <Loading />;
   }
 
   const handleBack = () => {
@@ -38,7 +41,7 @@ const TripDetailScreen = () => {
   };
 
   const handleEdit = () => {
-    router.push('/trip/edit'); // Không cần truyền params nữa
+    router.push("/trip/edit"); // Không cần truyền params nữa
   };
 
   const handleDelete = () => {
@@ -52,7 +55,7 @@ const TripDetailScreen = () => {
       setTemplates(fetched);
       setIsTemplateModalVisible(true);
     } catch (error) {
-      console.error('Failed to load templates:', error);
+      console.error("Failed to load templates:", error);
     } finally {
       setIsTemplatesLoading(false);
     }
@@ -60,7 +63,7 @@ const TripDetailScreen = () => {
 
   const handleApplyTemplate = async (templateId) => {
     // console.log(templateId);
-    
+
     if (!user) return;
 
     setIsApplying(true);
@@ -68,15 +71,15 @@ const TripDetailScreen = () => {
     try {
       // console.log(user.uid, trip.id, templateId);
       await applyTemplateToTrip(user.uid, trip.id, templateId);
-      console.log('Template applied successfully');
+      console.log("Template applied successfully");
       // Refresh trip in context
       const updated = await getTrip(trip.id);
       // console.log(updated)
       setTrip(updated);
       setIsTemplateModalVisible(false);
     } catch (error) {
-      console.error('Failed to apply template:', error);
-      setApplyError('Không thể áp template. Vui lòng thử lại.');
+      console.error("Failed to apply template:", error);
+      setApplyError("Không thể áp template. Vui lòng thử lại.");
     } finally {
       setIsApplying(false);
     }
@@ -86,13 +89,13 @@ const TripDetailScreen = () => {
     setIsDeleteModalVisible(false);
     try {
       await deleteTrip(trip.id);
-      router.push('/home/home'); // Quay về trang chủ và làm mới
+      router.push("/home/home"); // Quay về trang chủ và làm mới
     } catch (error) {
-      console.error('Lỗi khi xóa chuyến đi:', error);
+      console.error("Lỗi khi xóa chuyến đi:", error);
     }
   };
   // console.log(templates);
-  
+
   return (
     <View style={styles.itineraryContainer}>
       <CustomModal
@@ -101,12 +104,16 @@ const TripDetailScreen = () => {
         onClose={() => setIsDeleteModalVisible(false)}
         onConfirm={confirmDelete}
       >
-        <Text>Bạn có chắc chắn muốn xóa chuyến đi này không? Hành động này không thể hoàn tác.</Text>
+        <Text>
+          Bạn có chắc chắn muốn xóa chuyến đi này không? Hành động này không thể
+          hoàn tác.
+        </Text>
       </CustomModal>
 
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        style={styles.itineraryHeader}>
+        colors={["#667eea", "#764ba2"]}
+        style={styles.itineraryHeader}
+      >
         <TouchableOpacity onPress={handleBack}>
           <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
         </TouchableOpacity>
@@ -125,7 +132,10 @@ const TripDetailScreen = () => {
       </LinearGradient>
 
       {/* Trip Summary */}
-      <ScrollView style={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.summarySection}>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Dates</Text>
@@ -137,8 +147,21 @@ const TripDetailScreen = () => {
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Budget</Text>
-            <Text style={styles.summaryValue}>💰 ${trip.budget}</Text>
-            <Text onPress={() => router.push('/budget/budget')} style={{ color: 'blue', textDecorationLine: 'underline' }}>View Budget</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text style={styles.summaryValue}>💰 ${trip.budget}</Text>
+              <Text
+                onPress={() => router.push("/budget/budget")}
+                style={{ color: "blue", textDecorationLine: "none" }}
+              >
+                View{" "}
+              </Text>
+            </View>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Duration</Text>
@@ -175,13 +198,16 @@ const TripDetailScreen = () => {
           <Text>Loading...</Text>
         ) : (
           <>
-            {applyError && <Text style={{ color: 'red' }}>{applyError}</Text>}
+            {applyError && <Text style={{ color: "red" }}>{applyError}</Text>}
             {templates.length === 0 ? (
               <Text>Không có template nào</Text>
             ) : (
               templates.map((t) => (
-                             
-                <TouchableOpacity key={t.id} onPress={() => handleApplyTemplate(t.id)} style={{ paddingVertical: 10 }}>
+                <TouchableOpacity
+                  key={t.id}
+                  onPress={() => handleApplyTemplate(t.id)}
+                  style={{ paddingVertical: 10 }}
+                >
                   <Text style={{ fontSize: 16 }}>{t.name}</Text>
                 </TouchableOpacity>
               ))
@@ -198,33 +224,33 @@ const TripDetailScreen = () => {
 const styles = StyleSheet.create({
   itineraryContainer: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
   },
   center: {
-    justifyContent: 'center',
+    justifyContent: "center",
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
   },
   contentContainer: {
     flex: 1,
     padding: 20,
   },
   itineraryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingTop: 40,
   },
   backButtonTextWhite: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   itineraryTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
   },
   editButton: {
     fontSize: 20,
@@ -238,37 +264,37 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
   },
   errorText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
+    fontWeight: "600",
+    color: "#1A1A1A",
     marginBottom: 20,
   },
   errorButton: {
     paddingHorizontal: 30,
     paddingVertical: 12,
-    backgroundColor: '#667eea',
+    backgroundColor: "#667eea",
     borderRadius: 8,
   },
   errorButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
   summarySection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -277,48 +303,48 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: "#E0E0E0",
   },
   summaryLabel: {
     fontSize: 12,
-    color: '#999',
-    fontWeight: '600',
+    color: "#999",
+    fontWeight: "600",
     marginBottom: 4,
   },
   summaryValue: {
     fontSize: 16,
-    color: '#1A1A1A',
-    fontWeight: '600',
+    color: "#1A1A1A",
+    fontWeight: "600",
   },
   detailsSection: {
     marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
+    fontWeight: "bold",
+    color: "#1A1A1A",
     marginBottom: 12,
   },
   detailCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   detailLabel: {
     fontSize: 12,
-    color: '#999',
-    fontWeight: '600',
+    color: "#999",
+    fontWeight: "600",
     marginBottom: 4,
   },
   detailValue: {
     fontSize: 16,
-    color: '#1A1A1A',
-    fontWeight: '600',
+    color: "#1A1A1A",
+    fontWeight: "600",
   },
 });
 
