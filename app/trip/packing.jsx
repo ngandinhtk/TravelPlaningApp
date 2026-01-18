@@ -228,41 +228,7 @@ const PackingListScreen = () => {
         )}
       </LinearGradient>
 
-      {/* Tabs */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === "packing" && styles.tabButtonActive,
-          ]}
-          onPress={() => setActiveTab("packing")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "packing" && styles.tabTextActive,
-            ]}
-          >
-            🎒 Hành trang ({packingItems.length})
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === "todo" && styles.tabButtonActive,
-          ]}
-          onPress={() => setActiveTab("todo")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "todo" && styles.tabTextActive,
-            ]}
-          >
-            ✅ Việc cần làm ({todoItems.length})
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {activeTab === "packing" ? null : null}
 
       <View style={styles.progressContainer}>
         <Text style={styles.progressLabel}>
@@ -346,6 +312,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 20,
     paddingTop: 50,
+    marginBottom: 10,
   },
   tabContainer: {
     flexDirection: "row",
