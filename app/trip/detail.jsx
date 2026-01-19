@@ -1,5 +1,19 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import {
+  ArrowLeft,
+  Backpack,
+  Calendar,
+  CheckSquare,
+  CloudSun,
+  DollarSign,
+  Download,
+  Edit,
+  FileText,
+  Plane,
+  Trash2,
+  Users,
+} from "lucide-react-native";
 import { useState } from "react";
 import {
   ScrollView,
@@ -115,20 +129,10 @@ const TripDetailScreen = () => {
         style={styles.itineraryHeader}
       >
         <TouchableOpacity onPress={handleBack}>
-          <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
+          <ArrowLeft color="#FFF" size={24} />
         </TouchableOpacity>
         <Text style={styles.itineraryTitle}>{trip.destination}</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity onPress={handleEdit}>
-            <Text style={styles.editButton}>✏️</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={openTemplateModal}>
-            <Text style={styles.applyButton}>📥</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleDelete}>
-            <Text style={styles.deleteButton}>🗑️</Text>
-          </TouchableOpacity>
-        </View>
+        <View style={{ width: 24 }} />
       </LinearGradient>
 
       {/* Trip Summary */}
@@ -143,7 +147,12 @@ const TripDetailScreen = () => {
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Travelers</Text>
-            <Text style={styles.summaryValue}>👥 {trip.travelers}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Users size={16} color="#1A1A1A" />
+              <Text style={[styles.summaryValue, { marginLeft: 6 }]}>
+                {trip.travelers}
+              </Text>
+            </View>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Budget</Text>
@@ -154,7 +163,12 @@ const TripDetailScreen = () => {
                 alignItems: "center",
               }}
             >
-              <Text style={styles.summaryValue}>💰 ${trip.budget}</Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <DollarSign size={16} color="#1A1A1A" />
+                <Text style={[styles.summaryValue, { marginLeft: 6 }]}>
+                  ${trip.budget}
+                </Text>
+              </View>
               <Text
                 onPress={() => router.push("/budget/budget")}
                 style={{ color: "blue", textDecorationLine: "none" }}
@@ -172,13 +186,15 @@ const TripDetailScreen = () => {
                 alignItems: "center",
               }}
             >
-              <Text style={styles.summaryValue}>
-                🎒{" "}
-                {trip.packingList
-                  ? trip.packingList.filter((i) => i.isChecked).length
-                  : 0}
-                /{trip.packingList ? trip.packingList.length : 0} items
-              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Backpack size={16} color="#1A1A1A" />
+                <Text style={[styles.summaryValue, { marginLeft: 6 }]}>
+                  {trip.packingList
+                    ? trip.packingList.filter((i) => i.isChecked).length
+                    : 0}
+                  /{trip.packingList ? trip.packingList.length : 0} items
+                </Text>
+              </View>
               <Text
                 onPress={() =>
                   router.push({
@@ -201,13 +217,15 @@ const TripDetailScreen = () => {
                 alignItems: "center",
               }}
             >
-              <Text style={styles.summaryValue}>
-                ✅{" "}
-                {trip.todoList
-                  ? trip.todoList.filter((i) => i.isChecked).length
-                  : 0}
-                /{trip.todoList ? trip.todoList.length : 0} tasks
-              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <CheckSquare size={16} color="#1A1A1A" />
+                <Text style={[styles.summaryValue, { marginLeft: 6 }]}>
+                  {trip.todoList
+                    ? trip.todoList.filter((i) => i.isChecked).length
+                    : 0}
+                  /{trip.todoList ? trip.todoList.length : 0} tasks
+                </Text>
+              </View>
               <Text
                 onPress={() =>
                   router.push({
@@ -223,7 +241,12 @@ const TripDetailScreen = () => {
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Duration</Text>
-            <Text style={styles.summaryValue}>📅 {trip.days} days</Text>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Calendar size={16} color="#1A1A1A" />
+              <Text style={[styles.summaryValue, { marginLeft: 6 }]}>
+                {trip.days} days
+              </Text>
+            </View>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Status</Text>
@@ -231,7 +254,12 @@ const TripDetailScreen = () => {
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Note</Text>
-            <Text style={styles.summaryValue}>📝 {trip.notes}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <FileText size={16} color="#1A1A1A" />
+              <Text style={[styles.summaryValue, { marginLeft: 6 }]}>
+                {trip.notes}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -241,6 +269,68 @@ const TripDetailScreen = () => {
           <View style={styles.detailCard}>
             <Text style={styles.detailLabel}>Destination</Text>
             <Text style={styles.detailValue}>{trip.destination}</Text>
+          </View>
+        </View>
+
+        {/* Quick Actions Grid */}
+        <View style={styles.actionsSection}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionsGrid}>
+            <TouchableOpacity onPress={handleEdit} style={styles.actionItem}>
+              <View style={[styles.iconCircle, { backgroundColor: "#eef0ff" }]}>
+                <Edit color="#667eea" size={24} />
+              </View>
+              <Text style={styles.actionLabel}>Edit</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.push("/trip/transport")}
+              style={styles.actionItem}
+            >
+              <View style={[styles.iconCircle, { backgroundColor: "#eef0ff" }]}>
+                <Plane color="#667eea" size={24} />
+              </View>
+              <Text style={styles.actionLabel}>Transport</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.push("/trip/weather")}
+              style={styles.actionItem}
+            >
+              <View style={[styles.iconCircle, { backgroundColor: "#eef0ff" }]}>
+                <CloudSun color="#667eea" size={24} />
+              </View>
+              <Text style={styles.actionLabel}>Weather</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.push("/trip/invite")}
+              style={styles.actionItem}
+            >
+              <View style={[styles.iconCircle, { backgroundColor: "#eef0ff" }]}>
+                <Users color="#667eea" size={24} />
+              </View>
+              <Text style={styles.actionLabel}>Invite</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={openTemplateModal}
+              style={styles.actionItem}
+            >
+              <View style={[styles.iconCircle, { backgroundColor: "#eef0ff" }]}>
+                <Download color="#667eea" size={24} />
+              </View>
+              <Text style={styles.actionLabel}>Template</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleDelete} style={styles.actionItem}>
+              <View style={[styles.iconCircle, { backgroundColor: "#ffe5e5" }]}>
+                <Trash2 color="#ff4757" size={24} />
+              </View>
+              <Text style={[styles.actionLabel, { color: "#ff4757" }]}>
+                Delete
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -309,21 +399,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#FFFFFF",
-  },
-  editButton: {
-    fontSize: 20,
-  },
-  deleteButton: {
-    fontSize: 20,
-    marginLeft: 16,
-  },
-  applyButton: {
-    fontSize: 18,
-    marginLeft: 8,
-  },
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
   },
   errorContainer: {
     flex: 1,
@@ -403,6 +478,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#1A1A1A",
     fontWeight: "600",
+  },
+  actionsSection: {
+    marginBottom: 20,
+  },
+  actionsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  actionItem: {
+    width: "30%",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  iconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  actionLabel: {
+    fontSize: 12,
+    color: "#333",
+    fontWeight: "500",
   },
 });
 

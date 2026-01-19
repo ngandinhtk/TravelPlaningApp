@@ -1,6 +1,6 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import { useState } from "react";
 import {
   Platform,
   ScrollView,
@@ -8,21 +8,21 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
-} from 'react-native';
+  View,
+} from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import CustomModal from '../../components/common/Modal';
-import { useUser } from '../../context/UserContext';
-import { addTrip } from '../../services/tripService';
+import CustomModal from "../../components/common/Modal";
+import { useUser } from "../../context/UserContext";
+import { addTrip } from "../../services/tripService";
 
 const CreateTripScreen = ({ onBack }) => {
   const [step, setStep] = useState(1);
-  const [destination, setDestination] = useState('');
+  const [destination, setDestination] = useState("");
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [travelers, setTravelers] = useState('2');
-  const [budget, setBudget] = useState('');
-  const [notes, setNotes] = useState('');
+  const [travelers, setTravelers] = useState("2");
+  const [budget, setBudget] = useState("");
+  const [notes, setNotes] = useState("");
   const [tripId, setTripId] = useState(Date.now());
   const [interests, setInterests] = useState([]);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
@@ -32,16 +32,15 @@ const CreateTripScreen = ({ onBack }) => {
   const { user } = useUser();
   const [error, setError] = useState(null);
   const interestOptions = [
-    { emoji: '🏖️', name: 'Beach' },
-    { emoji: '🏔️', name: 'Mountain' },
-    { emoji: '🍜', name: 'Food' },
-    { emoji: '🎨', name: 'Culture' },
-    { emoji: '🏛️', name: 'History' },
-    { emoji: '🎢', name: 'Adventure' },
+    { emoji: "🏖️", name: "Beach" },
+    { emoji: "🏔️", name: "Mountain" },
+    { emoji: "🍜", name: "Food" },
+    { emoji: "🎨", name: "Culture" },
+    { emoji: "🏛️", name: "History" },
+    { emoji: "🎢", name: "Adventure" },
   ];
   // console.log(Platform.OS === 'web' ? 'Running on Web' : 'Running on Native');
 
-  
   const toggleInterest = (interest) => {
     if (interests.includes(interest)) {
       setInterests(interests.filter((i) => i !== interest));
@@ -52,12 +51,12 @@ const CreateTripScreen = ({ onBack }) => {
 
   const handleCreateTrip = async () => {
     console.log(destination, startDate, endDate);
-    
+
     if (!destination || !startDate.toDateString() || !endDate.toDateString()) {
-      setError('Vui lòng điền đầy đủ các trường thông tin cần thiết.');
+      setError("Vui lòng điền đầy đủ các trường thông tin cần thiết.");
       return;
     }
-    
+
     try {
       const start = startDate;
       const end = endDate;
@@ -65,83 +64,85 @@ const CreateTripScreen = ({ onBack }) => {
       const calculatedDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
 
       const formatDate = (date) => {
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
         const year = date.getFullYear();
         return `${day}/${month}/${year}`;
       };
 
       if (end < start) {
-        setError('Ngày kết thúc không thể trước ngày bắt đầu.');
+        setError("Ngày kết thúc không thể trước ngày bắt đầu.");
         return;
       }
       const startStr = formatDate(startDate);
       const endStr = formatDate(endDate);
-      
+
       // setTripId(tripId + 1);
       await addTrip({
         userId: user?.uid,
+        userName: user?.displayName,
+        userEmail: user?.email,
         destination: destination,
         dates: `${startStr} - ${endStr}`,
         countryCode: null,
-        status: updateTripStatus({ startDate, endDate, status: 'planning' }),
+        status: updateTripStatus({ startDate, endDate, status: "planning" }),
         travelers: parseInt(travelers) || 0,
         budget: parseFloat(budget) || 0,
         days: calculatedDays,
         interests,
         tripId,
-        notes: notes || '',
+        notes: notes || "",
       });
-      setSuccessMessage('Trip c reated successfully!');
+      setSuccessMessage("Trip c reated successfully!");
       setTimeout(() => {
         setSuccessMessage(null);
-        router.push('/');
+        router.push("/");
       }, 2000);
-      
     } catch (error) {
-      console.error('Error creating trip:', error);
-      setError('Failed to create trip.');
+      console.error("Error creating trip:", error);
+      setError("Failed to create trip.");
     }
-
   };
 
   const handleBack = () => {
-    router.push('/');
+    router.push("/");
+  };
+
+  if (Platform.OS === "web") {
+    require("react-datepicker/dist/react-datepicker.css");
   }
 
-if (Platform.OS === 'web') {
-  require('react-datepicker/dist/react-datepicker.css');
-}
+  let DatePicker; // Will be assigned conditionally
+  if (Platform.OS === "web") {
+    const ReactDatePicker = require("react-datepicker").default;
+    DatePicker = ReactDatePicker;
+  }
 
-let DatePicker; // Will be assigned conditionally
-if (Platform.OS === 'web') {
-  const ReactDatePicker = require('react-datepicker').default;
-  DatePicker = ReactDatePicker;
-}
+  const updateTripStatus = (trip) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
+    // Handle both Date objects and Firebase Timestamps
+    const endDate = trip.endDate.toDate
+      ? trip.endDate.toDate()
+      : new Date(trip.endDate);
+    endDate.setHours(23, 59, 59, 999);
 
-const updateTripStatus = (trip) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    const startDate = trip.startDate.toDate
+      ? trip.startDate.toDate()
+      : new Date(trip.startDate);
 
-  // Handle both Date objects and Firebase Timestamps
-  const endDate = trip.endDate.toDate ? trip.endDate.toDate() : new Date(trip.endDate);
-  endDate.setHours(23, 59, 59, 999);
-
-  const startDate = trip.startDate.toDate ? trip.startDate.toDate() : new Date(trip.startDate);
-
-  if (trip.status === "archived") return "archived";
-  if (endDate < today) return "past";
-  if (startDate > today) return "upcoming";
-  return "upcoming";
-};
-
+    if (trip.status === "archived") return "archived";
+    if (endDate < today) return "past";
+    if (startDate > today) return "upcoming";
+    return "upcoming";
+  };
 
   const handleStartDateChange = (date) => {
     setStartDate(date);
     setShowStartDatePicker(false);
   };
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+
   const handleEndDateChange = (date) => {
     setEndDate(date);
     setShowEndDatePicker(false);
@@ -174,15 +175,21 @@ const updateTripStatus = (trip) => {
   const renderWebPicker = () => (
     <>
       {showStartDatePicker && (
-        <div style={styles.webPickerOverlay} onClick={() => setShowStartDatePicker(false)}>
-          <div style={styles.webPickerContainer} onClick={(e) => e.stopPropagation()}>
+        <div
+          style={styles.webPickerOverlay}
+          onClick={() => setShowStartDatePicker(false)}
+        >
+          <div
+            style={styles.webPickerContainer}
+            onClick={(e) => e.stopPropagation()}
+          >
             <DatePicker
               selected={startDate}
               onChange={handleStartDateChange}
               dateFormat="MM/dd/yyyy"
               inline
             />
-            <button 
+            <button
               onClick={() => setShowStartDatePicker(false)}
               style={styles.webPickerButton}
             >
@@ -192,8 +199,14 @@ const updateTripStatus = (trip) => {
         </div>
       )}
       {showEndDatePicker && (
-        <div style={styles.webPickerOverlay} onClick={() => setShowEndDatePicker(false)}>
-          <div style={styles.webPickerContainer} onClick={(e) => e.stopPropagation()}>
+        <div
+          style={styles.webPickerOverlay}
+          onClick={() => setShowEndDatePicker(false)}
+        >
+          <div
+            style={styles.webPickerContainer}
+            onClick={(e) => e.stopPropagation()}
+          >
             <DatePicker
               selected={endDate}
               onChange={handleEndDateChange}
@@ -201,7 +214,7 @@ const updateTripStatus = (trip) => {
               minDate={startDate}
               inline
             />
-            <button 
+            <button
               onClick={() => setShowEndDatePicker(false)}
               style={styles.webPickerButton}
             >
@@ -213,7 +226,6 @@ const updateTripStatus = (trip) => {
     </>
   );
 
-  
   return (
     <View style={styles.createTripContainer}>
       <CustomModal
@@ -234,7 +246,10 @@ const updateTripStatus = (trip) => {
         <Text>{successMessage}</Text>
       </CustomModal>
 
-      <LinearGradient colors={['#667eea', '#764ba2']} style={styles.createTripHeader}>
+      <LinearGradient
+        colors={["#667eea", "#764ba2"]}
+        style={styles.createTripHeader}
+      >
         <TouchableOpacity onPress={handleBack}>
           <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
         </TouchableOpacity>
@@ -242,7 +257,10 @@ const updateTripStatus = (trip) => {
         <Text style={styles.stepIndicator}>Step {step}/3</Text>
       </LinearGradient>
 
-      <ScrollView style={styles.createTripForm} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.createTripForm}
+        showsVerticalScrollIndicator={false}
+      >
         {step === 1 && (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Where are you going? ✈️</Text>
@@ -261,27 +279,45 @@ const updateTripStatus = (trip) => {
             <View style={styles.inputRow}>
               <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
                 <Text style={styles.inputLabel}>Start Date</Text>
-                <TouchableOpacity onPress={() => setShowStartDatePicker(true)} style={styles.input}>
-                  <Text style={styles.dateText}>{startDate.toLocaleDateString()}</Text>
+                <TouchableOpacity
+                  onPress={() => setShowStartDatePicker(true)}
+                  style={styles.input}
+                >
+                  <Text style={styles.dateText}>
+                    {startDate.toLocaleDateString()}
+                  </Text>
                 </TouchableOpacity>
-                {Platform.OS === 'web' ? renderWebPicker() : renderNativePicker()}
+                {Platform.OS === "web"
+                  ? renderWebPicker()
+                  : renderNativePicker()}
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={styles.inputLabel}>End Date</Text>
-                <TouchableOpacity onPress={() => setShowEndDatePicker(true)} style={styles.input}>
-                  <Text style={styles.dateText}>{endDate.toLocaleDateString()}</Text>
+                <TouchableOpacity
+                  onPress={() => setShowEndDatePicker(true)}
+                  style={styles.input}
+                >
+                  <Text style={styles.dateText}>
+                    {endDate.toLocaleDateString()}
+                  </Text>
                 </TouchableOpacity>
-                {Platform.OS === 'web' ? renderWebPicker() : renderNativePicker()}
+                {Platform.OS === "web"
+                  ? renderWebPicker()
+                  : renderNativePicker()}
               </View>
             </View>
 
-            <TouchableOpacity style={styles.nextButton} onPress={() => setStep(2)}>
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={() => setStep(2)}
+            >
               <LinearGradient
-                colors={['#667eea', '#764ba2']}
+                colors={["#667eea", "#764ba2"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.gradientButton}>
+                style={styles.gradientButton}
+              >
                 <Text style={styles.nextButtonText}>Next</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -291,7 +327,9 @@ const updateTripStatus = (trip) => {
         {step === 2 && (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Ai đi cùng & ngân sách? 💰</Text>
-            <Text style={styles.stepSubtitle}>Hãy cho chúng tôi biết bạn đồng hành với ai.</Text>
+            <Text style={styles.stepSubtitle}>
+              Hãy cho chúng tôi biết bạn đồng hành với ai.
+            </Text>
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Số lượng người đi</Text>
@@ -317,7 +355,7 @@ const updateTripStatus = (trip) => {
               />
             </View>
 
-             <View style={styles.inputGroup}>
+            <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Ghi chú</Text>
               <TextInput
                 style={styles.input}
@@ -330,26 +368,30 @@ const updateTripStatus = (trip) => {
             </View>
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.nextButton, { flex: 1, marginLeft: 10 }]}
-                onPress={() => setStep(1)}>
+                onPress={() => setStep(1)}
+              >
                 <LinearGradient
-                  colors={['#667eea', '#764ba2']}
+                  colors={["#667eea", "#764ba2"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.gradientButton}>
+                  style={styles.gradientButton}
+                >
                   <Text style={styles.secondaryButtonText}>Quay lại</Text>
-                  </LinearGradient>
+                </LinearGradient>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.nextButton, { flex: 1, marginLeft: 10 }]}
-                onPress={() => setStep(3)}>
+                onPress={() => setStep(3)}
+              >
                 <LinearGradient
-                  colors={['#667eea', '#764ba2']}
+                  colors={["#667eea", "#764ba2"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.gradientButton}>
+                  style={styles.gradientButton}
+                >
                   <Text style={styles.nextButtonText}>Tiếp theo</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -360,7 +402,9 @@ const updateTripStatus = (trip) => {
         {step === 3 && (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Your Interests 💫</Text>
-            <Text style={styles.stepSubtitle}>Select what you love (optional)</Text>
+            <Text style={styles.stepSubtitle}>
+              Select what you love (optional)
+            </Text>
 
             <View style={styles.interestsGrid}>
               {interestOptions.map((interest, index) => (
@@ -368,15 +412,19 @@ const updateTripStatus = (trip) => {
                   key={index}
                   style={[
                     styles.interestChip,
-                    interests.includes(interest.name) && styles.interestChipActive,
-                    ]}
-                  onPress={() => toggleInterest(interest.name)}>
+                    interests.includes(interest.name) &&
+                      styles.interestChipActive,
+                  ]}
+                  onPress={() => toggleInterest(interest.name)}
+                >
                   <Text style={styles.interestChipEmoji}>{interest.emoji}</Text>
                   <Text
                     style={[
                       styles.interestChipText,
-                      interests.includes(interest.name) && styles.interestChipTextActive,
-                    ]}>
+                      interests.includes(interest.name) &&
+                        styles.interestChipTextActive,
+                    ]}
+                  >
                     {interest.name}
                   </Text>
                 </TouchableOpacity>
@@ -384,26 +432,30 @@ const updateTripStatus = (trip) => {
             </View>
 
             <View style={styles.buttonRow}>
-               <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.nextButton, { flex: 1, marginLeft: 10 }]}
-                onPress={() => setStep(1)}>
+                onPress={() => setStep(1)}
+              >
                 <LinearGradient
-                  colors={['#667eea', '#764ba2']}
+                  colors={["#667eea", "#764ba2"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.gradientButton}>
+                  style={styles.gradientButton}
+                >
                   <Text style={styles.secondaryButtonText}>Quay lại</Text>
-                  </LinearGradient>
+                </LinearGradient>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.nextButton, { flex: 1, marginLeft: 10 }]}
-                onPress={handleCreateTrip}>
+                onPress={handleCreateTrip}
+              >
                 <LinearGradient
-                  colors={['#667eea', '#764ba2']}
+                  colors={["#667eea", "#764ba2"]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
-                  style={styles.gradientButton}>
+                  style={styles.gradientButton}
+                >
                   <Text style={styles.nextButtonText}>Create Trip ✨</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -412,7 +464,7 @@ const updateTripStatus = (trip) => {
         )}
         <View style={{ height: 50 }} />
       </ScrollView>
-    </View >
+    </View>
   );
 };
 
@@ -420,28 +472,28 @@ const updateTripStatus = (trip) => {
 const styles = StyleSheet.create({
   createTripContainer: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
   },
   createTripHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingTop: 50,
   },
   backButtonTextWhite: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   createTripTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
   },
   stepIndicator: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     opacity: 0.9,
   },
   createTripForm: {
@@ -454,13 +506,13 @@ const styles = StyleSheet.create({
   },
   stepTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
+    fontWeight: "bold",
+    color: "#1A1A1A",
     marginBottom: 10,
   },
   stepSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 30,
   },
   inputGroup: {
@@ -468,78 +520,78 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1A1A1A',
+    fontWeight: "600",
+    color: "#1A1A1A",
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    backgroundColor: '#F8F9FA',
-    justifyContent: 'center',
+    backgroundColor: "#F8F9FA",
+    justifyContent: "center",
   },
   dateText: {
     fontSize: 16,
   },
   inputRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   nextButton: {
     marginTop: 20,
     borderRadius: 12,
-    overflow: 'hidden',
-    zIndex: -1
+    overflow: "hidden",
+    zIndex: -1,
   },
   gradientButton: {
     paddingVertical: 16,
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 12,
   },
   nextButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   secondaryButton: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: "#E0E0E0",
     paddingVertical: 16,
     paddingHorizontal: 30,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   secondaryButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   buttonRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 20,
   },
   interestsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginTop: 20,
   },
   interestChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 20,
     marginRight: 10,
     marginBottom: 10,
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
   },
   interestChipActive: {
-    backgroundColor: '#667eea',
-    borderColor: '#667eea',
+    backgroundColor: "#667eea",
+    borderColor: "#667eea",
   },
   interestChipEmoji: {
     fontSize: 18,
@@ -547,46 +599,45 @@ const styles = StyleSheet.create({
   },
   interestChipText: {
     fontSize: 14,
-    color: '#1A1A1A',
-    fontWeight: '600',
+    color: "#1A1A1A",
+    fontWeight: "600",
   },
   interestChipTextActive: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   // Web Date Picker Styles
   webPickerOverlay: {
-    position: 'fixed',
+    position: "fixed",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 1000,
   },
   webPickerContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 20,
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
     maxWidth: 400,
   },
   webPickerButton: {
     marginTop: 15,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#667eea',
-    color: '#FFFFFF',
-    border: 'none',
+    backgroundColor: "#667eea",
+    color: "#FFFFFF",
+    border: "none",
     borderRadius: 8,
     fontSize: 16,
-    fontWeight: '600',
-    cursor: 'pointer',
-    width: '100%',
+    fontWeight: "600",
+    cursor: "pointer",
+    width: "100%",
   },
 });
-
 
 export default CreateTripScreen;

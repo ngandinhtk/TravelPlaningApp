@@ -1,37 +1,36 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { ScrollView } from 'react-native-gesture-handler';
-import { useUser } from '../../context/UserContext';
-import { auth } from '../../services/firebase';
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import { ScrollView } from "react-native-gesture-handler";
+import { useUser } from "../../context/UserContext";
+import { auth } from "../../services/firebase";
 
 const ProfileScreen = () => {
   // Get user directly from our context
   const { user } = useUser();
   // console.log(user, 'user');
-  
+
   if (!user) {
-    router.replace('/auth/login');
+    router.replace("/auth/login");
     return (
       <View style={styles.profileContainer}>
         <Text>Loading profile...</Text>
       </View>
     );
-
   }
-const handleLogout = async () => {
-  await auth.signOut();
-  router.replace('/auth/login');
-};
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.replace("/auth/login");
+  };
 
   return (
     <View style={styles.profileContainer}>
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
+        colors={["#667eea", "#764ba2"]}
         style={styles.profileHeader}
       >
-        <TouchableOpacity onPress={()=> router.back(-1)}>
+        <TouchableOpacity onPress={() => router.back(-1)}>
           <Text style={styles.backButtonTextWhite}>← Back</Text>
         </TouchableOpacity>
         <Text style={styles.profileTitle}>Profile</Text>
@@ -40,15 +39,21 @@ const handleLogout = async () => {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.profileCard}>
-          <Image 
-            source={(user?.photoURL && typeof user.photoURL === 'string' && user.photoURL.startsWith('http')) ? { uri: user.photoURL } : require('../../lib/character.jpg')} 
-            style={styles.profileAvatarImage} 
+          <Image
+            source={
+              user?.photoURL &&
+              typeof user.photoURL === "string" &&
+              user.photoURL.startsWith("http")
+                ? { uri: user.photoURL }
+                : require("../../lib/character.jpg")
+            }
+            style={styles.profileAvatarImage}
           />
           <Text style={styles.profileName}>{user.displayName}</Text>
           <Text style={styles.profileEmail}>{user.email}</Text>
           <TouchableOpacity>
             <LinearGradient
-              colors={['#FFD93D', '#FFA500']}
+              colors={["#FFD93D", "#FFA500"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.upgradeBadge}
@@ -88,11 +93,11 @@ const handleLogout = async () => {
             <Text style={styles.menuText}>Travel History</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuItem}>
+          {/* <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>💰</Text>
             <Text style={styles.menuText}>Budget</Text>
             <Text style={styles.menuArrow}>›</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>❓</Text>
@@ -106,9 +111,9 @@ const handleLogout = async () => {
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.menuItem, styles.logoutItem]} 
-            onPress={handleLogout }
+          <TouchableOpacity
+            style={[styles.menuItem, styles.logoutItem]}
+            onPress={handleLogout}
           >
             <Text style={styles.menuIcon}>🚪</Text>
             <Text style={[styles.menuText, styles.logoutText]}>Logout</Text>
@@ -122,37 +127,36 @@ const handleLogout = async () => {
   );
 };
 
-
 const styles = StyleSheet.create({
   profileContainer: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
   },
   profileHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingTop: 40,
   },
   backButtonTextWhite: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   profileTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
   },
   profileCard: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     margin: 20,
     padding: 20,
     borderRadius: 16,
     marginTop: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -163,16 +167,16 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     marginBottom: 15,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: "#E0E0E0",
   },
   profileName: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1A1A1A',
+    fontWeight: "bold",
+    color: "#1A1A1A",
   },
   profileEmail: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 20,
   },
   upgradeBadge: {
@@ -181,21 +185,21 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   upgradeBadgeText: {
-    color: '#4D4D4D',
-    fontWeight: '600',
+    color: "#4D4D4D",
+    fontWeight: "600",
   },
   profileMenu: {
     marginHorizontal: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: "#F0F0F0",
   },
   menuIcon: {
     fontSize: 20,
@@ -204,23 +208,23 @@ const styles = StyleSheet.create({
   menuText: {
     flex: 1,
     fontSize: 16,
-    color: '#1A1A1A',
+    color: "#1A1A1A",
   },
   menuArrow: {
     fontSize: 18,
-    color: '#C0C0C0',
+    color: "#C0C0C0",
   },
   logoutItem: {
     borderBottomWidth: 0,
   },
   logoutText: {
-    color: '#FF6B6B',
-    fontWeight: '600',
+    color: "#FF6B6B",
+    fontWeight: "600",
   },
   versionText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 20,
-    color: '#999',
+    color: "#999",
     fontSize: 12,
   },
 });
