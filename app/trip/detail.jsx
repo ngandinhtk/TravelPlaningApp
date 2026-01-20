@@ -2,7 +2,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
   ArrowLeft,
-  Backpack,
   Calendar,
   CheckSquare,
   CloudSun,
@@ -146,14 +145,10 @@ const TripDetailScreen = () => {
             <Text style={styles.summaryValue}>{trip.dates}</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Travelers</Text>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Users size={16} color="#1A1A1A" />
-              <Text style={[styles.summaryValue, { marginLeft: 6 }]}>
-                {trip.travelers}
-              </Text>
-            </View>
+            <Text style={styles.summaryLabel}>Destination</Text>
+            <Text style={styles.summaryValue}>{trip.destination}</Text>
           </View>
+
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Budget</Text>
             <View
@@ -177,7 +172,8 @@ const TripDetailScreen = () => {
               </Text>
             </View>
           </View>
-          <View style={styles.summaryItem}>
+
+          {/* <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Packing List</Text>
             <View
               style={{
@@ -207,9 +203,9 @@ const TripDetailScreen = () => {
                 Manage
               </Text>
             </View>
-          </View>
+          </View> */}
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>To-Do List</Text>
+            <Text style={styles.summaryLabel}>Packing List</Text>
             <View
               style={{
                 flexDirection: "row",
@@ -229,13 +225,21 @@ const TripDetailScreen = () => {
               <Text
                 onPress={() =>
                   router.push({
-                    pathname: "/trip/packing",
-                    params: { initialTab: "todo" },
+                    pathname: "/trip/checklist",
                   })
                 }
                 style={{ color: "blue", textDecorationLine: "none" }}
               >
                 Manage
+              </Text>
+            </View>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Travelers</Text>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Users size={16} color="#1A1A1A" />
+              <Text style={[styles.summaryValue, { marginLeft: 6 }]}>
+                {trip.travelers}
               </Text>
             </View>
           </View>
@@ -252,7 +256,7 @@ const TripDetailScreen = () => {
             <Text style={styles.summaryLabel}>Status</Text>
             <Text style={styles.summaryValue}>{trip.status}</Text>
           </View>
-          <View style={styles.summaryItem}>
+          <View style={[styles.summaryItem, { borderBottomWidth: 0 }]}>
             <Text style={styles.summaryLabel}>Note</Text>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <FileText size={16} color="#1A1A1A" />
@@ -264,13 +268,13 @@ const TripDetailScreen = () => {
         </View>
 
         {/* Trip Details */}
-        <View style={styles.detailsSection}>
+        {/* <View style={styles.detailsSection}>
           <Text style={styles.sectionTitle}>Trip Details</Text>
           <View style={styles.detailCard}>
             <Text style={styles.detailLabel}>Destination</Text>
             <Text style={styles.detailValue}>{trip.destination}</Text>
           </View>
-        </View>
+        </View> */}
 
         {/* Quick Actions Grid */}
         <View style={styles.actionsSection}>

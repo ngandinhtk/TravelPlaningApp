@@ -1,6 +1,6 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -8,48 +8,56 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
-} from 'react-native';
+  View,
+} from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
-import CustomModal from '../../components/common/Modal';
-import { useTrip } from '../../context/TripContext';
-import { updateTrip } from '../../services/tripService';
+import CustomModal from "../../components/common/Modal";
+import { useTrip } from "../../context/TripContext";
+import { updateTrip } from "../../services/tripService";
 
 const EditTripScreen = () => {
   const router = useRouter();
   const { trip, setTrip: setTripInContext } = useTrip(); // Lấy trip từ Context
 
-  const [destination, setDestination] = useState('');
+  const [destinations, setDestinations] = useState([""]);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
-  const [travelers, setTravelers] = useState('');
-  const [budget, setBudget] = useState('');
-  const [notes, setNotes] = useState('');
+  const [travelers, setTravelers] = useState("");
+  const [budget, setBudget] = useState("");
+  const [notes, setNotes] = useState("");
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-  
+
   useEffect(() => {
     // Khi trip từ context có sẵn, cập nhật state của form
     if (trip) {
-      setDestination(trip.destination);
+      if (trip.destination) {
+        // Tách chuỗi thành mảng nếu có dấu " - ", hoặc giữ nguyên nếu không
+        const destArray = trip.destination.split(" - ");
+        setDestinations(destArray.length > 0 ? destArray : [""]);
+      }
       setTravelers(String(trip.travelers));
       setBudget(String(trip.budget));
       setNotes(trip.notes);
 
       // Chuyển đổi chuỗi ngày tháng 'DD/MM/YYYY' thành đối tượng Date
-      const dateParts = trip.dates.split(' - ');
-      const [startDay, startMonth, startYear] = dateParts[0].split('/');
-      const [endDay, endMonth, endYear] = dateParts[1].split('/');
+      const dateParts = trip.dates.split(" - ");
+      const [startDay, startMonth, startYear] = dateParts[0].split("/");
+      const [endDay, endMonth, endYear] = dateParts[1].split("/");
       setStartDate(new Date(`${startYear}-${startMonth}-${startDay}`));
       setEndDate(new Date(`${endYear}-${endMonth}-${endDay}`));
     }
   }, [trip]);
 
   const handleUpdateTrip = async () => {
-    if (!destination || !startDate || !endDate) {
-      setError('Vui lòng điền đầy đủ các trường thông tin cần thiết.');
+    const destinationString = destinations
+      .filter((d) => d.trim() !== "")
+      .join(" - ");
+
+    if (!destinationString || !startDate || !endDate) {
+      setError("Vui lòng điền đầy đủ các trường thông tin cần thiết.");
       return;
     }
 
@@ -57,20 +65,19 @@ const EditTripScreen = () => {
     const calculatedDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
 
     const formatDate = (date) => {
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
       const year = date.getFullYear();
       return `${day}/${month}/${year}`;
     };
 
     const updatedData = {
-      destination,
+      destination: destinationString,
       dates: `${formatDate(startDate)} - ${formatDate(endDate)}`,
       travelers: parseInt(travelers, 10),
       budget: parseFloat(budget),
       days: calculatedDays,
       notes: notes,
-      
     };
 
     try {
@@ -78,14 +85,14 @@ const EditTripScreen = () => {
       // Cập nhật lại trip trong context để các màn hình khác có dữ liệu mới
       setTripInContext({ ...trip, ...updatedData });
 
-      setSuccessMessage('Cập nhật chuyến đi thành công!');
+      setSuccessMessage("Cập nhật chuyến đi thành công!");
       setTimeout(() => {
         setSuccessMessage(null);
-        router.push('/home/home'); // Quay về trang chủ và làm mới
+        router.push("/home/home"); // Quay về trang chủ và làm mới
       }, 2000);
     } catch (e) {
-      console.error('Lỗi khi cập nhật chuyến đi:', e);
-      setError('Không thể cập nhật chuyến đi. Vui lòng thử lại.');
+      console.error("Lỗi khi cập nhật chuyến đi:", e);
+      setError("Không thể cập nhật chuyến đi. Vui lòng thử lại.");
     }
   };
 
@@ -97,6 +104,21 @@ const EditTripScreen = () => {
   const handleEndDateChange = (date) => {
     setShowEndDatePicker(false);
     setEndDate(date);
+  };
+
+  const handleAddDestination = () => {
+    setDestinations([...destinations, ""]);
+  };
+
+  const handleRemoveDestination = (index) => {
+    const newDestinations = destinations.filter((_, i) => i !== index);
+    setDestinations(newDestinations);
+  };
+
+  const handleChangeDestination = (text, index) => {
+    const newDestinations = [...destinations];
+    newDestinations[index] = text;
+    setDestinations(newDestinations);
   };
 
   // Nếu trip chưa được tải xong, hiển thị loading
@@ -111,14 +133,27 @@ const EditTripScreen = () => {
 
   return (
     <View style={styles.createTripContainer}>
-      <CustomModal visible={!!error} title="Lỗi" onClose={() => setError(null)} onConfirm={() => setError(null)}>
+      <CustomModal
+        visible={!!error}
+        title="Lỗi"
+        onClose={() => setError(null)}
+        onConfirm={() => setError(null)}
+      >
         <Text>{error}</Text>
       </CustomModal>
-      <CustomModal visible={!!successMessage} title="Thành công" onClose={() => setSuccessMessage(null)} onConfirm={() => setSuccessMessage(null)}>
+      <CustomModal
+        visible={!!successMessage}
+        title="Thành công"
+        onClose={() => setSuccessMessage(null)}
+        onConfirm={() => setSuccessMessage(null)}
+      >
         <Text>{successMessage}</Text>
       </CustomModal>
 
-      <LinearGradient colors={['#667eea', '#764ba2']} style={styles.createTripHeader}>
+      <LinearGradient
+        colors={["#667eea", "#764ba2"]}
+        style={styles.createTripHeader}
+      >
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
         </TouchableOpacity>
@@ -126,50 +161,119 @@ const EditTripScreen = () => {
         <View style={{ width: 80 }} />
       </LinearGradient>
 
-      <ScrollView style={styles.createTripForm} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.createTripForm}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Điểm đến</Text>
-          <TextInput style={styles.input} value={destination} onChangeText={setDestination} />
+          {destinations.map((dest, index) => (
+            <View key={index} style={styles.destinationRow}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                value={dest}
+                onChangeText={(text) => handleChangeDestination(text, index)}
+                placeholder={`Điểm đến ${index + 1}`}
+              />
+              {destinations.length > 1 && (
+                <TouchableOpacity
+                  onPress={() => handleRemoveDestination(index)}
+                  style={styles.removeButton}
+                >
+                  <Text style={styles.removeButtonText}>×</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ))}
+          <TouchableOpacity
+            onPress={handleAddDestination}
+            style={styles.addButton}
+          >
+            <Text style={styles.addButtonText}>+ Thêm điểm đến</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.inputRow}>
           <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
             <Text style={styles.inputLabel}>Ngày bắt đầu</Text>
-            <TouchableOpacity onPress={() => setShowStartDatePicker(true)} style={styles.input}>
-              <Text style={styles.dateText}>{startDate.toLocaleDateString()}</Text>
+            <TouchableOpacity
+              onPress={() => setShowStartDatePicker(true)}
+              style={styles.input}
+            >
+              <Text style={styles.dateText}>
+                {startDate.toLocaleDateString()}
+              </Text>
             </TouchableOpacity>
           </View>
           <View style={[styles.inputGroup, { flex: 1 }]}>
             <Text style={styles.inputLabel}>Ngày kết thúc</Text>
-            <TouchableOpacity onPress={() => setShowEndDatePicker(true)} style={styles.input}>
-              <Text style={styles.dateText}>{endDate.toLocaleDateString()}</Text>
+            <TouchableOpacity
+              onPress={() => setShowEndDatePicker(true)}
+              style={styles.input}
+            >
+              <Text style={styles.dateText}>
+                {endDate.toLocaleDateString()}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Số lượng người đi</Text>
-          <TextInput style={styles.input} value={travelers} onChangeText={setTravelers} keyboardType="numeric" />
+          <TextInput
+            style={styles.input}
+            value={travelers}
+            onChangeText={setTravelers}
+            keyboardType="numeric"
+          />
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Ngân sách ($)</Text>
-          <TextInput style={styles.input} value={budget} onChangeText={setBudget} keyboardType="numeric" />
+          <TextInput
+            style={styles.input}
+            value={budget}
+            onChangeText={setBudget}
+            keyboardType="numeric"
+          />
         </View>
 
-           <View style={styles.inputGroup}>
+        <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Ghi chú</Text>
-          <TextInput style={styles.input} value={notes} onChangeText={setNotes} multiline />
+          <TextInput
+            style={styles.input}
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+          />
         </View>
 
         <TouchableOpacity style={styles.nextButton} onPress={handleUpdateTrip}>
-          <LinearGradient colors={['#667eea', '#764ba2']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.gradientButton}>
+          <LinearGradient
+            colors={["#667eea", "#764ba2"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.gradientButton}
+          >
             <Text style={styles.nextButtonText}>Lưu thay đổi</Text>
           </LinearGradient>
         </TouchableOpacity>
 
-        <DateTimePickerModal isVisible={showStartDatePicker} mode="date" onConfirm={handleStartDateChange} onCancel={() => setShowStartDatePicker(false)} date={startDate} />
-        <DateTimePickerModal isVisible={showEndDatePicker} mode="date" onConfirm={handleEndDateChange} onCancel={() => setShowEndDatePicker(false)} date={endDate} minimumDate={startDate} />
+        <DateTimePickerModal
+          isVisible={showStartDatePicker}
+          mode="date"
+          onConfirm={handleStartDateChange}
+          onCancel={() => setShowStartDatePicker(false)}
+          date={startDate}
+        />
+        <DateTimePickerModal
+          isVisible={showEndDatePicker}
+          mode="date"
+          onConfirm={handleEndDateChange}
+          onCancel={() => setShowEndDatePicker(false)}
+          date={endDate}
+          minimumDate={startDate}
+        />
       </ScrollView>
     </View>
   );
@@ -178,29 +282,29 @@ const EditTripScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   createTripContainer: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
   },
   createTripHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingTop: 50,
   },
   backButtonTextWhite: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   createTripTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
   },
   createTripForm: {
     flex: 1,
@@ -212,40 +316,66 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1A1A1A',
+    fontWeight: "600",
+    color: "#1A1A1A",
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    backgroundColor: '#F8F9FA',
-    justifyContent: 'center',
+    backgroundColor: "#F8F9FA",
+    justifyContent: "center",
   },
   dateText: {
     fontSize: 16,
   },
   inputRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   nextButton: {
     marginTop: 20,
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   gradientButton: {
     paddingVertical: 16,
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 12,
   },
   nextButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
+  },
+  destinationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  removeButton: {
+    marginLeft: 10,
+    padding: 5,
+  },
+  removeButtonText: {
+    fontSize: 24,
+    color: "#e74c3c",
+    fontWeight: "bold",
+  },
+  addButton: {
+    alignSelf: "flex-start",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#eef0ff",
+    borderRadius: 8,
+  },
+  addButtonText: {
+    fontSize: 14,
+    color: "#667eea",
+    fontWeight: "600",
   },
 });
 

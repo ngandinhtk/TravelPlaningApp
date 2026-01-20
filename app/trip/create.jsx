@@ -17,7 +17,7 @@ import { addTrip } from "../../services/tripService";
 
 const CreateTripScreen = ({ onBack }) => {
   const [step, setStep] = useState(1);
-  const [destination, setDestination] = useState("");
+  const [destinations, setDestinations] = useState([""]);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [travelers, setTravelers] = useState("2");
@@ -49,8 +49,24 @@ const CreateTripScreen = ({ onBack }) => {
     }
   };
 
+  const handleAddDestination = () => {
+    setDestinations([...destinations, ""]);
+  };
+
+  const handleRemoveDestination = (index) => {
+    const newDestinations = destinations.filter((_, i) => i !== index);
+    setDestinations(newDestinations);
+  };
+
+  const handleChangeDestination = (text, index) => {
+    const newDestinations = [...destinations];
+    newDestinations[index] = text;
+    setDestinations(newDestinations);
+  };
+
   const handleCreateTrip = async () => {
-    console.log(destination, startDate, endDate);
+    const destination = destinations.filter((d) => d.trim()).join(" - ");
+    // console.log(destination, startDate, endDate);
 
     if (!destination || !startDate.toDateString() || !endDate.toDateString()) {
       setError("Vui lòng điền đầy đủ các trường thông tin cần thiết.");
@@ -93,7 +109,7 @@ const CreateTripScreen = ({ onBack }) => {
         tripId,
         notes: notes || "",
       });
-      setSuccessMessage("Trip c reated successfully!");
+      setSuccessMessage("Trip created successfully!");
       setTimeout(() => {
         setSuccessMessage(null);
         router.push("/");
@@ -132,10 +148,10 @@ const CreateTripScreen = ({ onBack }) => {
       ? trip.startDate.toDate()
       : new Date(trip.startDate);
 
-    if (trip.status === "archived") return "archived";
-    if (endDate < today) return "past";
-    if (startDate > today) return "upcoming";
-    return "upcoming";
+    if (trip.status === "archived") return "Archived";
+    if (endDate < today) return "Past";
+    if (startDate > today) return "Upcoming";
+    return "Upcoming";
   };
 
   const handleStartDateChange = (date) => {
@@ -266,14 +282,51 @@ const CreateTripScreen = ({ onBack }) => {
             <Text style={styles.stepTitle}>Where are you going? ✈️</Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Destination</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., Paris, Vietnam"
-                value={destination}
-                onChangeText={setDestination}
-                placeholderTextColor="#999"
-              />
+              <Text style={styles.inputLabel}>Destination(s)</Text>
+              {destinations.map((dest, index) => (
+                <View
+                  key={index}
+                  style={{ flexDirection: "row", marginBottom: 10 }}
+                >
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    placeholder={`Destination ${index + 1}`}
+                    value={dest}
+                    onChangeText={(text) =>
+                      handleChangeDestination(text, index)
+                    }
+                    placeholderTextColor="#999"
+                  />
+                  {destinations.length > 1 && (
+                    <TouchableOpacity
+                      onPress={() => handleRemoveDestination(index)}
+                      style={{
+                        justifyContent: "center",
+                        marginLeft: 10,
+                        padding: 5,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: "red",
+                          fontSize: 20,
+                          fontWeight: "bold",
+                        }}
+                      >
+                        ×
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))}
+              <TouchableOpacity
+                onPress={handleAddDestination}
+                style={{ marginTop: 5 }}
+              >
+                <Text style={{ color: "#667eea", fontWeight: "600" }}>
+                  + Add another destination
+                </Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.inputRow}>

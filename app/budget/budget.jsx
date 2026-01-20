@@ -351,19 +351,6 @@ const BudgetScreen = () => {
           </Text>
         </View>
 
-        {/* Analysis Button */}
-        <TouchableOpacity
-          style={styles.analysisButton}
-          onPress={handleAnalyzeBudget}
-        >
-          <Text style={styles.analysisButtonText}>
-            📊{" "}
-            {showRecommended
-              ? "Xem chi tiết phân tích"
-              : "Phân tích & Gợi ý chi tiêu"}
-          </Text>
-        </TouchableOpacity>
-
         {/* Pie Chart & Category Breakdown */}
         <View style={styles.chartSection}>
           <View
@@ -425,6 +412,19 @@ const BudgetScreen = () => {
             })}
           </View>
         </View>
+
+        {/* Analysis Button */}
+        <TouchableOpacity
+          style={styles.analysisButton}
+          onPress={handleAnalyzeBudget}
+        >
+          <Text style={styles.analysisButtonText}>
+            📊{" "}
+            {showRecommended
+              ? "Xem chi tiết phân tích"
+              : "Phân tích & Gợi ý chi tiêu"}
+          </Text>
+        </TouchableOpacity>
 
         {/* Recent Expenses */}
         <View style={styles.expensesSection}>
