@@ -11,11 +11,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import CustomModal from "../../components/common/Modal";
 import { useTrip } from "../../context/TripContext";
 import { useUser } from "../../context/UserContext";
 import { getTrips, getTripTemplates } from "../../services/tripService";
 import { getUserProfile } from "../../services/userService";
-
 const pulseAnim = new Animated.Value(0);
 const SkeletonPlaceholder = ({ width, height, style }) => {
   useEffect(() => {
@@ -56,6 +56,11 @@ const HomeScreen = ({ onCreateTrip, onViewTrip }) => {
   const [isTripsLoading, setIsTripsLoading] = useState(true);
   const [templates, setTemplates] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTemplateDetail, setSelectedTemplateDetail] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
+  // const [selectedTemplateForExisting, setSelectedTemplateForExisting] = useState(null);
+
   const { setSelectedTripId } = useTrip(); // Lấy hàm để set ID từ context
   const router = useRouter();
 
@@ -92,6 +97,10 @@ const HomeScreen = ({ onCreateTrip, onViewTrip }) => {
       fetchTrips();
     }, [user, isAuthLoading]),
   );
+  const handleSelectTemplate = (template) => {
+    setSelectedTemplateDetail(template);
+    setShowDetailModal(true);
+  };
 
   onCreateTrip = () => {
     router.push("/trip/create");
@@ -109,6 +118,95 @@ const HomeScreen = ({ onCreateTrip, onViewTrip }) => {
   );
   return (
     <View style={styles.homeContainer}>
+      <CustomModal
+        visible={showDetailModal}
+        title={selectedTemplateDetail?.name || "Chi tiết lịch trình"}
+        onClose={() => setShowDetailModal(false)}
+      >
+        {selectedTemplateDetail && (
+          <ScrollView
+            style={{ maxHeight: 500 }}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Điểm đến:</Text>
+              <Text style={styles.detailValue}>
+                {selectedTemplateDetail.destination}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Thời gian:</Text>
+              <Text style={styles.detailValue}>
+                {selectedTemplateDetail.duration} ngày
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Loại hình:</Text>
+              <Text style={styles.detailValue}>
+                {selectedTemplateDetail.tripType}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Ngân sách:</Text>
+              <Text style={styles.detailValue}>
+                {(
+                  (selectedTemplateDetail.budget?.budgetMin ||
+                    selectedTemplateDetail.budgetMin ||
+                    0) / 1000000
+                ).toFixed(1)}{" "}
+                -{" "}
+                {(
+                  (selectedTemplateDetail.budget?.budgetMax ||
+                    selectedTemplateDetail.budgetMax ||
+                    0) / 1000000
+                ).toFixed(1)}{" "}
+                triệu VND
+              </Text>
+            </View>
+
+            <Text
+              style={[styles.detailLabel, { marginTop: 10, marginBottom: 8 }]}
+            >
+              Điểm nổi bật:
+            </Text>
+            <View style={styles.highlightContainer}>
+              {selectedTemplateDetail.highlights.map((h, index) => (
+                <View key={index} style={styles.highlightBadge}>
+                  <Text style={styles.highlightText}>{h}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.modalActionContainer}>
+              {/* <TouchableOpacity
+                style={[styles.modalButton, styles.importButton]}
+                onPress={() => {
+                  setShowDetailModal(false);
+                  handleImportTemplate(selectedTemplateDetail);
+                }}
+              >
+                <Text style={styles.modalButtonText}>Nhập mới</Text>
+              </TouchableOpacity> */}
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  styles.applyButton,
+                  selectedTemplateDetail?.isSample && {
+                    backgroundColor: "#b0b0b0",
+                  },
+                ]}
+                disabled={selectedTemplateDetail?.isSample}
+                onPress={() => {
+                  setShowDetailModal(false);
+                  // handleOpenTripPicker(selectedTemplateDetail);
+                }}
+              >
+                <Text style={styles.modalButtonText}>Áp dụng...</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        )}
+      </CustomModal>
       {/* Header */}
       <LinearGradient
         colors={["#5d75e2ff", "#764ba2"]}
@@ -207,16 +305,36 @@ const HomeScreen = ({ onCreateTrip, onViewTrip }) => {
           {templates.map((template, index) => (
             <TouchableOpacity
               key={index}
-              onPress={() => {
-                /* TODO: Navigate to template detail */
-              }}
+              onPress={() => handleSelectTemplate(template)}
+              // onPress={() => router.push("template/templates")}
+              style={{ marginRight: 15 }}
             >
               <LinearGradient
                 colors={["#667eea", "#764ba2"]}
-                style={styles.trendingCard}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.templateCard}
               >
-                <Text style={styles.trendingEmoji}>🗺️</Text>
-                <Text style={styles.trendingText}>{template.name}</Text>
+                <View style={styles.templateHeader}>
+                  <View style={styles.templateIconBg}>
+                    <Text style={styles.templateIcon}>✨</Text>
+                  </View>
+                  {template.duration && (
+                    <View style={styles.durationBadge}>
+                      <Text style={styles.durationText}>
+                        {template.duration} ngày
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <View>
+                  <Text style={styles.templateName} numberOfLines={2}>
+                    {template.name}
+                  </Text>
+                  <Text style={styles.templateDesc} numberOfLines={1}>
+                    {template.destination || "Khám phá ngay"}
+                  </Text>
+                </View>
               </LinearGradient>
             </TouchableOpacity>
           ))}
@@ -626,6 +744,106 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#FFFFFF",
     fontWeight: "600",
+  },
+  templateCard: {
+    width: 200,
+    height: 140,
+    borderRadius: 16,
+    padding: 16,
+    justifyContent: "space-between",
+  },
+  templateHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  templateIconBg: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  templateIcon: {
+    fontSize: 18,
+  },
+  durationBadge: {
+    backgroundColor: "rgba(0,0,0,0.2)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  durationText: {
+    color: "#FFF",
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  templateName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#FFF",
+    marginBottom: 4,
+  },
+  templateDesc: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.8)",
+  },
+  detailRow: {
+    flexDirection: "row",
+    marginBottom: 12,
+    alignItems: "center",
+  },
+  detailLabel: {
+    fontWeight: "bold",
+    color: "#333",
+    width: 100,
+    fontSize: 16,
+  },
+  detailValue: {
+    color: "#555",
+    flex: 1,
+    fontSize: 16,
+  },
+  highlightContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 20,
+  },
+  highlightBadge: {
+    backgroundColor: "#eef0ff",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  highlightText: {
+    color: "#667eea",
+    fontSize: 14,
+  },
+  modalActionContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginHorizontal: 5,
+  },
+  importButton: {
+    backgroundColor: "#667eea",
+  },
+  applyButton: {
+    backgroundColor: "#27ae60",
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
   },
   bottomNav: {
     flexDirection: "row",

@@ -12,18 +12,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import BackButton from "../../components/common/BackButton";
+import LoadingScreen from "../../components/common/Loading";
 import CustomModal from "../../components/common/Modal";
 import { useTrip } from "../../context/TripContext";
 import { useUser } from "../../context/UserContext";
-import { getAllTemplates } from "../../services/templateService";
+import { seedTemplates } from "../../services/seedService";
 import {
-  addTrip,
   applyTemplateToTrip,
+  getTemplatesByRegion,
   getTrips,
-  mapTemplateToTrip,
+  getTripTemplates,
 } from "../../services/tripService";
 
-import LoadingScreen from "../../components/common/Loading";
 import { showToast } from "../../lib/showToast";
 
 const SAMPLE_TEMPLATES = [
@@ -128,6 +128,8 @@ const SAMPLE_TEMPLATES = [
 const TemplateListScreen = () => {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [regions, setRegions] = useState([]);
+  const [selectedRegion, setSelectedRegion] = useState("All");
   const [importingStatus, setImportingStatus] = useState({});
   const [showTripPicker, setShowTripPicker] = useState(false);
   const [userTrips, setUserTrips] = useState([]);
@@ -145,9 +147,15 @@ const TemplateListScreen = () => {
     const fetchTemplates = async () => {
       setLoading(true);
       try {
-        const fetchedTemplates = await getAllTemplates();
+        // Fetch unfiltered templates initially
+        const fetchedTemplates = await getTripTemplates(50);
         if (fetchedTemplates.length > 0) {
           setTemplates(fetchedTemplates);
+          // derive available regions from templates
+          const regionSet = new Set(
+            fetchedTemplates.map((t) => t.region).filter((r) => !!r),
+          );
+          setRegions(["All", ...Array.from(regionSet)]);
         } else {
           // If no templates in DB, show sample ones. Mark them as samples.
           const samplesWithId = SAMPLE_TEMPLATES.map((t, i) => ({
@@ -156,6 +164,7 @@ const TemplateListScreen = () => {
             isSample: true,
           }));
           setTemplates(samplesWithId);
+          setRegions(["All"]);
         }
       } catch (error) {
         console.error("Failed to fetch templates:", error);
@@ -168,71 +177,48 @@ const TemplateListScreen = () => {
     fetchTemplates();
   }, []);
 
-  // const handleSeedData = async () => {
-  //   if (!addTemplate) {
-  //     Alert.alert("Lỗi", "Hàm addTemplate chưa được định nghĩa trong service.");
-  //     return;
-  //   }
-  //   setLoading(true);
-  //   try {
-  //     for (const template of SAMPLE_TEMPLATES) {
-  //       await addTemplate(template);
-  //     }
-  //     Alert.alert("Thành công", "Đã thêm dữ liệu mẫu!");
-  //     const fetched = await getAllTemplates();
-  //     setTemplates(fetched);
-  //   } catch (error) {
-  //     console.error("Seed error:", error);
-  //     Alert.alert("Lỗi", "Không thể thêm dữ liệu mẫu.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const handleSeedData = async () => {
+    setLoading(true);
+    try {
+      const result = await seedTemplates();
+      Alert.alert(result.success ? "Thành công" : "Thông báo", result.message);
+      if (result.success) {
+        const fetched = await getTripTemplates(50);
+        setTemplates(fetched);
+        const regionSet = new Set(
+          fetched.map((t) => t.region).filter((r) => !!r),
+        );
+        setRegions(["All", ...Array.from(regionSet)]);
+      }
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể thêm dữ liệu mẫu.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectRegion = async (region) => {
+    setSelectedRegion(region);
+    setLoading(true);
+    try {
+      if (!region || region === "All") {
+        const fetched = await getTripTemplates(50);
+        setTemplates(fetched);
+      } else {
+        const fetched = await getTemplatesByRegion(region, 50);
+        setTemplates(fetched);
+      }
+    } catch (err) {
+      console.error("Failed to fetch templates by region:", err);
+      Alert.alert("Lỗi", "Không thể tải mẫu theo vùng.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSelectTemplate = (template) => {
     setSelectedTemplateDetail(template);
     setShowDetailModal(true);
-  };
-
-  const handleImportTemplate = async (template) => {
-    if (!user) {
-      Alert.alert(
-        "Yêu cầu đăng nhập",
-        "Bạn cần đăng nhập để lưu lịch trình này.",
-      );
-      return;
-    }
-
-    Alert.alert(
-      "Nhập lịch trình mới",
-      `Bạn có muốn nhập mẫu "${template.name}" thành một chuyến đi mới không?`,
-      [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Nhập",
-          onPress: async () => {
-            setImportingStatus((prev) => ({ ...prev, [template.id]: "new" }));
-            try {
-              // Use mapping helper to build trip payload from template
-              const tripData = mapTemplateToTrip(template, user.uid);
-
-              const newTripId = await addTrip(tripData);
-              setSelectedTripId(newTripId);
-              showToast("Đã nhập mẫu thành chuyến đi mới thành công!");
-              router.push("/trip/detail");
-            } catch (error) {
-              console.error("Failed to import template:", error);
-              Alert.alert(
-                "Lỗi",
-                "Không thể import template. Vui lòng thử lại sau.",
-              );
-            } finally {
-              setImportingStatus((prev) => ({ ...prev, [template.id]: null }));
-            }
-          },
-        },
-      ],
-    );
   };
 
   const handleOpenTripPicker = async (template) => {
@@ -298,7 +284,7 @@ const TemplateListScreen = () => {
         </Text>
         <View style={styles.cardFooter}>
           <Text style={styles.cardTripType}>{item.tripType}</Text>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={() => handleImportTemplate(item)}
             style={{ marginLeft: 12 }}
             disabled={!!importingStatus[item.id]}
@@ -306,7 +292,7 @@ const TemplateListScreen = () => {
             <Text style={{ color: "#667eea", fontWeight: "600" }}>
               {importingStatus[item.id] === "new" ? "Đang nhập..." : "Nhập mới"}
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity
             onPress={() => handleOpenTripPicker(item)}
             style={{ marginLeft: 12 }}
@@ -343,22 +329,52 @@ const TemplateListScreen = () => {
       <View style={styles.header}>
         <BackButton />
         <Text style={styles.headerTitle}>Lịch Trình Gợi Ý</Text>
-        {/* <TouchableOpacity onPress={handleSeedData}>
+        <TouchableOpacity onPress={handleSeedData}>
           <Text style={{ fontSize: 20 }}>➕</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>
 
       {loading ? (
         // <ActivityIndicator size="large" color="#667eea" style={{ marginTop: 50 }} />
         <LoadingScreen />
       ) : (
-        <FlatList
-          data={templates}
-          renderItem={renderTemplateItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          ListEmptyComponent={ListEmptyComponent}
-        />
+        <>
+          {/* Region filter */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ paddingHorizontal: 12, paddingVertical: 8 }}
+          >
+            {regions.map((r) => (
+              <TouchableOpacity
+                key={r}
+                onPress={() => handleSelectRegion(r)}
+                style={[
+                  styles.regionButton,
+                  selectedRegion === r && styles.regionButtonSelected,
+                ]}
+              >
+                <Text
+                  style={
+                    selectedRegion === r
+                      ? styles.regionTextSelected
+                      : styles.regionText
+                  }
+                >
+                  {r}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <FlatList
+            data={templates}
+            renderItem={renderTemplateItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContainer}
+            ListEmptyComponent={ListEmptyComponent}
+          />
+        </>
       )}
 
       <CustomModal
@@ -421,7 +437,7 @@ const TemplateListScreen = () => {
             </View>
 
             <View style={styles.modalActionContainer}>
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={[styles.modalButton, styles.importButton]}
                 onPress={() => {
                   setShowDetailModal(false);
@@ -429,7 +445,7 @@ const TemplateListScreen = () => {
                 }}
               >
                 <Text style={styles.modalButtonText}>Nhập mới</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               <TouchableOpacity
                 style={[
                   styles.modalButton,
@@ -635,6 +651,27 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  regionButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
+  regionButtonSelected: {
+    backgroundColor: "#667eea",
+    borderColor: "#667eea",
+  },
+  regionText: {
+    color: "#333",
+    fontWeight: "600",
+  },
+  regionTextSelected: {
+    color: "#fff",
+    fontWeight: "700",
   },
 });
 

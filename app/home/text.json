@@ -1,0 +1,61 @@
+{
+  "Name": "AutoPostFacebook",
+  "CreationDate": "2026-01-19",
+  "Commands": [
+    {
+      "Command": "open",
+      "Target": "https://www.facebook.com/",
+      "Value": ""
+    },
+    {
+      "Command": "csvRead",
+      "Target": "posts.csv",
+      "Value": ""
+    },
+    {
+      "Command": "while_v2",
+      "Target": "${!csvReadStatus} == \"OK\"",
+      "Value": ""
+    },
+    {
+      "Command": "click",
+      "Target": "//div[@aria-label='Tạo bài viết']",
+      "Value": ""
+    },
+    {
+      "Command": "type",
+      "Target": "//div[@role='textbox']",
+      "Value": "${!col1}"
+    },
+    {
+      "Command": "XClick",
+      "Target": "upload_icon.png",
+      "Value": ""
+    },
+    {
+      "Command": "XType",
+      "Target": "${!col2}",
+      "Value": "${KEY_ENTER}"
+    },
+    {
+      "Command": "pause",
+      "Target": "5000 + ${!random} * 10000",
+      "Value": ""
+    },
+    {
+      "Command": "click",
+      "Target": "//button[@data-testid='react-composer-post-button']",
+      "Value": ""
+    },
+    {
+      "Command": "csvReadLine",
+      "Target": "",
+      "Value": ""
+    },
+    {
+      "Command": "end",
+      "Target": "",
+      "Value": ""
+    }
+  ]
+}

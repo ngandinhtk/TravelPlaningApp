@@ -72,7 +72,7 @@ export const deleteTrip = async (tripId: any) => {
 };
 
 // Get a single trip by its ID
-export const getTrip = async (tripId: any) => {
+export const getTrip = async (tripId: any): Promise<any> => {
   const tripDocRef = doc(db, "trips", tripId);
   const docSnap = await getDoc(tripDocRef);
   // console.log('Fetched trip data:', docSnap.data());
@@ -131,15 +131,26 @@ export const getAllTrips = async () => {
 };
 
 // Fetch a small list of templates (used on home screen for recommendations)
-export const getTripTemplates = async (limitCount = 5) => {
+export const getTripTemplates = async (limitCount = 5, region?: string) => {
   try {
-    const q = query(templatesCollection, limit(limitCount));
+    const q = region
+      ? query(
+          templatesCollection,
+          where("region", "==", region),
+          limit(limitCount),
+        )
+      : query(templatesCollection, limit(limitCount));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error("Error fetching templates:", error);
     return [];
   }
+};
+
+// Convenience wrapper to fetch templates for a specific region
+export const getTemplatesByRegion = async (region: string, limitCount = 20) => {
+  return getTripTemplates(limitCount, region);
 };
 
 // Apply a template to an existing trip. This merges template fields into the trip

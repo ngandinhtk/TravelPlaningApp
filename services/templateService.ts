@@ -48,18 +48,6 @@ export const checkTemplateNameExists = async (
   return !querySnapshot.empty;
 };
 
-// export const getTemplatesByCriteria = async (criteria: any) => {
-//   console.log('Filtering with criteria:', criteria);
-
-//   const q = query(
-//     templatesCollection,
-//     where('destination', '==', criteria.destination),
-//     where('duration', '==', Number(criteria.duration))
-//   );
-//   const querySnapshot = await getDocs(q);
-//   return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-// };
-
 export const deleteTemplate = async (templateId: string) => {
   const templateDoc = doc(db, "templates", templateId);
   await deleteDoc(templateDoc);

@@ -13,4 +13,8 @@ export interface Trip {
   budget: number;
   days: number;
   status: string;
+  itinerary?: any[];
+  packingList?: any[];
+  todoList?: any[];
+  notes?: string;
 }
