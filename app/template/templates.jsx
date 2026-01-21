@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -7,21 +8,22 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import BackButton from "../../components/common/BackButton";
+// import BackButton from "../../components/common/BackButton";
+import { LinearGradient } from "expo-linear-gradient";
 import LoadingScreen from "../../components/common/Loading";
 import CustomModal from "../../components/common/Modal";
 import { useTrip } from "../../context/TripContext";
 import { useUser } from "../../context/UserContext";
-import { seedTemplates } from "../../services/seedService";
+import { db } from "../../services/firebase";
 import {
   applyTemplateToTrip,
-  getTemplatesByRegion,
   getTrips,
   getTripTemplates,
+  updateTrip,
 } from "../../services/tripService";
 
 import { showToast } from "../../lib/showToast";
@@ -54,6 +56,15 @@ const SAMPLE_TEMPLATES = [
         day: 3,
         title: "Cafe & Thư giãn",
         activities: ["Cafe Tùng", "Mua sắm đặc sản", "Ra sân bay"],
+      },
+      {
+        day: 4,
+        title: "Tạm biệt Đà Lạt",
+        activities: [
+          "Ăn sáng bánh mì xíu mại",
+          "Mua quà lưu niệm",
+          "Ra sân bay",
+        ],
       },
     ],
     packingList: [
@@ -117,6 +128,11 @@ const SAMPLE_TEMPLATES = [
         title: "Ẩm thực & Cafe",
         activities: ["Phở Bát Đàn", "Cafe Trứng", "Nhà Thờ Lớn"],
       },
+      {
+        day: 3,
+        title: "Tạm biệt",
+        activities: ["Mua quà đặc sản", "Ra sân bay"],
+      },
     ],
     packingList: [
       { text: "Máy ảnh", category: "Electronics", isChecked: false },
@@ -127,6 +143,8 @@ const SAMPLE_TEMPLATES = [
 
 const TemplateListScreen = () => {
   const [templates, setTemplates] = useState([]);
+  const [allTemplates, setAllTemplates] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [regions, setRegions] = useState([]);
   const [selectedRegion, setSelectedRegion] = useState("All");
@@ -149,23 +167,26 @@ const TemplateListScreen = () => {
       try {
         // Fetch unfiltered templates initially
         const fetchedTemplates = await getTripTemplates(50);
+        let data = [];
         if (fetchedTemplates.length > 0) {
-          setTemplates(fetchedTemplates);
-          // derive available regions from templates
-          const regionSet = new Set(
-            fetchedTemplates.map((t) => t.region).filter((r) => !!r),
-          );
-          setRegions(["All", ...Array.from(regionSet)]);
+          data = fetchedTemplates;
         } else {
           // If no templates in DB, show sample ones. Mark them as samples.
-          const samplesWithId = SAMPLE_TEMPLATES.map((t, i) => ({
+          data = SAMPLE_TEMPLATES.map((t, i) => ({
             ...t,
             id: `sample-${i}`,
             isSample: true,
           }));
-          setTemplates(samplesWithId);
-          setRegions(["All"]);
         }
+
+        setAllTemplates(data);
+        setTemplates(data);
+
+        // derive available regions/destinations from templates
+        const locationSet = new Set(
+          data.map((t) => t.destination || t.region).filter((r) => !!r),
+        );
+        setRegions(["All", ...Array.from(locationSet)]);
       } catch (error) {
         console.error("Failed to fetch templates:", error);
         alert("Đã có lỗi xảy ra khi tải lịch trình mẫu.");
@@ -177,43 +198,55 @@ const TemplateListScreen = () => {
     fetchTemplates();
   }, []);
 
-  const handleSeedData = async () => {
-    setLoading(true);
-    try {
-      const result = await seedTemplates();
-      Alert.alert(result.success ? "Thành công" : "Thông báo", result.message);
-      if (result.success) {
-        const fetched = await getTripTemplates(50);
-        setTemplates(fetched);
-        const regionSet = new Set(
-          fetched.map((t) => t.region).filter((r) => !!r),
-        );
-        setRegions(["All", ...Array.from(regionSet)]);
-      }
-    } catch (error) {
-      Alert.alert("Lỗi", "Không thể thêm dữ liệu mẫu.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Effect để lọc dữ liệu khi search hoặc chọn region thay đổi
+  useEffect(() => {
+    let result = allTemplates;
 
-  const handleSelectRegion = async (region) => {
-    setSelectedRegion(region);
-    setLoading(true);
-    try {
-      if (!region || region === "All") {
-        const fetched = await getTripTemplates(50);
-        setTemplates(fetched);
-      } else {
-        const fetched = await getTemplatesByRegion(region, 50);
-        setTemplates(fetched);
-      }
-    } catch (err) {
-      console.error("Failed to fetch templates by region:", err);
-      Alert.alert("Lỗi", "Không thể tải mẫu theo vùng.");
-    } finally {
-      setLoading(false);
+    // 1. Lọc theo Region
+    if (selectedRegion && selectedRegion !== "All") {
+      result = result.filter(
+        (t) => t.destination === selectedRegion || t.region === selectedRegion,
+      );
     }
+
+    // 2. Lọc theo Search Query (Tên hoặc Highlights)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(
+        (t) =>
+          t.name.toLowerCase().includes(query) ||
+          (t.highlights &&
+            t.highlights.some((h) => h.toLowerCase().includes(query))),
+      );
+    }
+
+    setTemplates(result);
+  }, [searchQuery, selectedRegion, allTemplates]);
+
+  // const handleSeedData = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const result = await seedTemplates();
+  //     Alert.alert(result.success ? "Thành công" : "Thông báo", result.message);
+  //     if (result.success) {
+  //       const fetched = await getTripTemplates(50);
+  //       setAllTemplates(fetched);
+  //       setTemplates(fetched);
+  //       const locationSet = new Set(
+  //         fetched.map((t) => t.destination || t.region).filter((r) => !!r),
+  //       );
+  //       setRegions(["All", ...Array.from(locationSet)]);
+  //     }
+  //   } catch (error) {
+  //     Alert.alert("Lỗi", "Không thể thêm dữ liệu mẫu.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const handleSelectRegion = (region) => {
+    setSelectedRegion(region);
+    // Logic lọc đã được chuyển vào useEffect
   };
 
   const handleSelectTemplate = (template) => {
@@ -221,36 +254,120 @@ const TemplateListScreen = () => {
     setShowDetailModal(true);
   };
 
-  const handleOpenTripPicker = async (template) => {
+  const handleTemplateAction = async (template) => {
     if (!user) {
-      Alert.alert("Yêu cầu đăng nhập", "Bạn cần đăng nhập để áp dụng mẫu này.");
+      Alert.alert(
+        "Yêu cầu đăng nhập",
+        "Bạn cần đăng nhập để sử dụng tính năng này.",
+      );
       return;
     }
-    setSelectedTemplateForExisting(template);
-    setLoadingUserTrips(true);
-    setShowTripPicker(true);
+
+    setLoading(true);
     try {
       const trips = await getTrips(user.uid);
-      setUserTrips(trips);
-    } catch (err) {
-      console.error("Failed to fetch user trips:", err);
-      Alert.alert("Lỗi", "Không thể tải danh sách chuyến đi của bạn.");
-      setShowTripPicker(false); // Close picker on error
+      const hasMatchingTrip = trips.some(
+        (t) =>
+          t.destination &&
+          template.destination &&
+          t.destination
+            .toLowerCase()
+            .includes(template.destination.toLowerCase()),
+      );
+
+      if (hasMatchingTrip) {
+        setSelectedTemplateForExisting(template);
+        setUserTrips(trips);
+        setShowTripPicker(true);
+      } else {
+        await handleCreateTripFromTemplate(template);
+      }
+    } catch (error) {
+      console.error("Error in template action:", error);
+      Alert.alert("Lỗi", "Không thể xử lý yêu cầu.");
     } finally {
-      setLoadingUserTrips(false);
+      setLoading(false);
+    }
+  };
+
+  const handleCreateTripFromTemplate = async (template) => {
+    setLoading(true);
+    try {
+      // Helper to format date for default
+      const today = new Date();
+      const formatDate = (date) => {
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      };
+      const defaultDates = `${formatDate(today)} - ${formatDate(today)}`;
+
+      // 1. Tạo object chuyến đi mới
+      const newTripData = {
+        userId: user.uid,
+        destination: template.destination,
+        dates: defaultDates,
+        duration: template.duration,
+        travelers: 1,
+        budget: 0,
+        createdAt: serverTimestamp(),
+        status: "planning",
+        // Nếu là sample data, nạp trực tiếp dữ liệu vào
+        itinerary: template.isSample ? template.itinerary : [],
+        packingList: template.isSample ? template.packingList : [],
+      };
+
+      const docRef = await addDoc(collection(db, "trips"), newTripData);
+      const newTripId = docRef.id;
+
+      // 2. Nếu là template server, gọi hàm apply để fetch chi tiết
+      if (!template.isSample) {
+        await applyTemplateToTrip(user.uid, newTripId, template.id);
+      }
+
+      // 3. Chuyển hướng
+      setSelectedTripId(newTripId);
+      showToast("Đã tạo chuyến đi mới từ mẫu!");
+      router.push("/trip/detail");
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Lỗi", "Không thể tạo chuyến đi.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleApplyToExistingTrip = async (trip) => {
     if (!selectedTemplateForExisting || applyingToExisting) return;
 
+    // Kiểm tra địa điểm trùng khớp
+    if (
+      selectedTemplateForExisting.destination &&
+      (!trip.destination ||
+        !trip.destination
+          .toLowerCase()
+          .includes(selectedTemplateForExisting.destination.toLowerCase()))
+    ) {
+      Alert.alert("Lỗi", "Địa điểm của template không khớp với chuyến đi này.");
+      return;
+    }
+
     setApplyingToExisting(true);
     try {
-      await applyTemplateToTrip(
-        user.uid,
-        trip.id,
-        selectedTemplateForExisting.id,
-      );
+      if (selectedTemplateForExisting.isSample) {
+        // Xử lý sample data thủ công
+        await updateTrip(trip.id, {
+          itinerary: selectedTemplateForExisting.itinerary,
+          packingList: selectedTemplateForExisting.packingList,
+        });
+      } else {
+        await applyTemplateToTrip(
+          user.uid,
+          trip.id,
+          selectedTemplateForExisting.id,
+        );
+      }
       setSelectedTripId(trip.id);
       showToast("Đã áp dụng mẫu vào chuyến đi!");
       setShowTripPicker(false);
@@ -262,6 +379,25 @@ const TemplateListScreen = () => {
       setApplyingToExisting(false);
     }
   };
+
+  const renderRegionItem = ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles.regionChip,
+        selectedRegion === item && styles.regionChipActive,
+      ]}
+      onPress={() => handleSelectRegion(item)}
+    >
+      <Text
+        style={[
+          styles.regionText,
+          selectedRegion === item && styles.regionTextActive,
+        ]}
+      >
+        {item === "All" ? "Tất cả" : item}
+      </Text>
+    </TouchableOpacity>
+  );
 
   const renderTemplateItem = ({ item }) => {
     const min = item.budget?.budgetMin || item.budgetMin || 0;
@@ -294,17 +430,17 @@ const TemplateListScreen = () => {
             </Text>
           </TouchableOpacity> */}
           <TouchableOpacity
-            onPress={() => handleOpenTripPicker(item)}
+            onPress={() => handleTemplateAction(item)}
             style={{ marginLeft: 12 }}
-            disabled={!!importingStatus[item.id] || item.isSample}
+            disabled={!!importingStatus[item.id]}
           >
             <Text
               style={{
-                color: item.isSample ? "#b0b0b0" : "#27ae60",
+                color: "#27ae60",
                 fontWeight: "600",
               }}
             >
-              Áp dụng vào...
+              Sử dụng mẫu
             </Text>
           </TouchableOpacity>
         </View>
@@ -325,13 +461,24 @@ const TemplateListScreen = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <BackButton />
-        <Text style={styles.headerTitle}>Lịch Trình Gợi Ý</Text>
-        <TouchableOpacity onPress={handleSeedData}>
-          <Text style={{ fontSize: 20 }}>➕</Text>
+    <View style={styles.container}>
+      <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={styles.backButton}>&larr; Back</Text>
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Lịch Trình Gợi Ý</Text>
+        <View style={{ width: 50 }} />
+      </LinearGradient>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Tìm kiếm lịch trình, điểm đến..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholderTextColor="#999"
+        />
       </View>
 
       {loading ? (
@@ -340,32 +487,16 @@ const TemplateListScreen = () => {
       ) : (
         <>
           {/* Region filter */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ paddingHorizontal: 12, paddingVertical: 8 }}
-          >
-            {regions.map((r) => (
-              <TouchableOpacity
-                key={r}
-                onPress={() => handleSelectRegion(r)}
-                style={[
-                  styles.regionButton,
-                  selectedRegion === r && styles.regionButtonSelected,
-                ]}
-              >
-                <Text
-                  style={
-                    selectedRegion === r
-                      ? styles.regionTextSelected
-                      : styles.regionText
-                  }
-                >
-                  {r}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <View style={styles.filterContainer}>
+            <FlatList
+              data={regions}
+              renderItem={renderRegionItem}
+              keyExtractor={(item) => item}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.regionList}
+            />
+          </View>
 
           <FlatList
             data={templates}
@@ -447,20 +578,14 @@ const TemplateListScreen = () => {
                 <Text style={styles.modalButtonText}>Nhập mới</Text>
               </TouchableOpacity> */}
               <TouchableOpacity
-                style={[
-                  styles.modalButton,
-                  styles.applyButton,
-                  selectedTemplateDetail?.isSample && {
-                    backgroundColor: "#b0b0b0",
-                  },
-                ]}
-                disabled={selectedTemplateDetail?.isSample}
+                style={[styles.modalButton, styles.applyButton]}
+                // disabled={selectedTemplateDetail?.isSample}
                 onPress={() => {
                   setShowDetailModal(false);
-                  handleOpenTripPicker(selectedTemplateDetail);
+                  handleTemplateAction(selectedTemplateDetail);
                 }}
               >
-                <Text style={styles.modalButtonText}>Áp dụng...</Text>
+                <Text style={styles.modalButtonText}>Sử dụng mẫu</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -485,25 +610,48 @@ const TemplateListScreen = () => {
                   import.
                 </Text>
               ) : (
-                userTrips.map((t) => (
-                  <TouchableOpacity
-                    key={t.id}
-                    onPress={() => handleApplyToExistingTrip(t)}
-                    style={styles.tripPickerItem}
-                    disabled={applyingToExisting}
-                  >
-                    <Text
-                      style={{ fontSize: 16, fontWeight: "600", color: "#333" }}
+                userTrips.map((t) => {
+                  const isMatch = selectedTemplateForExisting?.destination
+                    ? t.destination
+                        ?.toLowerCase()
+                        .includes(
+                          selectedTemplateForExisting.destination.toLowerCase(),
+                        )
+                    : true;
+
+                  return (
+                    <TouchableOpacity
+                      key={t.id}
+                      onPress={() => handleApplyToExistingTrip(t)}
+                      style={[
+                        styles.tripPickerItem,
+                        !isMatch && { opacity: 0.6 },
+                      ]}
+                      disabled={applyingToExisting || !isMatch}
                     >
-                      {t.destination}
-                    </Text>
-                    {t.dates && (
-                      <Text style={{ fontSize: 14, color: "#666" }}>
-                        {t.dates}
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          fontWeight: "600",
+                          color: "#333",
+                        }}
+                      >
+                        {t.destination}
                       </Text>
-                    )}
-                  </TouchableOpacity>
-                ))
+                      {t.dates && (
+                        <Text style={{ fontSize: 14, color: "#666" }}>
+                          {t.dates}
+                        </Text>
+                      )}
+                      {!isMatch && (
+                        <Text style={{ fontSize: 12, color: "red" }}>
+                          Không khớp địa điểm (
+                          {selectedTemplateForExisting?.destination})
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })
               )}
             </ScrollView>
             {applyingToExisting && (
@@ -524,7 +672,7 @@ const TemplateListScreen = () => {
           </View>
         )}
       </CustomModal>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -534,11 +682,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    backgroundColor: "#fff",
+    padding: 20,
+    paddingTop: 50,
   },
-  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#1A1A1A" },
+  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#FFFFFF" },
   listContainer: { padding: 20 },
   card: {
     backgroundColor: "#FFFFFF",
@@ -617,6 +764,9 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     marginBottom: 20,
   },
+  // header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 40 },
+  // headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#FFFFFF' },
+  backButton: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
   highlightBadge: {
     backgroundColor: "#eef0ff",
     paddingHorizontal: 12,
@@ -652,25 +802,43 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
-  regionButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  searchContainer: {
+    padding: 15,
     backgroundColor: "#fff",
-    borderRadius: 20,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: "#eee",
   },
-  regionButtonSelected: {
-    backgroundColor: "#667eea",
+  searchInput: {
+    backgroundColor: "#F0F2F5",
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+  },
+  filterContainer: {
+    backgroundColor: "#fff",
+    paddingVertical: 10,
+  },
+  regionList: {
+    paddingHorizontal: 15,
+  },
+  regionChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "#F0F2F5",
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  regionChipActive: {
+    backgroundColor: "#E0E7FF",
     borderColor: "#667eea",
   },
   regionText: {
-    color: "#333",
-    fontWeight: "600",
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "500",
   },
-  regionTextSelected: {
-    color: "#fff",
+  regionTextActive: {
+    color: "#667eea",
     fontWeight: "700",
   },
 });

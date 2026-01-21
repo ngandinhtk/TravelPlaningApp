@@ -81,7 +81,13 @@ const TripDetailScreen = () => {
     setIsTemplatesLoading(true);
     try {
       const fetched = await getTripTemplates();
-      setTemplates(fetched);
+      // Filter templates based on trip destination
+      const filtered = fetched.filter(
+        (t) =>
+          t.destination &&
+          trip.destination?.toLowerCase().includes(t.destination.toLowerCase()),
+      );
+      setTemplates(filtered);
       setIsTemplateModalVisible(true);
     } catch (error) {
       console.error("Failed to load templates:", error);
@@ -541,7 +547,11 @@ const TripDetailScreen = () => {
           <>
             {applyError && <Text style={{ color: "red" }}>{applyError}</Text>}
             {templates.length === 0 ? (
-              <Text>Không có template nào</Text>
+              <Text
+                style={{ textAlign: "center", marginTop: 20, color: "#666" }}
+              >
+                Không tìm thấy lịch trình mẫu nào cho {trip.destination}.
+              </Text>
             ) : (
               templates.map((t) => (
                 <TouchableOpacity
