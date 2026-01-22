@@ -13,6 +13,7 @@ import {
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import CustomModal from "../../components/common/Modal";
 import { useUser } from "../../context/UserContext";
+import { createInitialItineraries } from "../../services/itineraryService";
 import { addTrip } from "../../services/tripService";
 
 const CreateTripScreen = ({ onBack }) => {
@@ -65,7 +66,10 @@ const CreateTripScreen = ({ onBack }) => {
   };
 
   const handleCreateTrip = async () => {
-    const destination = destinations.filter((d) => d.trim()).join(" - ");
+    const destination = destinations
+      .filter((d) => d.trim())
+      .map((d) => d.trim().toUpperCase())
+      .join(" - ");
     // console.log(destination, startDate, endDate);
 
     if (!destination || !startDate.toDateString() || !endDate.toDateString()) {
@@ -93,6 +97,15 @@ const CreateTripScreen = ({ onBack }) => {
       const startStr = formatDate(startDate);
       const endStr = formatDate(endDate);
 
+      // Create itineraries based on destinations and days
+      const cleanDestinations = destinations
+        .filter((d) => d.trim())
+        .map((d) => d.trim().toUpperCase());
+      const itineraries = createInitialItineraries(
+        cleanDestinations,
+        calculatedDays,
+      );
+
       // setTripId(tripId + 1);
       await addTrip({
         userId: user?.uid,
@@ -108,6 +121,7 @@ const CreateTripScreen = ({ onBack }) => {
         interests,
         tripId,
         notes: notes || "",
+        itinerary: itineraries,
       });
       setSuccessMessage("Trip created successfully!");
       setTimeout(() => {
@@ -173,6 +187,12 @@ const CreateTripScreen = ({ onBack }) => {
           onConfirm={handleStartDateChange}
           onCancel={() => setShowStartDatePicker(false)}
           date={startDate}
+          display="spinner"
+          textColor="#333"
+          accentColor="#667eea"
+          headerTextIOS="Chọn ngày bắt đầu"
+          cancelTextIOS="Hủy"
+          confirmTextIOS="Xác nhận"
         />
       )}
       {showEndDatePicker && (
@@ -183,6 +203,12 @@ const CreateTripScreen = ({ onBack }) => {
           onCancel={() => setShowEndDatePicker(false)}
           date={endDate}
           minimumDate={startDate}
+          display="spinner"
+          textColor="#333"
+          accentColor="#667eea"
+          headerTextIOS="Chọn ngày kết thúc"
+          cancelTextIOS="Hủy"
+          confirmTextIOS="Xác nhận"
         />
       )}
     </>

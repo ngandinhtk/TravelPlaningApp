@@ -265,6 +265,12 @@ const EditTripScreen = () => {
           onConfirm={handleStartDateChange}
           onCancel={() => setShowStartDatePicker(false)}
           date={startDate}
+          display="spinner"
+          textColor="#333"
+          accentColor="#667eea"
+          headerTextIOS="Chọn ngày bắt đầu"
+          cancelTextIOS="Hủy"
+          confirmTextIOS="Xác nhận"
         />
         <DateTimePickerModal
           isVisible={showEndDatePicker}
@@ -273,6 +279,12 @@ const EditTripScreen = () => {
           onCancel={() => setShowEndDatePicker(false)}
           date={endDate}
           minimumDate={startDate}
+          display="spinner"
+          textColor="#333"
+          accentColor="#667eea"
+          headerTextIOS="Chọn ngày kết thúc"
+          cancelTextIOS="Hủy"
+          confirmTextIOS="Xác nhận"
         />
       </ScrollView>
     </View>

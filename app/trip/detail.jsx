@@ -48,7 +48,6 @@ const TripDetailScreen = () => {
   const [applyError, setApplyError] = useState(null);
   const { user } = useUser();
   const [previousTripState, setPreviousTripState] = useState(null);
-
   const [activityModalVisible, setActivityModalVisible] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
@@ -59,8 +58,6 @@ const TripDetailScreen = () => {
     description: "",
   });
 
-  // Nếu trip chưa được tải xong (do context đang fetch), hiển thị loading
-  // console.log('Trip in Detail Screen:', trip);
   if (!trip) {
     return <Loading />;
   }
@@ -81,12 +78,53 @@ const TripDetailScreen = () => {
     setIsTemplatesLoading(true);
     try {
       const fetched = await getTripTemplates();
-      // Filter templates based on trip destination
-      const filtered = fetched.filter(
-        (t) =>
-          t.destination &&
-          trip.destination?.toLowerCase().includes(t.destination.toLowerCase()),
+      console.log("Fetched templates:", fetched);
+
+      // Extract unique destinations from trip itinerary
+      const tripDestinations = new Set();
+
+      if (trip.itinerary && trip.itinerary.length > 0) {
+        // Get destinations from itinerary
+        trip.itinerary.forEach((day) => {
+          if (day.destination) {
+            const destLower = day.destination.toLowerCase().trim();
+            if (destLower) tripDestinations.add(destLower);
+          }
+        });
+      } else if (trip.destination) {
+        // Fallback: parse trip.destination string
+        const destinations = trip.destination
+          .split(" - ")
+          .map((d) => d.toLowerCase().trim())
+          .filter((d) => d); // Remove empty strings
+        destinations.forEach((d) => tripDestinations.add(d));
+      }
+
+      console.log("Trip destinations:", Array.from(tripDestinations));
+
+      // Filter templates with strict matching
+      const filtered = fetched.filter((t) => {
+        if (!t.destination || tripDestinations.size === 0) return false;
+
+        const templateDest = t.destination.toLowerCase().trim();
+
+        // Check exact or partial match
+        for (let tripDest of tripDestinations) {
+          // Match if template destination contains trip destination as a word
+          const tripDestRegex = new RegExp(`\\b${tripDest}\\b`, "i");
+          if (templateDest.match(tripDestRegex)) {
+            return true;
+          }
+        }
+        return false;
+      });
+
+      console.log("Filtered templates:", filtered);
+      console.log(
+        `Found ${filtered.length} matching templates out of ${fetched.length} total`,
       );
+
+      // Show filtered templates if found, otherwise show all
       setTemplates(filtered);
       setIsTemplateModalVisible(true);
     } catch (error) {
@@ -97,8 +135,6 @@ const TripDetailScreen = () => {
   };
 
   const handleApplyTemplate = async (templateId) => {
-    // console.log(templateId);
-
     if (!user) return;
 
     setIsApplying(true);
@@ -111,11 +147,11 @@ const TripDetailScreen = () => {
         todoList: trip.todoList || [],
       });
       // console.log(user.uid, trip.id, templateId);
-      await applyTemplateToTrip(user.uid, trip.id, templateId);
+      await applyTemplateToTrip(user.uid, trip.id, templateId, true);
       console.log("Template applied successfully");
       // Refresh trip in context
       const updated = await getTrip(trip.id);
-      // console.log(updated)
+      // console.log(updated)x
       setTrip(updated);
       showToast("Đã áp dụng lịch trình mẫu!");
       setIsTemplateModalVisible(false);
@@ -367,19 +403,43 @@ const TripDetailScreen = () => {
               flexDirection: "row",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: 12,
+              marginBottom: 16,
             }}
           >
             <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>
               Lịch trình chi tiết
             </Text>
-            {previousTripState && (
-              <TouchableOpacity onPress={handleUndoApply} disabled={isApplying}>
-                <Text style={{ color: "#667eea", fontWeight: "600" }}>
-                  ↩ Hoàn tác
-                </Text>
-              </TouchableOpacity>
-            )}
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
+              {previousTripState && (
+                <TouchableOpacity
+                  onPress={handleUndoApply}
+                  disabled={isApplying}
+                >
+                  <Text style={{ color: "#667eea", fontWeight: "600" }}>
+                    ↩ Hoàn tác
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {trip.itinerary && trip.itinerary.length > 0 && (
+                <TouchableOpacity
+                  onPress={openTemplateModal}
+                  style={styles.applyTemplateBtn}
+                >
+                  <Download size={16} color="#667eea" />
+                  <Text
+                    style={{
+                      color: "#667eea",
+                      fontWeight: "600",
+                      marginLeft: 4,
+                    }}
+                  >
+                    Áp dụng
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {trip.itinerary && trip.itinerary.length > 0 ? (
@@ -553,17 +613,39 @@ const TripDetailScreen = () => {
                 Không tìm thấy lịch trình mẫu nào cho {trip.destination}.
               </Text>
             ) : (
-              templates.map((t) => (
-                <TouchableOpacity
-                  key={t.id}
-                  onPress={() => handleApplyTemplate(t.id)}
-                  style={{ paddingVertical: 10 }}
-                >
-                  <Text style={{ fontSize: 16 }}>{t.name}</Text>
-                </TouchableOpacity>
-              ))
+              <ScrollView style={{ maxHeight: 400 }}>
+                {templates.map((t) => (
+                  <TouchableOpacity
+                    key={t.id}
+                    onPress={() => handleApplyTemplate(t.id)}
+                    style={styles.templateItem}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.templateName}>{t.name}</Text>
+                      {t.destination && (
+                        <Text style={styles.templateDestination}>
+                          📍 {t.destination}
+                        </Text>
+                      )}
+                      {t.duration && (
+                        <Text style={styles.templateInfo}>
+                          ⏱️ {t.duration} ngày
+                        </Text>
+                      )}
+                      {t.description && (
+                        <Text style={styles.templateDesc}>{t.description}</Text>
+                      )}
+                    </View>
+                    <Text style={styles.selectIcon}>›</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             )}
-            {isApplying && <Text>Applying...</Text>}
+            {isApplying && (
+              <Text style={{ textAlign: "center", marginTop: 10 }}>
+                Áp dụng...
+              </Text>
+            )}
           </>
         )}
       </CustomModal>
@@ -950,6 +1032,56 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     backgroundColor: "#f9f9f9",
+  },
+  applyTemplateBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#eef0ff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#d0d5ff",
+  },
+  templateItem: {
+    flexDirection: "row",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginVertical: 6,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: "#667eea",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  templateName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  templateDestination: {
+    fontSize: 13,
+    color: "#667eea",
+    marginBottom: 2,
+    fontWeight: "500",
+  },
+  templateInfo: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 4,
+  },
+  templateDesc: {
+    fontSize: 12,
+    color: "#999",
+    fontStyle: "italic",
+    marginTop: 4,
+  },
+  selectIcon: {
+    fontSize: 24,
+    color: "#667eea",
+    marginLeft: 8,
   },
 });
 

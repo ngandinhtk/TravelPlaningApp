@@ -353,31 +353,50 @@ const TemplateListScreen = () => {
       return;
     }
 
-    setApplyingToExisting(true);
-    try {
-      if (selectedTemplateForExisting.isSample) {
-        // Xử lý sample data thủ công
-        await updateTrip(trip.id, {
-          itinerary: selectedTemplateForExisting.itinerary,
-          packingList: selectedTemplateForExisting.packingList,
-        });
-      } else {
-        await applyTemplateToTrip(
-          user.uid,
-          trip.id,
-          selectedTemplateForExisting.id,
-        );
-      }
-      setSelectedTripId(trip.id);
-      showToast("Đã áp dụng mẫu vào chuyến đi!");
-      setShowTripPicker(false);
-      router.push("/trip/detail");
-    } catch (err) {
-      console.error("Failed to apply template to existing trip:", err);
-      Alert.alert("Lỗi", "Không thể áp dụng mẫu vào chuyến đi này.");
-    } finally {
-      setApplyingToExisting(false);
-    }
+    // Xác nhận từ user trước khi apply
+    Alert.alert(
+      "Áp dụng lịch trình",
+      `Bạn sẽ áp dụng lịch trình "${selectedTemplateForExisting.name}" vào chuyến đi "${trip.destination}"?\n\nChỉ itinerary và packing list sẽ được cập nhật. Các thông tin gốc như ngày đi, ngân sách sẽ không thay đổi.`,
+      [
+        {
+          text: "Hủy",
+          onPress: () => {},
+          style: "cancel",
+        },
+        {
+          text: "Áp dụng",
+          onPress: async () => {
+            setApplyingToExisting(true);
+            try {
+              if (selectedTemplateForExisting.isSample) {
+                // Xử lý sample data: chỉ merge itinerary và packing list
+                await updateTrip(trip.id, {
+                  itinerary: selectedTemplateForExisting.itinerary,
+                  packingList: selectedTemplateForExisting.packingList,
+                });
+              } else {
+                // Áp dụng template: merge itinerary và packing list mà bảo vệ thông tin gốc
+                await applyTemplateToTrip(
+                  user.uid,
+                  trip.id,
+                  selectedTemplateForExisting.id,
+                  true, // mergeOnly = true để chỉ merge itinerary
+                );
+              }
+              setSelectedTripId(trip.id);
+              showToast("Đã áp dụng mẫu vào chuyến đi!");
+              setShowTripPicker(false);
+              router.push("/trip/detail");
+            } catch (err) {
+              console.error("Failed to apply template to existing trip:", err);
+              Alert.alert("Lỗi", "Không thể áp dụng mẫu vào chuyến đi này.");
+            } finally {
+              setApplyingToExisting(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const renderRegionItem = ({ item }) => (

@@ -106,6 +106,7 @@ export const mapTemplateToTrip = (template: any, userId: any) => {
     notes: template.notes || "",
     itinerary: template.itinerary || [],
     tripType: template.tripType || "",
+    packingList: template.packingList || [],
     createdFromTemplateId: template.id || null,
   };
 
@@ -155,10 +156,12 @@ export const getTemplatesByRegion = async (region: string, limitCount = 20) => {
 
 // Apply a template to an existing trip. This merges template fields into the trip
 // while preserving trip ownership (`userId`) and `createdAt`.
+// @param mergeOnly - if true, only merge itinerary without changing destination/budget/days/etc
 export const applyTemplateToTrip = async (
   userId: any,
   tripId: any,
   templateId: any,
+  mergeOnly: boolean = false,
 ) => {
   // Get template
   const templateDocRef = doc(db, "templates", templateId);
@@ -186,15 +189,24 @@ export const applyTemplateToTrip = async (
   const mapped = mapTemplateToTrip(templateData, userId);
 
   // Choose which keys are safe to update on an existing trip
-  const allowedUpdateKeys = [
-    "destination",
-    "days",
-    "itinerary",
-    "budget",
-    "interests",
-    "tripType",
-    "notes",
-  ];
+  let allowedUpdateKeys: string[];
+  if (mergeOnly) {
+    // When merging only, protect trip's original destination/budget/days info
+    // Only update itinerary and packing list
+    allowedUpdateKeys = ["itinerary", "packingList"];
+  } else {
+    // Original behavior: update all allowed fields
+    // This should only be used when creating a new trip from template
+    allowedUpdateKeys = [
+      "destination",
+      "days",
+      "itinerary",
+      "budget",
+      "interests",
+      "tripType",
+      "notes",
+    ];
+  }
   const updateFields: any = {};
   allowedUpdateKeys.forEach((k) => {
     if (mapped[k] !== undefined) updateFields[k] = mapped[k];
