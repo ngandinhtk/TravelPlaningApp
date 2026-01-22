@@ -187,7 +187,7 @@ const HomeScreen = ({ onCreateTrip, onViewTrip }) => {
               >
                 <Text style={styles.modalButtonText}>Nhập mới</Text>
               </TouchableOpacity> */}
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 style={[
                   styles.modalButton,
                   styles.applyButton,
@@ -198,11 +198,10 @@ const HomeScreen = ({ onCreateTrip, onViewTrip }) => {
                 disabled={selectedTemplateDetail?.isSample}
                 onPress={() => {
                   setShowDetailModal(false);
-                  // handleOpenTripPicker(selectedTemplateDetail);
                 }}
               >
                 <Text style={styles.modalButtonText}>Áp dụng...</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </ScrollView>
         )}
@@ -439,11 +438,16 @@ const StatsSkeleton = () => (
 );
 
 const StatsContent = ({ trips }) => {
+  const totalDestinations = new Set(trips.map((trip) => trip.destination)).size;
   const totalDays = trips.reduce((sum, trip) => sum + (trip.days || 0), 0);
-  const totalBudget = trips.reduce((sum, trip) => sum + (trip.budget || 0), 0);
+  // const totalBudget = trips.reduce((sum, trip) => sum + (trip.budget || 0), 0);
 
   return (
     <>
+      <View style={styles.statCard}>
+        <Text style={[styles.statNumber]}>{totalDestinations}</Text>
+        <Text style={styles.statLabel}>Destinations</Text>
+      </View>
       <View style={styles.statCard}>
         <Text style={styles.statNumber}>{trips.length}</Text>
         <Text style={styles.statLabel}>Trips</Text>
@@ -452,12 +456,6 @@ const StatsContent = ({ trips }) => {
       <View style={styles.statCard}>
         <Text style={styles.statNumber}>{totalDays}</Text>
         <Text style={styles.statLabel}>Days</Text>
-      </View>
-      <View style={styles.statCard}>
-        <Text style={[styles.statNumber, { color: "#667eea", fontSize: 20 }]}>
-          ${totalBudget.toLocaleString()}
-        </Text>
-        <Text style={styles.statLabel}>Budget</Text>
       </View>
     </>
   );

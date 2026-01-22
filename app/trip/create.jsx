@@ -50,6 +50,13 @@ const CreateTripScreen = ({ onBack }) => {
     }
   };
 
+  const formatDate = (date) => {
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const handleAddDestination = () => {
     setDestinations([...destinations, ""]);
   };
@@ -82,13 +89,6 @@ const CreateTripScreen = ({ onBack }) => {
       const end = endDate;
       const timeDiff = end.getTime() - start.getTime();
       const calculatedDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
-
-      const formatDate = (date) => {
-        const day = String(date.getDate()).padStart(2, "0");
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
-      };
 
       if (end < start) {
         setError("Ngày kết thúc không thể trước ngày bắt đầu.");
@@ -193,6 +193,7 @@ const CreateTripScreen = ({ onBack }) => {
           headerTextIOS="Chọn ngày bắt đầu"
           cancelTextIOS="Hủy"
           confirmTextIOS="Xác nhận"
+          locale="vi_VN"
         />
       )}
       {showEndDatePicker && (
@@ -209,6 +210,7 @@ const CreateTripScreen = ({ onBack }) => {
           headerTextIOS="Chọn ngày kết thúc"
           cancelTextIOS="Hủy"
           confirmTextIOS="Xác nhận"
+          locale="vi_VN"
         />
       )}
     </>
@@ -225,17 +227,18 @@ const CreateTripScreen = ({ onBack }) => {
             style={styles.webPickerContainer}
             onClick={(e) => e.stopPropagation()}
           >
+            <Text style={styles.webPickerTitle}>Chọn ngày bắt đầu</Text>
             <DatePicker
               selected={startDate}
               onChange={handleStartDateChange}
-              dateFormat="MM/dd/yyyy"
+              dateFormat="dd/MM/yyyy"
               inline
             />
             <button
               onClick={() => setShowStartDatePicker(false)}
               style={styles.webPickerButton}
             >
-              Close
+              Xác nhận
             </button>
           </div>
         </div>
@@ -249,10 +252,11 @@ const CreateTripScreen = ({ onBack }) => {
             style={styles.webPickerContainer}
             onClick={(e) => e.stopPropagation()}
           >
+            <Text style={styles.webPickerTitle}>Chọn ngày kết thúc</Text>
             <DatePicker
               selected={endDate}
               onChange={handleEndDateChange}
-              dateFormat="MM/dd/yyyy"
+              dateFormat="dd/MM/yyyy"
               minDate={startDate}
               inline
             />
@@ -260,7 +264,7 @@ const CreateTripScreen = ({ onBack }) => {
               onClick={() => setShowEndDatePicker(false)}
               style={styles.webPickerButton}
             >
-              Close
+              Xác nhận
             </button>
           </div>
         </div>
@@ -362,9 +366,7 @@ const CreateTripScreen = ({ onBack }) => {
                   onPress={() => setShowStartDatePicker(true)}
                   style={styles.input}
                 >
-                  <Text style={styles.dateText}>
-                    {startDate.toLocaleDateString()}
-                  </Text>
+                  <Text style={styles.dateText}>{formatDate(startDate)}</Text>
                 </TouchableOpacity>
                 {Platform.OS === "web"
                   ? renderWebPicker()
@@ -377,9 +379,7 @@ const CreateTripScreen = ({ onBack }) => {
                   onPress={() => setShowEndDatePicker(true)}
                   style={styles.input}
                 >
-                  <Text style={styles.dateText}>
-                    {endDate.toLocaleDateString()}
-                  </Text>
+                  <Text style={styles.dateText}>{formatDate(endDate)}</Text>
                 </TouchableOpacity>
                 {Platform.OS === "web"
                   ? renderWebPicker()
@@ -699,10 +699,12 @@ const styles = StyleSheet.create({
   },
   webPickerContainer: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 20,
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+    borderRadius: 16,
+    padding: 24,
+    boxShadow:
+      "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
     maxWidth: 400,
+    alignItems: "center",
   },
   webPickerButton: {
     marginTop: 15,
@@ -716,6 +718,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     cursor: "pointer",
     width: "100%",
+  },
+  webPickerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 16,
   },
 });
 

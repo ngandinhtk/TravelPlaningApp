@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -51,6 +52,13 @@ const EditTripScreen = () => {
     }
   }, [trip]);
 
+  const formatDate = (date) => {
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const handleUpdateTrip = async () => {
     const destinationString = destinations
       .filter((d) => d.trim() !== "")
@@ -63,13 +71,6 @@ const EditTripScreen = () => {
 
     const timeDiff = endDate.getTime() - startDate.getTime();
     const calculatedDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
-
-    const formatDate = (date) => {
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    };
 
     const updatedData = {
       destination: destinationString,
@@ -120,6 +121,72 @@ const EditTripScreen = () => {
     newDestinations[index] = text;
     setDestinations(newDestinations);
   };
+
+  if (Platform.OS === "web") {
+    require("react-datepicker/dist/react-datepicker.css");
+  }
+
+  let DatePicker;
+  if (Platform.OS === "web") {
+    const ReactDatePicker = require("react-datepicker").default;
+    DatePicker = ReactDatePicker;
+  }
+
+  const renderWebPicker = () => (
+    <>
+      {showStartDatePicker && (
+        <div
+          style={styles.webPickerOverlay}
+          onClick={() => setShowStartDatePicker(false)}
+        >
+          <div
+            style={styles.webPickerContainer}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Text style={styles.webPickerTitle}>Chọn ngày bắt đầu</Text>
+            <DatePicker
+              selected={startDate}
+              onChange={handleStartDateChange}
+              dateFormat="dd/MM/yyyy"
+              inline
+            />
+            <button
+              onClick={() => setShowStartDatePicker(false)}
+              style={styles.webPickerButton}
+            >
+              Xác nhận
+            </button>
+          </div>
+        </div>
+      )}
+      {showEndDatePicker && (
+        <div
+          style={styles.webPickerOverlay}
+          onClick={() => setShowEndDatePicker(false)}
+        >
+          <div
+            style={styles.webPickerContainer}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Text style={styles.webPickerTitle}>Chọn ngày kết thúc</Text>
+            <DatePicker
+              selected={endDate}
+              onChange={handleEndDateChange}
+              dateFormat="dd/MM/yyyy"
+              minDate={startDate}
+              inline
+            />
+            <button
+              onClick={() => setShowEndDatePicker(false)}
+              style={styles.webPickerButton}
+            >
+              Xác nhận
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
 
   // Nếu trip chưa được tải xong, hiển thị loading
   if (!trip) {
@@ -200,9 +267,7 @@ const EditTripScreen = () => {
               onPress={() => setShowStartDatePicker(true)}
               style={styles.input}
             >
-              <Text style={styles.dateText}>
-                {startDate.toLocaleDateString()}
-              </Text>
+              <Text style={styles.dateText}>{formatDate(startDate)}</Text>
             </TouchableOpacity>
           </View>
           <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -211,9 +276,7 @@ const EditTripScreen = () => {
               onPress={() => setShowEndDatePicker(true)}
               style={styles.input}
             >
-              <Text style={styles.dateText}>
-                {endDate.toLocaleDateString()}
-              </Text>
+              <Text style={styles.dateText}>{formatDate(endDate)}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -259,33 +322,41 @@ const EditTripScreen = () => {
           </LinearGradient>
         </TouchableOpacity>
 
-        <DateTimePickerModal
-          isVisible={showStartDatePicker}
-          mode="date"
-          onConfirm={handleStartDateChange}
-          onCancel={() => setShowStartDatePicker(false)}
-          date={startDate}
-          display="spinner"
-          textColor="#333"
-          accentColor="#667eea"
-          headerTextIOS="Chọn ngày bắt đầu"
-          cancelTextIOS="Hủy"
-          confirmTextIOS="Xác nhận"
-        />
-        <DateTimePickerModal
-          isVisible={showEndDatePicker}
-          mode="date"
-          onConfirm={handleEndDateChange}
-          onCancel={() => setShowEndDatePicker(false)}
-          date={endDate}
-          minimumDate={startDate}
-          display="spinner"
-          textColor="#333"
-          accentColor="#667eea"
-          headerTextIOS="Chọn ngày kết thúc"
-          cancelTextIOS="Hủy"
-          confirmTextIOS="Xác nhận"
-        />
+        {Platform.OS === "web" ? (
+          renderWebPicker()
+        ) : (
+          <>
+            <DateTimePickerModal
+              isVisible={showStartDatePicker}
+              mode="date"
+              onConfirm={handleStartDateChange}
+              onCancel={() => setShowStartDatePicker(false)}
+              date={startDate}
+              display="spinner"
+              textColor="#333"
+              accentColor="#667eea"
+              headerTextIOS="Chọn ngày bắt đầu"
+              cancelTextIOS="Hủy"
+              confirmTextIOS="Xác nhận"
+              locale="vi_VN"
+            />
+            <DateTimePickerModal
+              isVisible={showEndDatePicker}
+              mode="date"
+              onConfirm={handleEndDateChange}
+              onCancel={() => setShowEndDatePicker(false)}
+              date={endDate}
+              minimumDate={startDate}
+              display="spinner"
+              textColor="#333"
+              accentColor="#667eea"
+              headerTextIOS="Chọn ngày kết thúc"
+              cancelTextIOS="Hủy"
+              confirmTextIOS="Xác nhận"
+              locale="vi_VN"
+            />
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -388,6 +459,47 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#667eea",
     fontWeight: "600",
+  },
+  // Web Date Picker Styles
+  webPickerOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+  },
+  webPickerContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    boxShadow:
+      "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+    maxWidth: 400,
+    alignItems: "center",
+  },
+  webPickerButton: {
+    marginTop: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "#667eea",
+    color: "#FFFFFF",
+    border: "none",
+    borderRadius: 8,
+    fontSize: 16,
+    fontWeight: "600",
+    cursor: "pointer",
+    width: "100%",
+  },
+  webPickerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 16,
   },
 });
 

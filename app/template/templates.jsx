@@ -356,7 +356,7 @@ const TemplateListScreen = () => {
     // Xác nhận từ user trước khi apply
     Alert.alert(
       "Áp dụng lịch trình",
-      `Bạn sẽ áp dụng lịch trình "${selectedTemplateForExisting.name}" vào chuyến đi "${trip.destination}"?\n\nChỉ itinerary và packing list sẽ được cập nhật. Các thông tin gốc như ngày đi, ngân sách sẽ không thay đổi.`,
+      `Bạn sẽ áp dụng lịch trình "${selectedTemplateForExisting.name}" vào chuyến đi "${trip.destination}"?`,
       [
         {
           text: "Hủy",
