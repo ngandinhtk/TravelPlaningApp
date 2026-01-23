@@ -1,24 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
-import { generateMockItinerary } from '../../lib/data';
+import { generateMockItinerary } from "../../lib/data";
 const GeneratingScreen = ({ trip, onComplete }) => {
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState('Analyzing your preferences...');
+
+  const statuses = [
+    "Analyzing your preferences...",
+    "Finding the best attractions...",
+    "Optimizing your route...",
+    "Selecting restaurants...",
+    "Finalizing your itinerary...",
+  ];
+
+  // Derive status from progress (0-20: index 0, 21-40: index 1, etc.)
+  const statusIndex = Math.min(Math.floor(progress / 20), statuses.length - 1);
+  const status = statuses[statusIndex];
 
   useEffect(() => {
-    const statuses = [
-      'Analyzing your preferences...',
-      'Finding the best attractions...',
-      'Optimizing your route...',
-      'Selecting restaurants...',
-      'Finalizing your itinerary...'
-    ];
-
-    let currentStatus = 0;
     const interval = setInterval(() => {
-      setProgress(prev => {
+      setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           setTimeout(() => {
@@ -28,35 +30,32 @@ const GeneratingScreen = ({ trip, onComplete }) => {
         }
         return prev + 2;
       });
-
-      if (progress % 20 === 0 && currentStatus < statuses.length - 1) {
-        currentStatus++;
-        setStatus(statuses[currentStatus]);
-      }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [progress]);
+  }, []); // Run once on mount
 
   return (
     <LinearGradient
-      colors={['#667eea', '#764ba2']}
+      colors={["#667eea", "#764ba2"]}
       style={styles.generatingContainer}
     >
       <Text style={styles.generatingIcon}>✨</Text>
       <Text style={styles.generatingTitle}>Creating Your Perfect Trip</Text>
       <Text style={styles.generatingStatus}>{status}</Text>
-      
+
       <View style={styles.progressBarContainer}>
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, { width: `${progress}%` }]} />
         </View>
       </View>
-      
+
       <Text style={styles.progressText}>{progress}%</Text>
 
       <View style={styles.generatingFeatures}>
-        <Text style={styles.featureText}>🎯 Personalized to your interests</Text>
+        <Text style={styles.featureText}>
+          🎯 Personalized to your interests
+        </Text>
         <Text style={styles.featureText}>💰 Optimized for your budget</Text>
         <Text style={styles.featureText}>🗺️ Smart route planning</Text>
       </View>
@@ -65,51 +64,51 @@ const GeneratingScreen = ({ trip, onComplete }) => {
 };
 
 const styles = StyleSheet.create({
-    generatingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 30,
-      },
-      generatingIcon: {
-        fontSize: 80,
-        marginBottom: 30,
-      },
-      generatingTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#FFFFFF',
-        marginBottom: 15,
-        textAlign: 'center',
-      },
-      generatingStatus: {
-        fontSize: 16,
-        color: '#FFFFFF',
-        opacity: 0.9,
-        marginBottom: 30,
-      },
-      progressBarContainer: {
-        width: '100%',
-        height: 10,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        borderRadius: 5,
-        marginBottom: 10,
-      },
-      progressBar: {
-        height: '100%',
-        borderRadius: 5,
-        overflow: 'hidden',
-      },
-      progressFill: {
-        height: '100%',
-        backgroundColor: '#FFFFFF',
-      },
-      progressText: {
-        fontSize: 16,
-        color: '#FFFFFF',
-        fontWeight: '600',
-        marginBottom: 40,
-      },
+  generatingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 30,
+  },
+  generatingIcon: {
+    fontSize: 80,
+    marginBottom: 30,
+  },
+  generatingTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  generatingStatus: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    opacity: 0.9,
+    marginBottom: 30,
+  },
+  progressBarContainer: {
+    width: "100%",
+    height: 10,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  progressBar: {
+    height: "100%",
+    borderRadius: 5,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: "#FFFFFF",
+  },
+  progressText: {
+    fontSize: 16,
+    color: "#FFFFFF",
+    fontWeight: "600",
+    marginBottom: 40,
+  },
 });
 
 export default GeneratingScreen;

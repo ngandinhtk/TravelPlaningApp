@@ -1,11 +1,12 @@
-import { TripProvider } from './TripContext';
-import { UserProvider } from './UserContext';
+import { IntelligenceProvider } from "./IntelligenceContext";
+import { TripProvider } from "./TripContext";
+import { UserProvider } from "./UserContext";
 
 export const AppProviders = ({ children }) => {
   return (
     <UserProvider>
       <TripProvider>
-        {children}
+        <IntelligenceProvider>{children}</IntelligenceProvider>
       </TripProvider>
     </UserProvider>
   );

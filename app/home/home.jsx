@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   Image,
@@ -11,13 +11,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { FeedbackModal } from "../../components/common/FeedbackModal";
+import { IntelligenceCard } from "../../components/common/IntelligenceCard";
 import CustomModal from "../../components/common/Modal";
+import { useIntelligence } from "../../context/IntelligenceContext";
 import { useTrip } from "../../context/TripContext";
 import { useUser } from "../../context/UserContext";
 import { getTrips, getTripTemplates } from "../../services/tripService";
 import { getUserProfile } from "../../services/userService";
-const pulseAnim = new Animated.Value(0);
 const SkeletonPlaceholder = ({ width, height, style }) => {
+  const pulseAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     const sharedAnimation = Animated.loop(
       Animated.sequence([
@@ -49,15 +53,17 @@ const SkeletonPlaceholder = ({ width, height, style }) => {
   );
 };
 
-const HomeScreen = ({ onCreateTrip, onViewTrip }) => {
+const HomeScreen = () => {
   // Use the user and the auth loading state from the context
   const { user, isLoading: isAuthLoading } = useUser();
+  const { trackAction } = useIntelligence();
   const [trips, setTrips] = useState([]);
   const [isTripsLoading, setIsTripsLoading] = useState(true);
   const [templates, setTemplates] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTemplateDetail, setSelectedTemplateDetail] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   // const [selectedTemplateForExisting, setSelectedTemplateForExisting] = useState(null);
 
@@ -72,6 +78,10 @@ const HomeScreen = ({ onCreateTrip, onViewTrip }) => {
           setIsTripsLoading(true);
           try {
             const userTrips = await getTrips(user.uid);
+            // Track home page visit
+            await trackAction(user.uid, "home_visit", "dashboard", {
+              tripCount: userTrips.length,
+            });
             // console.log(userTrips);
             getUserProfile(user.uid)
               .then((profile) => {})
@@ -95,18 +105,31 @@ const HomeScreen = ({ onCreateTrip, onViewTrip }) => {
         }
       };
       fetchTrips();
-    }, [user, isAuthLoading]),
+    }, [user, isAuthLoading, trackAction]),
   );
   const handleSelectTemplate = (template) => {
     setSelectedTemplateDetail(template);
     setShowDetailModal(true);
   };
 
-  onCreateTrip = () => {
+  const handleCreateTrip = () => {
+    // Track create trip action
+    if (user) {
+      trackAction(user.uid, "trip_create_initiated", "trip", {
+        source: "home_screen",
+      });
+    }
     router.push("/trip/create");
   };
 
-  onViewTrip = (trip) => {
+  const handleViewTrip = (trip) => {
+    // Track trip view action
+    if (user) {
+      trackAction(user.uid, "trip_viewed", "trip", {
+        tripId: trip.id,
+        destination: trip.destination,
+      });
+    }
     // 1. Set ID của chuyến đi được chọn vào context
     setSelectedTripId(trip.id);
     // 2. Điều hướng đến trang chi tiết mà không cần params
@@ -243,7 +266,10 @@ const HomeScreen = ({ onCreateTrip, onViewTrip }) => {
 
       {/* Action Buttons */}
       <View style={styles.actionButtonsContainer}>
-        <TouchableOpacity onPress={onCreateTrip} style={styles.actionButton}>
+        <TouchableOpacity
+          onPress={handleCreateTrip}
+          style={styles.actionButton}
+        >
           <LinearGradient
             colors={["#667eea", "#764ba2"]}
             start={{ x: 0, y: 0 }}
@@ -285,7 +311,7 @@ const HomeScreen = ({ onCreateTrip, onViewTrip }) => {
         {isTripsLoading ? (
           <TripsSkeleton />
         ) : (
-          <TripsContent trips={filteredTrips} onViewTrip={onViewTrip} />
+          <TripsContent trips={filteredTrips} onViewTrip={handleViewTrip} />
         )}
 
         {/* Recommended Templates Section */}
@@ -366,11 +392,41 @@ const HomeScreen = ({ onCreateTrip, onViewTrip }) => {
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        {/* AI Intelligence Section */}
+        {!isAuthLoading && user && (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>🧠 Your AI Intelligence</Text>
+            <TouchableOpacity
+              onPress={() => router.push("/admin/intelligence")}
+            >
+              <Text style={styles.seeAll}>View Details</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {!isAuthLoading && user && (
+          <View style={{ height: 300, marginBottom: 20 }}>
+            <IntelligenceCard
+              userId={user.uid}
+              onFeedbackPress={() => setShowFeedbackModal(true)}
+            />
+          </View>
+        )}
+
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>{/* ... navigation items ... */}</View>
+      {/* Feedback Modal */}
+      {user && (
+        <FeedbackModal
+          isVisible={showFeedbackModal}
+          onClose={() => setShowFeedbackModal(false)}
+          userId={user.uid}
+          itemType="home_interaction"
+          title="What do you think?"
+        />
+      )}
     </View>
   );
 };

@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import CustomModal from "../../components/common/Modal";
+import { useIntelligence } from "../../context/IntelligenceContext";
 import { useUser } from "../../context/UserContext";
 import { createInitialItineraries } from "../../services/itineraryService";
 import { addTrip } from "../../services/tripService";
@@ -31,6 +32,7 @@ const CreateTripScreen = ({ onBack }) => {
   const [successMessage, setSuccessMessage] = useState(null);
 
   const { user } = useUser();
+  const { trackAction } = useIntelligence();
   const [error, setError] = useState(null);
   const interestOptions = [
     { emoji: "🏖️", name: "Beach" },
@@ -123,6 +125,18 @@ const CreateTripScreen = ({ onBack }) => {
         notes: notes || "",
         itinerary: itineraries,
       });
+
+      // Track trip creation behavior
+      if (user?.uid) {
+        await trackAction(user.uid, "trip_created", "trip", {
+          destination,
+          days: calculatedDays,
+          budget: parseFloat(budget) || 0,
+          travelers: parseInt(travelers) || 0,
+          interests: interests,
+        });
+      }
+
       setSuccessMessage("Trip created successfully!");
       setTimeout(() => {
         setSuccessMessage(null);
