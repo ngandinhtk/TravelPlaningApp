@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
+  Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -16,6 +18,13 @@ import {
   getPersonalizedRecommendations,
   getUserIntelligenceScore,
 } from "../../services/compoundingIntelligenceService";
+import {
+  findCompatibleTravelCompanions,
+  getSimilarPlaces,
+  predictTripBudget,
+  suggestBestTravelTime,
+  suggestPackingItems,
+} from "../admin/compoundingIntelligenceNextSteps";
 
 const { width } = Dimensions.get("window");
 
@@ -32,6 +41,8 @@ const IntelligenceDashboard = () => {
   });
   const [recommendations, setRecommendations] = useState([]);
   const [feedbackVisible, setFeedbackVisible] = useState(false);
+  const [betaLoading, setBetaLoading] = useState(false);
+  const [betaInsights, setBetaInsights] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -80,6 +91,29 @@ const IntelligenceDashboard = () => {
     return lvl;
   };
 
+  const handleGenerateBetaInsights = async () => {
+    setBetaLoading(true);
+    try {
+      // Demo context
+      const demoDest = "Kyoto";
+      const demoSeason = "Spring";
+
+      const [places, budget, time, companions, packing] = await Promise.all([
+        getSimilarPlaces(user?.uid),
+        predictTripBudget(user?.uid, demoDest, 5),
+        suggestBestTravelTime(user?.uid, demoDest),
+        findCompatibleTravelCompanions(user?.uid),
+        suggestPackingItems(user?.uid, demoDest, demoSeason),
+      ]);
+
+      setBetaInsights({ places, budget, time, companions, packing });
+    } catch (error) {
+      console.error("Error generating beta insights:", error);
+    } finally {
+      setBetaLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -91,6 +125,10 @@ const IntelligenceDashboard = () => {
     );
   }
 
+  // Calculate dynamic top padding for header
+  const headerPaddingTop =
+    Platform.OS === "android" ? StatusBar.currentHeight + 20 : 60;
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Hero Section - Intelligence Score */}
@@ -98,10 +136,16 @@ const IntelligenceDashboard = () => {
         colors={getLevelColor(score)}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.heroSection}
+        style={[styles.heroSection, { paddingTop: headerPaddingTop }]}
       >
         <TouchableOpacity
-          style={styles.backButton}
+          style={[
+            styles.backButton,
+            {
+              top:
+                Platform.OS === "android" ? StatusBar.currentHeight + 10 : 50,
+            },
+          ]}
           onPress={() => router.back()}
         >
           <Text style={styles.backButtonText}>← Back</Text>
@@ -126,7 +170,7 @@ const IntelligenceDashboard = () => {
           colors={["#667eea", "#764ba2"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.statCard}
+          style={[styles.statCard, styles.shadow]}
         >
           <Text style={styles.statIcon}>📊</Text>
           <Text style={styles.statNumber}>{stats.behaviors}</Text>
@@ -138,7 +182,7 @@ const IntelligenceDashboard = () => {
           colors={["#f093fb", "#f5576c"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.statCard}
+          style={[styles.statCard, styles.shadow]}
         >
           <Text style={styles.statIcon}>⭐</Text>
           <Text style={styles.statNumber}>{stats.feedbacks}</Text>
@@ -150,7 +194,7 @@ const IntelligenceDashboard = () => {
           colors={["#4facfe", "#00f2fe"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.statCard}
+          style={[styles.statCard, styles.shadow]}
         >
           <Text style={styles.statIcon}>💡</Text>
           <Text style={styles.statNumber}>{stats.insights}</Text>
@@ -220,7 +264,7 @@ const IntelligenceDashboard = () => {
           <Text style={styles.sectionTitle}>💡 Gợi ý mới nhất</Text>
 
           {recommendations.map((rec, index) => (
-            <View key={index} style={styles.recCard}>
+            <View key={index} style={[styles.recCard, styles.shadow]}>
               <View style={styles.recHeader}>
                 <Text style={styles.recTitle}>{rec.title}</Text>
                 <View style={styles.badge}>
@@ -230,10 +274,107 @@ const IntelligenceDashboard = () => {
                 </View>
               </View>
               <Text style={styles.recDesc}>{rec.description}</Text>
+
+              {/* Added Action Button for consistency with IntelligenceCard */}
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => setFeedbackVisible(true)}
+              >
+                <Text style={styles.actionButtonText}>
+                  Help me get better →
+                </Text>
+              </TouchableOpacity>
             </View>
           ))}
         </View>
       )}
+
+      {/* Beta / Genius Features Section */}
+      <View style={styles.section}>
+        <View style={styles.betaHeader}>
+          <Text style={styles.sectionTitle}>🧪 Genius Features (Beta)</Text>
+          <View style={styles.betaBadge}>
+            <Text style={styles.betaBadgeText}>NEW</Text>
+          </View>
+        </View>
+        <Text style={[styles.sectionDesc, { marginBottom: 16 }]}>
+          Các tính năng AI thế hệ tiếp theo đang được phát triển.
+        </Text>
+
+        {!betaInsights ? (
+          <TouchableOpacity
+            style={styles.betaButton}
+            onPress={handleGenerateBetaInsights}
+            disabled={betaLoading}
+          >
+            {betaLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.betaButtonText}>✨ Kích hoạt Genius AI</Text>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.betaContainer}>
+            <View style={[styles.betaCard, styles.shadow]}>
+              <Text style={styles.betaCardTitle}>💰 Dự đoán ngân sách</Text>
+              <Text style={styles.betaCardValue}>
+                ${betaInsights.budget.predictedTotal} /{" "}
+                {betaInsights.budget.days} ngày
+              </Text>
+              <Text style={styles.betaCardDesc}>
+                {betaInsights.budget.insight}
+              </Text>
+            </View>
+
+            <View style={[styles.betaCard, styles.shadow]}>
+              <Text style={styles.betaCardTitle}>🗓️ Thời điểm tốt nhất</Text>
+              <Text style={styles.betaCardValue}>
+                Tháng {betaInsights.time.bestMonth}
+              </Text>
+              <Text style={styles.betaCardDesc}>
+                {betaInsights.time.reason}
+              </Text>
+            </View>
+
+            <View style={[styles.betaCard, styles.shadow]}>
+              <Text style={styles.betaCardTitle}>
+                🎒 Gợi ý hành lý ({betaInsights.packing.destination})
+              </Text>
+              <View style={styles.tagContainer}>
+                {betaInsights.packing.items.map((item, i) => (
+                  <View key={i} style={styles.tag}>
+                    <Text style={styles.tagText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            <View style={[styles.betaCard, styles.shadow]}>
+              <Text style={styles.betaCardTitle}>👥 Bạn đồng hành phù hợp</Text>
+              {betaInsights.companions.map((comp, i) => (
+                <View key={i} style={styles.companionRow}>
+                  <Text style={styles.companionName}>{comp.name}</Text>
+                  <Text style={styles.companionScore}>
+                    {comp.matchScore}% hợp
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.betaButton,
+                { marginTop: 12, backgroundColor: "#f0f0f0" },
+              ]}
+              onPress={() => setBetaInsights(null)}
+            >
+              <Text style={[styles.betaButtonText, { color: "#666" }]}>
+                🔄 Reset Demo
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
 
       {/* Call to Action */}
       <View style={styles.ctaSection}>
@@ -258,9 +399,9 @@ const IntelligenceDashboard = () => {
       </View>
 
       {/* Refresh Button */}
-      <TouchableOpacity style={styles.refreshBtn} onPress={loadData}>
+      {/* <TouchableOpacity style={styles.refreshBtn} onPress={loadData}>
         <Text style={styles.refreshBtnText}>🔄 Làm mới dữ liệu</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <View style={styles.spacer} />
 
@@ -293,7 +434,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   heroSection: {
-    paddingTop: 60,
+    // paddingTop handled dynamically
     paddingBottom: 40,
     paddingHorizontal: 20,
     alignItems: "center",
@@ -301,7 +442,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: "absolute",
-    top: 50,
     left: 20,
     zIndex: 10,
     padding: 8,
@@ -362,6 +502,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingVertical: 16,
   },
+  shadow: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
   statIcon: {
     fontSize: 28,
     marginBottom: 8,
@@ -393,6 +540,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     marginBottom: 16,
+  },
+  sectionDesc: {
+    fontSize: 13,
+    color: "#666",
+    lineHeight: 18,
   },
   stepContainer: {
     backgroundColor: "#fff",
@@ -470,6 +622,19 @@ const styles = StyleSheet.create({
     color: "#667eea",
     fontWeight: "bold",
   },
+  actionButton: {
+    backgroundColor: "#f0f4ff",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    alignItems: "center",
+    marginTop: 12,
+  },
+  actionButtonText: {
+    color: "#667eea",
+    fontSize: 12,
+    fontWeight: "600",
+  },
   ctaSection: {
     paddingHorizontal: 16,
     marginBottom: 24,
@@ -519,6 +684,95 @@ const styles = StyleSheet.create({
   },
   spacer: {
     height: 20,
+  },
+  betaHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  betaBadge: {
+    backgroundColor: "#FFD700",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 8,
+    marginBottom: 12,
+  },
+  betaBadgeText: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  betaButton: {
+    backgroundColor: "#333",
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  betaButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  betaContainer: {
+    gap: 12,
+  },
+  betaCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 0,
+    // borderColor: "#eee", // Removed border in favor of shadow
+  },
+  betaCardTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#667eea",
+    marginBottom: 6,
+    textTransform: "uppercase",
+  },
+  betaCardValue: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  betaCardDesc: {
+    fontSize: 13,
+    color: "#888",
+  },
+  tagContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 8,
+  },
+  tag: {
+    backgroundColor: "#f0f4ff",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  tagText: {
+    fontSize: 12,
+    color: "#667eea",
+  },
+  companionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f5f5f5",
+  },
+  companionName: {
+    fontSize: 14,
+    color: "#333",
+  },
+  companionScore: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#4ec970",
   },
 });
 

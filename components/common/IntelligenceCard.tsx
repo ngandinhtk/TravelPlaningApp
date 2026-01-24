@@ -1,22 +1,22 @@
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-    AIInsight,
-    getPersonalizedRecommendations,
-    getUserIntelligenceScore,
+  AIInsight,
+  getPersonalizedRecommendations,
+  getUserIntelligenceScore,
 } from "../../services/compoundingIntelligenceService";
 
 interface IntelligenceCardProps {
   userId: string;
-  onFeedbackPress?: () => void;
+  onFeedbackPress?: (insight: AIInsight) => void;
 }
 
 export const IntelligenceCard: React.FC<IntelligenceCardProps> = ({
@@ -110,9 +110,9 @@ export const IntelligenceCard: React.FC<IntelligenceCardProps> = ({
           </View>
         </View>
 
-        <Text style={styles.scoreDescription}>
+        {/* <Text style={styles.scoreDescription}>
           More interactions & feedback = Smarter recommendations
-        </Text>
+        </Text> */}
       </LinearGradient>
 
       {/* Recommendations Section */}
@@ -135,7 +135,7 @@ export const IntelligenceCard: React.FC<IntelligenceCardProps> = ({
               {rec.actionable && (
                 <TouchableOpacity
                   style={styles.actionButton}
-                  onPress={onFeedbackPress}
+                  onPress={() => onFeedbackPress?.(rec)}
                 >
                   <Text style={styles.actionButtonText}>
                     Help me get better →
@@ -173,7 +173,7 @@ export const IntelligenceCard: React.FC<IntelligenceCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     paddingVertical: 12,
   },
   loadingContainer: {
@@ -323,8 +323,8 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     alignItems: "center",
-    paddingVertical: 40,
-    marginVertical: 20,
+    paddingVertical: 10,
+    marginVertical: 10,
   },
   emptyStateEmoji: {
     fontSize: 48,
