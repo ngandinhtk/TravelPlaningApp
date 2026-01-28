@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { FeedbackModal } from "../../components/common/FeedbackModal";
+import FeedbackModal from "../../components/common/FeedbackModal";
 import { useUser } from "../../context/UserContext";
 import {
   getPersonalizedRecommendations,

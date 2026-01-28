@@ -543,6 +543,21 @@ const TripDetailScreen = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
+              onPress={() =>
+                router.push({
+                  pathname: "/itinerary/itinerary",
+                  params: { id: trip.id },
+                })
+              }
+              style={styles.actionItem}
+            >
+              <View style={[styles.iconCircle, { backgroundColor: "#eef0ff" }]}>
+                <Calendar color="#667eea" size={24} />
+              </View>
+              <Text style={styles.actionLabel}>Itinerary</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               onPress={() => router.push("/trip/transport")}
               style={styles.actionItem}
             >

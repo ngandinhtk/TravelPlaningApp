@@ -1,289 +1,242 @@
-import { LinearGradient } from "expo-linear-gradient";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import React, { useState } from "react";
 import {
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
-import Modal from "react-native-modal";
-import { submitFeedback } from "../../services/compoundingIntelligenceService";
+import { db } from "../../services/firebase";
 
 interface FeedbackModalProps {
   isVisible: boolean;
   onClose: () => void;
-  userId: string;
-  itemType: string; // 'place', 'activity', 'recommendation', etc.
-  itemId?: string;
-  tripId?: string;
-  category?: string;
+  userId?: string;
+  itemType: string; // e.g., 'place', 'trip', 'template'
+  itemId: string;
+  category?: string; // e.g., 'beach', 'mountain', 'hotel'
   title?: string;
-  onSubmitSuccess?: () => void;
+  tripId?: string; // Optional: link feedback to a specific trip context
 }
 
-export const FeedbackModal: React.FC<FeedbackModalProps> = ({
+const FeedbackModal = ({
   isVisible,
   onClose,
   userId,
   itemType,
   itemId,
-  tripId,
   category,
-  title = "How was this?",
-  onSubmitSuccess,
-}) => {
+  title = "Đánh giá trải nghiệm",
+  tripId,
+}: FeedbackModalProps) => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      alert("Please select a rating");
+      Alert.alert(
+        "Chưa chọn đánh giá",
+        "Vui lòng chọn số sao để chúng tôi biết cảm nhận của bạn nhé!",
+      );
       return;
     }
 
-    setLoading(true);
+    if (!userId) {
+      Alert.alert("Yêu cầu đăng nhập", "Bạn cần đăng nhập để gửi đánh giá.");
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      await submitFeedback(
+      // Ghi dữ liệu vào collection 'feedback' trong Firestore
+      // Đây là dữ liệu nền tảng cho hệ thống Compounding Intelligence sau này
+      await addDoc(collection(db, "feedback"), {
         userId,
         itemType,
-        rating,
-        comment,
-        tripId,
         itemId,
-        category,
-      );
+        rating,
+        comment: comment.trim(),
+        category: category || "general",
+        tripId: tripId || null,
+        createdAt: serverTimestamp(),
+        helpful: true, // Mặc định feedback là hữu ích
+      });
 
-      setComment("");
+      Alert.alert("Cảm ơn!", "Đánh giá của bạn đã được ghi nhận.");
+
+      // Reset form
       setRating(0);
+      setComment("");
       onClose();
-      onSubmitSuccess?.();
     } catch (error) {
       console.error("Error submitting feedback:", error);
-      alert("Failed to submit feedback");
+      Alert.alert("Lỗi", "Không thể gửi đánh giá. Vui lòng thử lại sau.");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
+  };
+
+  const handleClose = () => {
+    if (!submitting) {
+      onClose();
+    }
+  };
+
+  const renderStars = () => {
+    return (
+      <View style={styles.starsContainer}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <TouchableOpacity
+            key={star}
+            onPress={() => setRating(star)}
+            activeOpacity={0.7}
+            style={styles.starButton}
+          >
+            <Text style={[styles.star, rating >= star && styles.starSelected]}>
+              {rating >= star ? "★" : "☆"}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
   };
 
   return (
     <Modal
-      isVisible={isVisible}
-      onBackdropPress={onClose}
-      onBackButtonPress={onClose}
-      backdropOpacity={0.4}
-      animationIn="slideInUp"
-      animationOut="slideOutDown"
+      visible={isVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={handleClose}
     >
-      <View style={styles.container}>
-        <LinearGradient
-          colors={["#667eea", "#764ba2"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
-        >
-          <Text style={styles.title}>{title}</Text>
-        </LinearGradient>
-
-        <View style={styles.content}>
-          {/* Rating Stars */}
-          <View style={styles.ratingContainer}>
-            <Text style={styles.ratingLabel}>Your rating:</Text>
-            <View style={styles.starsRow}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity
-                  key={star}
-                  onPress={() => setRating(star)}
-                  style={styles.starButton}
-                >
-                  <Text style={styles.star}>{rating >= star ? "⭐" : "☆"}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            {rating > 0 && (
-              <Text style={styles.ratingText}>
-                {rating === 5
-                  ? "Amazing! 🎉"
-                  : rating === 4
-                    ? "Great! 😊"
-                    : rating === 3
-                      ? "Good 👍"
-                      : rating === 2
-                        ? "Could be better 🤔"
-                        : "Need improvement 😔"}
-              </Text>
-            )}
-          </View>
-
-          {/* Comment Box */}
-          <View style={styles.commentContainer}>
-            <Text style={styles.commentLabel}>Add a comment (optional):</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="What did you think?"
-              placeholderTextColor="#999"
-              value={comment}
-              onChangeText={setComment}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* Help Text */}
-          <View style={styles.helpContainer}>
-            <Text style={styles.helpText}>
-              💡 Your feedback helps us learn and improve recommendations for
-              you!
-            </Text>
-          </View>
-        </View>
-
-        {/* Buttons */}
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={onClose}
-            disabled={loading}
-          >
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
-
-          <LinearGradient
-            colors={["#667eea", "#764ba2"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.submitButtonGradient}
-          >
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={handleSubmit}
-              disabled={loading}
+      <TouchableWithoutFeedback onPress={handleClose}>
+        <View style={styles.overlay}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              style={styles.keyboardView}
             >
-              <Text style={styles.submitText}>
-                {loading ? "Saving..." : "Submit Feedback"}
-              </Text>
-            </TouchableOpacity>
-          </LinearGradient>
+              <View style={styles.container}>
+                <Text style={styles.title}>{title}</Text>
+                <Text style={styles.subtitle}>Bạn cảm thấy thế nào?</Text>
+
+                {renderStars()}
+
+                <Text style={styles.label}>Nhận xét (Tùy chọn)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Chia sẻ thêm về trải nghiệm của bạn..."
+                  placeholderTextColor="#999"
+                  multiline
+                  numberOfLines={4}
+                  value={comment}
+                  onChangeText={setComment}
+                  textAlignVertical="top"
+                />
+
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    style={[styles.button, styles.cancelButton]}
+                    onPress={handleClose}
+                    disabled={submitting}
+                  >
+                    <Text style={styles.cancelButtonText}>Đóng</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.button, styles.submitButton]}
+                    onPress={handleSubmit}
+                    disabled={submitting}
+                  >
+                    {submitting ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <Text style={styles.submitButtonText}>Gửi đánh giá</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    overflow: "hidden",
-    maxHeight: "85%",
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
   },
-  header: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+  keyboardView: { width: "100%", alignItems: "center" },
+  container: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   title: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#fff",
+    color: "#1A1A1A",
+    textAlign: "center",
+    marginBottom: 8,
   },
-  content: {
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-  },
-  ratingContainer: {
+  subtitle: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
     marginBottom: 20,
   },
-  ratingLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  starsRow: {
+  starsContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 12,
-    marginBottom: 8,
+    marginBottom: 24,
   },
-  starButton: {
-    padding: 8,
-  },
-  star: {
-    fontSize: 36,
-  },
-  ratingText: {
-    textAlign: "center",
-    fontSize: 14,
-    color: "#667eea",
-    fontWeight: "600",
-    marginTop: 8,
-  },
-  commentContainer: {
-    marginBottom: 16,
-  },
-  commentLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
+  starButton: { marginHorizontal: 6 },
+  star: { fontSize: 36, color: "#E0E0E0" },
+  starSelected: { color: "#FFD700" },
+  label: { fontSize: 14, fontWeight: "600", color: "#333", marginBottom: 8 },
   input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 12,
     padding: 12,
+    height: 100,
     fontSize: 14,
     color: "#333",
-    minHeight: 80,
-    backgroundColor: "#f9f9f9",
+    marginBottom: 24,
   },
-  helpContainer: {
-    backgroundColor: "#f0f4ff",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  helpText: {
-    fontSize: 12,
-    color: "#667eea",
-    lineHeight: 18,
-  },
-  footer: {
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-  },
-  cancelButton: {
+  buttonContainer: { flexDirection: "row", gap: 12 }, // Note: 'gap' works in newer RN versions. Use marginLeft on second button if issues arise.
+  button: {
     flex: 1,
     paddingVertical: 12,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-  },
-  cancelText: {
-    color: "#666",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-  submitButtonGradient: {
-    flex: 1,
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  submitButton: {
-    paddingVertical: 12,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  submitText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 14,
-  },
+  cancelButton: { backgroundColor: "#F0F0F0" },
+  submitButton: { backgroundColor: "#667eea" },
+  cancelButtonText: { color: "#666", fontWeight: "600", fontSize: 16 },
+  submitButtonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
 });
+
+export default FeedbackModal;
+// export default FeedbackModal

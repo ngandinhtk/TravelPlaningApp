@@ -69,7 +69,7 @@ export const IntelligenceCard: React.FC<IntelligenceCardProps> = ({
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Intelligence Score Card */}
       <LinearGradient
-        colors={["#667eea", "#764ba2"]}
+        colors={["#7189f1", "#895ab8"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.scoreCard}
@@ -356,3 +356,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+
+export default IntelligenceCard;

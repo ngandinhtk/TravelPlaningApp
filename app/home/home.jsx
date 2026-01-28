@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   Image,
@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { FeedbackModal } from "../../components/common/FeedbackModal";
+import FeedbackModal from "../../components/common/FeedbackModal";
 import { IntelligenceCard } from "../../components/common/IntelligenceCard";
 import CustomModal from "../../components/common/Modal";
 import { useIntelligence } from "../../context/IntelligenceContext";
@@ -130,9 +130,8 @@ const HomeScreen = () => {
         destination: trip.destination,
       });
     }
-    // 1. Set ID của chuyến đi được chọn vào context
+
     setSelectedTripId(trip.id);
-    // 2. Điều hướng đến trang chi tiết mà không cần params
     router.push("/trip/detail");
   };
 
