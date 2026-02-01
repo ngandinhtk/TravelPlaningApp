@@ -34,14 +34,14 @@ const ManageTripsScreen = () => {
         <Text style={styles.tripStatus}>{item.status}</Text>
       </View>
       <Text style={styles.tripDates}>{item.dates}</Text>
-      <Text style={styles.tripUser}>User Email: {item.userEmail}</Text>
+      <Text style={styles.tripUser}>Email người dùng: {item.userEmail}</Text>
     </View>
   );
   return (
     <View style={styles.container}>
       <LinearGradient colors={["#f093fb", "#f5576c"]} style={styles.header}>
         <BackButton />
-        <Text style={styles.headerTitle}>Manage All Trips</Text>
+        <Text style={styles.headerTitle}>Quản lý tất cả chuyến đi</Text>
         <View style={{ width: 40 }} />
       </LinearGradient>
       <FlatList

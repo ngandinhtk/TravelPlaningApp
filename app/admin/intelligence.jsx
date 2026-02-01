@@ -24,7 +24,7 @@ import {
   predictTripBudget,
   suggestBestTravelTime,
   suggestPackingItems,
-} from "../admin/compoundingIntelligenceNextSteps";
+} from "./compoundingIntelligenceNextSteps";
 
 const { width } = Dimensions.get("window");
 

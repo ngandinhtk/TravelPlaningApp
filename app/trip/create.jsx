@@ -35,12 +35,12 @@ const CreateTripScreen = ({ onBack }) => {
   const { trackAction } = useIntelligence();
   const [error, setError] = useState(null);
   const interestOptions = [
-    { emoji: "🏖️", name: "Beach" },
-    { emoji: "🏔️", name: "Mountain" },
-    { emoji: "🍜", name: "Food" },
-    { emoji: "🎨", name: "Culture" },
-    { emoji: "🏛️", name: "History" },
-    { emoji: "🎢", name: "Adventure" },
+    { emoji: "🏖️", name: "Biển" },
+    { emoji: "🏔️", name: "Núi" },
+    { emoji: "🍜", name: "Ẩm thực" },
+    { emoji: "🎨", name: "Văn hóa" },
+    { emoji: "🏛️", name: "Lịch sử" },
+    { emoji: "🎢", name: "Phiêu lưu" },
   ];
   // console.log(Platform.OS === 'web' ? 'Running on Web' : 'Running on Native');
 
@@ -137,14 +137,14 @@ const CreateTripScreen = ({ onBack }) => {
         });
       }
 
-      setSuccessMessage("Trip created successfully!");
+      setSuccessMessage("Tạo chuyến đi thành công!");
       setTimeout(() => {
         setSuccessMessage(null);
         router.push("/");
       }, 2000);
     } catch (error) {
       console.error("Error creating trip:", error);
-      setError("Failed to create trip.");
+      setError("Tạo chuyến đi thất bại.");
     }
   };
 
@@ -313,8 +313,8 @@ const CreateTripScreen = ({ onBack }) => {
         <TouchableOpacity onPress={handleBack}>
           <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
         </TouchableOpacity>
-        <Text style={styles.createTripTitle}>Create Trip</Text>
-        <Text style={styles.stepIndicator}>Step {step}/3</Text>
+        <Text style={styles.createTripTitle}>Tạo chuyến đi</Text>
+        <Text style={styles.stepIndicator}>Bước {step}/3</Text>
       </LinearGradient>
 
       <ScrollView
@@ -323,10 +323,10 @@ const CreateTripScreen = ({ onBack }) => {
       >
         {step === 1 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Where are you going? ✈️</Text>
+            <Text style={styles.stepTitle}>Bạn muốn đi đâu? ✈️</Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Destination(s)</Text>
+              <Text style={styles.inputLabel}>Điểm đến</Text>
               {destinations.map((dest, index) => (
                 <View
                   key={index}
@@ -334,7 +334,7 @@ const CreateTripScreen = ({ onBack }) => {
                 >
                   <TextInput
                     style={[styles.input, { flex: 1 }]}
-                    placeholder={`Destination ${index + 1}`}
+                    placeholder={`Điểm đến ${index + 1}`}
                     value={dest}
                     onChangeText={(text) =>
                       handleChangeDestination(text, index)
@@ -368,14 +368,14 @@ const CreateTripScreen = ({ onBack }) => {
                 style={{ marginTop: 5 }}
               >
                 <Text style={{ color: "#667eea", fontWeight: "600" }}>
-                  + Add another destination
+                  + Thêm điểm đến khác
                 </Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.inputRow}>
               <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
-                <Text style={styles.inputLabel}>Start Date</Text>
+                <Text style={styles.inputLabel}>Ngày bắt đầu</Text>
                 <TouchableOpacity
                   onPress={() => setShowStartDatePicker(true)}
                   style={styles.input}
@@ -388,7 +388,7 @@ const CreateTripScreen = ({ onBack }) => {
               </View>
 
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.inputLabel}>End Date</Text>
+                <Text style={styles.inputLabel}>Ngày kết thúc</Text>
                 <TouchableOpacity
                   onPress={() => setShowEndDatePicker(true)}
                   style={styles.input}
@@ -411,7 +411,7 @@ const CreateTripScreen = ({ onBack }) => {
                 end={{ x: 1, y: 0 }}
                 style={styles.gradientButton}
               >
-                <Text style={styles.nextButtonText}>Next</Text>
+                <Text style={styles.nextButtonText}>Tiếp theo</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -437,7 +437,7 @@ const CreateTripScreen = ({ onBack }) => {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Ngân sách mỗi người (USD)</Text>
+              <Text style={styles.inputLabel}>Ngân sách mỗi người</Text>
               <TextInput
                 style={styles.input}
                 placeholder="ví dụ: 1000"
@@ -494,9 +494,9 @@ const CreateTripScreen = ({ onBack }) => {
 
         {step === 3 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Your Interests 💫</Text>
+            <Text style={styles.stepTitle}>Sở thích của bạn 💫</Text>
             <Text style={styles.stepSubtitle}>
-              Select what you love (optional)
+              Chọn những gì bạn thích (tùy chọn)
             </Text>
 
             <View style={styles.interestsGrid}>
@@ -549,7 +549,7 @@ const CreateTripScreen = ({ onBack }) => {
                   end={{ x: 1, y: 0 }}
                   style={styles.gradientButton}
                 >
-                  <Text style={styles.nextButtonText}>Create Trip ✨</Text>
+                  <Text style={styles.nextButtonText}>Tạo chuyến đi ✨</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>

@@ -1,6 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, Plus } from "lucide-react-native";
+import { ArrowLeft, Download, Plus } from "lucide-react-native";
+// import {   } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -11,17 +12,29 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { getTrip, updateTrip } from "../../services/tripService";
+import CustomModal from "../../components/common/Modal";
+import { useUser } from "../../context/UserContext";
+import { showToast } from "../../lib/showToast";
+import { applyTemplateToTrip, getTrip, getTripTemplates, updateTrip } from "../../services/tripService";
 import ItineraryItem from "../itinerary/ItineraryItem";
 
 const ItineraryScreen = () => {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { user } = useUser();
 
   const [trip, setTrip] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState(1);
   const [itinerary, setItinerary] = useState([]);
+
+  // Template states
+  const [isTemplateModalVisible, setIsTemplateModalVisible] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [isTemplatesLoading, setIsTemplatesLoading] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
+  const [applyError, setApplyError] = useState(null);
+  const [previousTripState, setPreviousTripState] = useState(null);
 
   useEffect(() => {
     const fetchTripData = async () => {
@@ -90,6 +103,105 @@ const ItineraryScreen = () => {
     );
   };
 
+  const openTemplateModal = async () => {
+    if (!trip) return;
+    setIsTemplatesLoading(true);
+    try {
+      const fetched = await getTripTemplates();
+
+      // Extract unique destinations from trip itinerary
+      const tripDestinations = new Set();
+
+      if (trip.itinerary && trip.itinerary.length > 0) {
+        trip.itinerary.forEach((day) => {
+          if (day.destination) {
+            const destLower = day.destination.toLowerCase().trim();
+            if (destLower) tripDestinations.add(destLower);
+          }
+        });
+      } else if (trip.destination) {
+        const destinations = trip.destination
+          .split(" - ")
+          .map((d) => d.toLowerCase().trim())
+          .filter((d) => d);
+        destinations.forEach((d) => tripDestinations.add(d));
+      }
+
+      // Filter templates with strict matching
+      const filtered = fetched.filter((t) => {
+        if (!t.destination || tripDestinations.size === 0) return false;
+        const templateDest = t.destination.toLowerCase().trim();
+        for (let tripDest of tripDestinations) {
+          const tripDestRegex = new RegExp(`\\b${tripDest}\\b`, "i");
+          if (templateDest.match(tripDestRegex)) {
+            return true;
+          }
+        }
+        return false;
+      });
+
+      setTemplates(filtered);
+      setIsTemplateModalVisible(true);
+    } catch (error) {
+      console.error("Failed to load templates:", error);
+    } finally {
+      setIsTemplatesLoading(false);
+    }
+  };
+
+  const handleApplyTemplate = async (templateId) => {
+    if (!user || !trip) return;
+
+    setIsApplying(true);
+    setApplyError(null);
+    try {
+      // Save state for undo
+      setPreviousTripState({
+        itinerary: trip.itinerary || [],
+        packingList: trip.packingList || [],
+        todoList: trip.todoList || [],
+      });
+
+      await applyTemplateToTrip(user.uid, trip.id, templateId, true);
+
+      // Refresh trip data
+      const updated = await getTrip(trip.id);
+      setTrip(updated);
+      if (updated.itinerary) {
+        setItinerary(updated.itinerary);
+      }
+
+      showToast("Đã áp dụng lịch trình mẫu!");
+      setIsTemplateModalVisible(false);
+    } catch (error) {
+      console.error("Failed to apply template:", error);
+      setApplyError("Không thể áp template. Vui lòng thử lại.");
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  const handleUndoApply = async () => {
+    if (!previousTripState || !trip) return;
+    setIsApplying(true);
+    try {
+      await updateTrip(trip.id, previousTripState);
+      // Update local state
+      const restoredTrip = { ...trip, ...previousTripState };
+      setTrip(restoredTrip);
+      if (restoredTrip.itinerary) {
+        setItinerary(restoredTrip.itinerary);
+      }
+      setPreviousTripState(null);
+      showToast("Đã hoàn tác thay đổi!");
+    } catch (error) {
+      console.error("Failed to undo:", error);
+      setApplyError("Không thể hoàn tác. Vui lòng thử lại.");
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
   const currentDayActivities =
     itinerary.find((i) => i.day === selectedDay)?.activities || [];
 
@@ -116,6 +228,23 @@ const ItineraryScreen = () => {
             {trip?.destination || "Lịch trình"}
           </Text>
           <View style={{ width: 24 }} />
+          <View style={{ flexDirection: "row", gap: 15 }}>
+            {previousTripState && (
+              <TouchableOpacity
+                onPress={handleUndoApply}
+                disabled={isApplying}
+                style={styles.headerButton}
+              >
+                <Text style={{ color: "#FFF", fontWeight: "bold" }}>↩</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={openTemplateModal}
+              style={styles.headerButton}
+            >
+              <Download color="#FFF" size={24} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Day Selector */}
@@ -177,6 +306,61 @@ const ItineraryScreen = () => {
       <TouchableOpacity style={styles.fab} onPress={handleAddActivity}>
         <Plus color="#FFF" size={24} />
       </TouchableOpacity>
+
+      {/* Template Modal */}
+      <CustomModal
+        visible={isTemplateModalVisible}
+        title="Chọn template để áp vào chuyến đi"
+        onClose={() => setIsTemplateModalVisible(false)}
+      >
+        {isTemplatesLoading ? (
+          <ActivityIndicator size="large" color="#667eea" />
+        ) : (
+          <>
+            {applyError && <Text style={{ color: "red" }}>{applyError}</Text>}
+            {templates.length === 0 ? (
+              <Text
+                style={{ textAlign: "center", marginTop: 20, color: "#666" }}
+              >
+                Không tìm thấy lịch trình mẫu nào cho {trip?.destination}.
+              </Text>
+            ) : (
+              <ScrollView style={{ maxHeight: 400 }}>
+                {templates.map((t) => (
+                  <TouchableOpacity
+                    key={t.id}
+                    onPress={() => handleApplyTemplate(t.id)}
+                    style={styles.templateItem}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.templateName}>{t.name}</Text>
+                      {t.destination && (
+                        <Text style={styles.templateDestination}>
+                          📍 {t.destination}
+                        </Text>
+                      )}
+                      {t.duration && (
+                        <Text style={styles.templateInfo}>
+                          ⏱️ {t.duration} ngày
+                        </Text>
+                      )}
+                      {t.description && (
+                        <Text style={styles.templateDesc}>{t.description}</Text>
+                      )}
+                    </View>
+                    <Text style={styles.selectIcon}>›</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+            {isApplying && (
+              <Text style={{ textAlign: "center", marginTop: 10 }}>
+                Đang áp dụng...
+              </Text>
+            )}
+          </>
+        )}
+      </CustomModal>
     </View>
   );
 };
@@ -268,6 +452,38 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
+  templateItem: {
+    flexDirection: "row",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginVertical: 6,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: "#667eea",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  templateName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  templateDestination: {
+    fontSize: 13,
+    color: "#667eea",
+    marginBottom: 2,
+    fontWeight: "500",
+  },
+  templateInfo: { fontSize: 12, color: "#666", marginBottom: 4 },
+  templateDesc: {
+    fontSize: 12,
+    color: "#999",
+    fontStyle: "italic",
+    marginTop: 4,
+  },
+  selectIcon: { fontSize: 24, color: "#667eea", marginLeft: 8 },
 });
 
 export default ItineraryScreen;

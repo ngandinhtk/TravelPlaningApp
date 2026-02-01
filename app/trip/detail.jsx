@@ -6,7 +6,6 @@ import {
   CheckSquare,
   CloudSun,
   DollarSign,
-  Download,
   Edit,
   FileText,
   MapPin,
@@ -270,16 +269,16 @@ const TripDetailScreen = () => {
       >
         <View style={styles.summarySection}>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Dates</Text>
+            <Text style={styles.summaryLabel}>Thời gian</Text>
             <Text style={styles.summaryValue}>{trip.dates}</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Destination</Text>
+            <Text style={styles.summaryLabel}>Điểm đến</Text>
             <Text style={styles.summaryValue}>{trip.destination}</Text>
           </View>
 
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Budget</Text>
+            <Text style={styles.summaryLabel}>Ngân sách</Text>
             <View
               style={{
                 flexDirection: "row",
@@ -297,7 +296,7 @@ const TripDetailScreen = () => {
                 onPress={() => router.push("/budget/budget")}
                 style={{ color: "blue", textDecorationLine: "none" }}
               >
-                View{" "}
+                Xem{" "}
               </Text>
             </View>
           </View>
@@ -334,7 +333,7 @@ const TripDetailScreen = () => {
             </View>
           </View> */}
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Packing List</Text>
+            <Text style={styles.summaryLabel}>Hành trang</Text>
             <View
               style={{
                 flexDirection: "row",
@@ -359,12 +358,12 @@ const TripDetailScreen = () => {
                 }
                 style={{ color: "blue", textDecorationLine: "none" }}
               >
-                Manage
+                Quản lý
               </Text>
             </View>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Travelers</Text>
+            <Text style={styles.summaryLabel}>Người tham gia</Text>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Users size={16} color="#1A1A1A" />
               <Text style={[styles.summaryValue, { marginLeft: 6 }]}>
@@ -373,20 +372,20 @@ const TripDetailScreen = () => {
             </View>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Duration</Text>
+            <Text style={styles.summaryLabel}>Thời lượng</Text>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Calendar size={16} color="#1A1A1A" />
               <Text style={[styles.summaryValue, { marginLeft: 6 }]}>
-                {trip.days} days
+                {trip.days} ngày
               </Text>
             </View>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Status</Text>
+            <Text style={styles.summaryLabel}>Trạng thái</Text>
             <Text style={styles.summaryValue}>{trip.status}</Text>
           </View>
           <View style={[styles.summaryItem, { borderBottomWidth: 0 }]}>
-            <Text style={styles.summaryLabel}>Note</Text>
+            <Text style={styles.summaryLabel}>Ghi chú</Text>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <FileText size={16} color="#1A1A1A" />
               <Text style={[styles.summaryValue, { marginLeft: 6 }]}>
@@ -422,7 +421,7 @@ const TripDetailScreen = () => {
                   </Text>
                 </TouchableOpacity>
               )}
-              {trip.itinerary && trip.itinerary.length > 0 && (
+              {/* {trip.itinerary && trip.itinerary.length > 0 && (
                 <TouchableOpacity
                   onPress={openTemplateModal}
                   style={styles.applyTemplateBtn}
@@ -438,7 +437,7 @@ const TripDetailScreen = () => {
                     Áp dụng
                   </Text>
                 </TouchableOpacity>
-              )}
+              )} */}
             </View>
           </View>
 
@@ -533,13 +532,13 @@ const TripDetailScreen = () => {
 
         {/* Quick Actions Grid */}
         <View style={styles.actionsSection}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <Text style={styles.sectionTitle}>Thao tác nhanh</Text>
           <View style={styles.actionsGrid}>
             <TouchableOpacity onPress={handleEdit} style={styles.actionItem}>
               <View style={[styles.iconCircle, { backgroundColor: "#eef0ff" }]}>
                 <Edit color="#667eea" size={24} />
               </View>
-              <Text style={styles.actionLabel}>Edit</Text>
+              <Text style={styles.actionLabel}>Sửa</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -554,7 +553,7 @@ const TripDetailScreen = () => {
               <View style={[styles.iconCircle, { backgroundColor: "#eef0ff" }]}>
                 <Calendar color="#667eea" size={24} />
               </View>
-              <Text style={styles.actionLabel}>Itinerary</Text>
+              <Text style={styles.actionLabel}>Lịch trình</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -564,7 +563,7 @@ const TripDetailScreen = () => {
               <View style={[styles.iconCircle, { backgroundColor: "#eef0ff" }]}>
                 <Plane color="#667eea" size={24} />
               </View>
-              <Text style={styles.actionLabel}>Transport</Text>
+              <Text style={styles.actionLabel}>Di chuyển</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -574,7 +573,7 @@ const TripDetailScreen = () => {
               <View style={[styles.iconCircle, { backgroundColor: "#eef0ff" }]}>
                 <CloudSun color="#667eea" size={24} />
               </View>
-              <Text style={styles.actionLabel}>Weather</Text>
+              <Text style={styles.actionLabel}>Thời tiết</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -584,9 +583,9 @@ const TripDetailScreen = () => {
               <View style={[styles.iconCircle, { backgroundColor: "#eef0ff" }]}>
                 <Users color="#667eea" size={24} />
               </View>
-              <Text style={styles.actionLabel}>Invite</Text>
+              <Text style={styles.actionLabel}>Mời</Text>
             </TouchableOpacity>
-
+            {/* 
             <TouchableOpacity
               onPress={openTemplateModal}
               style={styles.actionItem}
@@ -595,14 +594,14 @@ const TripDetailScreen = () => {
                 <Download color="#667eea" size={24} />
               </View>
               <Text style={styles.actionLabel}>Template</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <TouchableOpacity onPress={handleDelete} style={styles.actionItem}>
               <View style={[styles.iconCircle, { backgroundColor: "#ffe5e5" }]}>
                 <Trash2 color="#ff4757" size={24} />
               </View>
               <Text style={[styles.actionLabel, { color: "#ff4757" }]}>
-                Delete
+                Xóa
               </Text>
             </TouchableOpacity>
           </View>

@@ -1,90 +1,80 @@
-import React, { createContext, useCallback, useContext } from "react";
-import { CompoundingIntelligenceService } from "../services/compoundingIntelligenceService";
+import { createContext, useContext, useEffect, useState } from "react";
+import { intelligenceService } from "../services/compoundingIntelligenceService";
 
-/**
- * @typedef {Object} IntelligenceContextType
- * @property {Function} trackAction
- * @property {Function} submitUserFeedback
- * @property {Function} getRecommendations
- * @property {Function} getIntelligenceScore
- */
+const IntelligenceContext = createContext(null);
 
-const IntelligenceContext = createContext(undefined);
+export const IntelligenceProvider = ({ children, userId }) => {
+  const [intelligenceScore, setIntelligenceScore] = useState(0);
+  const [learningLevel, setLearningLevel] = useState("Novice");
+  const [recommendations, setRecommendations] = useState([]);
 
-export const IntelligenceProvider = ({ children }) => {
-  const trackAction = useCallback(
-    async (userId, action, category, value, metadata) => {
-      try {
-        await CompoundingIntelligenceService.trackUserBehavior(
-          userId,
-          action,
-          category,
-          value,
-          metadata,
-        );
-      } catch (error) {
-        console.error("Error tracking action:", error);
-      }
-    },
-    [],
-  );
-
-  const submitUserFeedback = useCallback(
-    async (userId, itemType, rating, comment, tripId, itemId, category) => {
-      try {
-        await CompoundingIntelligenceService.submitFeedback(
-          userId,
-          itemType,
-          rating,
-          comment,
-          tripId,
-          itemId,
-          category,
-        );
-      } catch (error) {
-        console.error("Error submitting feedback:", error);
-      }
-    },
-    [],
-  );
-
-  const getRecommendations = useCallback(async (userId) => {
-    try {
-      return await CompoundingIntelligenceService.getPersonalizedRecommendations(
-        userId,
-      );
-    } catch (error) {
-      console.error("Error getting recommendations:", error);
-      return [];
+  useEffect(() => {
+    if (userId) {
+      refreshData();
     }
-  }, []);
+  }, [userId]);
 
-  const getIntelligenceScore = useCallback(async (userId) => {
-    try {
-      return await CompoundingIntelligenceService.getUserIntelligenceScore(
-        userId,
-      );
-    } catch (error) {
-      console.error("Error getting intelligence score:", error);
-      return {
-        score: 0,
-        level: "🌱 Novice",
-        insights: 0,
-        behaviors: 0,
-        feedbacks: 0,
-      };
-    }
-  }, []);
+  const refreshData = async () => {
+    if (!userId) return;
+    const data = await intelligenceService.getUserIntelligenceScore(userId);
+    setIntelligenceScore(data.score);
+    setLearningLevel(data.level);
 
-  const value = {
-    trackAction,
-    submitUserFeedback,
-    getRecommendations,
-    getIntelligenceScore,
+    const recs =
+      await intelligenceService.getPersonalizedRecommendations(userId);
+    setRecommendations(recs);
+  };
+
+  const trackAction = async (action, category, value, metadata) => {
+    if (!userId) return;
+    await intelligenceService.trackUserBehavior(
+      userId,
+      action,
+      category,
+      value,
+      metadata,
+    );
+  };
+
+  const submitUserFeedback = async (
+    itemType,
+    rating,
+    comment,
+    tripId,
+    itemId,
+    category,
+  ) => {
+    if (!userId) return;
+    await intelligenceService.submitFeedback(
+      userId,
+      itemType,
+      rating,
+      comment,
+      tripId,
+      itemId,
+      category,
+    );
+    // Refresh score after feedback as it contributes heavily to the score
+    await refreshData();
+  };
+
+  const getIntelligenceScore = async () => {
+    if (!userId) return null;
+    return await intelligenceService.getUserIntelligenceScore(userId);
   };
 
   return (
-    <IntelligenceContext.Provider value={value}>
+    <IntelligenceContext.Provider
+      value={{
+        intelligenceScore,
+        learningLevel,
+        recommendations,
+        trackAction,
+        submitUserFeedback,
+        getIntelligenceScore,
+        getRecommendations: () => recommendations,
+      }}
+    >
       {children}
     </IntelligenceContext.Provider>
   );
@@ -93,7 +83,9 @@ export const IntelligenceProvider = ({ children }) => {
 export const useIntelligence = () => {
   const context = useContext(IntelligenceContext);
   if (!context) {
-    throw new Error("useIntelligence must be used within IntelligenceProvider");
+    throw new Error(
+      "useIntelligence must be used within an IntelligenceProvider",
+    );
   }
   return context;
 };

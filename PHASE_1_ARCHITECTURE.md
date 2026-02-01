@@ -26,6 +26,9 @@ my-first-app/
 │   └── templates/              # 📋 Template System (Feature #2)
 │       ├── index.jsx           # Browse Templates
 │       └── [id].jsx            # Template Detail -> Clone Trip
+│   ├── admin/
+│   │   ├── intelligence.jsx    # 🧠 AI Dashboard (Internal/Admin)
+│   │   └── compoundingIntelligenceNextSteps.js # 🧪 Beta AI Features Logic
 ├── components/
 │   ├── common/
 │   │   ├── FeedbackModal.tsx   # 🧠 AI Feedback Collection
@@ -38,14 +41,19 @@ my-first-app/
 │   └── budget/
 │       └── ExpenseChart.jsx
 ├── context/
+│   ├── AppProviders.jsx        # Wrapper for all contexts
+│   ├── UserContext.jsx         # 👤 User Auth State
 │   ├── IntelligenceContext.jsx # 🧠 AI Logic
 │   └── TripContext.jsx
+│   └── OfflineContext.jsx      # 🔌 Offline Mode & Sync (Phase 3)
 └── services/
+    ├── firebase.js             # 🔥 Firebase Config
     ├── compoundingIntelligenceService.ts # 🧠 AI Service
     ├── tripService.ts          # CRUD Trips
     ├── placeService.ts         # Places Data
     ├── templateService.ts      # Templates
     └── budgetService.ts        # Budget Logic
+    └── offlineService.ts       # 💾 Local Storage & Sync Queue (Phase 3)
 ```
 
 ## 🚀 Implementation Roadmap

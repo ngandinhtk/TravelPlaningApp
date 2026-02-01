@@ -412,8 +412,6 @@ const HomeScreen = () => {
             />
           </View>
         )}
-
-        <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* Feedback Modal */}
