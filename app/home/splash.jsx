@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from "expo-linear-gradient";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 const SplashScreen = () => (
   <LinearGradient
@@ -10,7 +9,7 @@ const SplashScreen = () => (
     <View style={styles.logoContainer}>
       <Text style={styles.logoIcon}>✈️</Text>
       <Text style={styles.logoText}>TravelMind AI</Text>
-      <Text style={styles.logoSubtext}>Your AI Travel Companion</Text>
+      <Text style={styles.logoSubtext}>Người bạn đồng hành du lịch AI</Text>
     </View>
     <ActivityIndicator size="large" color="#FFFFFF" style={{ marginTop: 30 }} />
   </LinearGradient>

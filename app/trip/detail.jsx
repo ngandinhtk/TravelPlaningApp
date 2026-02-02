@@ -26,27 +26,12 @@ import {
 import Loading from "../../components/common/Loading";
 import CustomModal from "../../components/common/Modal";
 import { useTrip } from "../../context/TripContext";
-import { useUser } from "../../context/UserContext";
-import { showToast } from "../../lib/showToast";
-import {
-  applyTemplateToTrip,
-  deleteTrip,
-  getTrip,
-  getTripTemplates,
-  updateTrip,
-} from "../../services/tripService";
+import { deleteTrip, updateTrip } from "../../services/tripService";
 
 const TripDetailScreen = () => {
   const { trip, setTrip } = useTrip(); // Lấy toàn bộ đối tượng trip từ Context
   const router = useRouter();
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [isTemplateModalVisible, setIsTemplateModalVisible] = useState(false);
-  const [templates, setTemplates] = useState([]);
-  const [isTemplatesLoading, setIsTemplatesLoading] = useState(false);
-  const [isApplying, setIsApplying] = useState(false);
-  const [applyError, setApplyError] = useState(null);
-  const { user } = useUser();
-  const [previousTripState, setPreviousTripState] = useState(null);
   const [activityModalVisible, setActivityModalVisible] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
@@ -71,112 +56,6 @@ const TripDetailScreen = () => {
 
   const handleDelete = () => {
     setIsDeleteModalVisible(true);
-  };
-
-  const openTemplateModal = async () => {
-    setIsTemplatesLoading(true);
-    try {
-      const fetched = await getTripTemplates();
-      console.log("Fetched templates:", fetched);
-
-      // Extract unique destinations from trip itinerary
-      const tripDestinations = new Set();
-
-      if (trip.itinerary && trip.itinerary.length > 0) {
-        // Get destinations from itinerary
-        trip.itinerary.forEach((day) => {
-          if (day.destination) {
-            const destLower = day.destination.toLowerCase().trim();
-            if (destLower) tripDestinations.add(destLower);
-          }
-        });
-      } else if (trip.destination) {
-        // Fallback: parse trip.destination string
-        const destinations = trip.destination
-          .split(" - ")
-          .map((d) => d.toLowerCase().trim())
-          .filter((d) => d); // Remove empty strings
-        destinations.forEach((d) => tripDestinations.add(d));
-      }
-
-      console.log("Trip destinations:", Array.from(tripDestinations));
-
-      // Filter templates with strict matching
-      const filtered = fetched.filter((t) => {
-        if (!t.destination || tripDestinations.size === 0) return false;
-
-        const templateDest = t.destination.toLowerCase().trim();
-
-        // Check exact or partial match
-        for (let tripDest of tripDestinations) {
-          // Match if template destination contains trip destination as a word
-          const tripDestRegex = new RegExp(`\\b${tripDest}\\b`, "i");
-          if (templateDest.match(tripDestRegex)) {
-            return true;
-          }
-        }
-        return false;
-      });
-
-      console.log("Filtered templates:", filtered);
-      console.log(
-        `Found ${filtered.length} matching templates out of ${fetched.length} total`,
-      );
-
-      // Show filtered templates if found, otherwise show all
-      setTemplates(filtered);
-      setIsTemplateModalVisible(true);
-    } catch (error) {
-      console.error("Failed to load templates:", error);
-    } finally {
-      setIsTemplatesLoading(false);
-    }
-  };
-
-  const handleApplyTemplate = async (templateId) => {
-    if (!user) return;
-
-    setIsApplying(true);
-    setApplyError(null);
-    try {
-      // Lưu trạng thái trước khi apply để có thể hoàn tác
-      setPreviousTripState({
-        itinerary: trip.itinerary || [],
-        packingList: trip.packingList || [],
-        todoList: trip.todoList || [],
-      });
-      // console.log(user.uid, trip.id, templateId);
-      await applyTemplateToTrip(user.uid, trip.id, templateId, true);
-      console.log("Template applied successfully");
-      // Refresh trip in context
-      const updated = await getTrip(trip.id);
-      // console.log(updated)x
-      setTrip(updated);
-      showToast("Đã áp dụng lịch trình mẫu!");
-      setIsTemplateModalVisible(false);
-    } catch (error) {
-      console.error("Failed to apply template:", error);
-      setApplyError("Không thể áp template. Vui lòng thử lại.");
-    } finally {
-      setIsApplying(false);
-    }
-  };
-
-  const handleUndoApply = async () => {
-    if (!previousTripState) return;
-    setIsApplying(true);
-    try {
-      await updateTrip(trip.id, previousTripState);
-      // Cập nhật lại state local
-      setTrip({ ...trip, ...previousTripState });
-      setPreviousTripState(null);
-      showToast("Đã hoàn tác thay đổi!");
-    } catch (error) {
-      console.error("Failed to undo:", error);
-      setApplyError("Không thể hoàn tác. Vui lòng thử lại.");
-    } finally {
-      setIsApplying(false);
-    }
   };
 
   const confirmDelete = async () => {
@@ -411,16 +290,6 @@ const TripDetailScreen = () => {
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
             >
-              {previousTripState && (
-                <TouchableOpacity
-                  onPress={handleUndoApply}
-                  disabled={isApplying}
-                >
-                  <Text style={{ color: "#667eea", fontWeight: "600" }}>
-                    ↩ Hoàn tác
-                  </Text>
-                </TouchableOpacity>
-              )}
               {/* {trip.itinerary && trip.itinerary.length > 0 && (
                 <TouchableOpacity
                   onPress={openTemplateModal}
@@ -516,16 +385,8 @@ const TripDetailScreen = () => {
                 Chưa có lịch trình nào.
               </Text>
               <Text style={styles.emptyItinerarySubText}>
-                Hãy áp dụng template hoặc tự tạo lịch trình mới.
+                Hãy tự tạo lịch trình mới.
               </Text>
-              <TouchableOpacity
-                style={styles.createItineraryButton}
-                onPress={openTemplateModal}
-              >
-                <Text style={styles.createItineraryText}>
-                  + Thêm lịch trình mẫu
-                </Text>
-              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -609,60 +470,6 @@ const TripDetailScreen = () => {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-
-      <CustomModal
-        visible={isTemplateModalVisible}
-        title="Chọn template để áp vào chuyến đi"
-        onClose={() => setIsTemplateModalVisible(false)}
-      >
-        {isTemplatesLoading ? (
-          <Text>Loading...</Text>
-        ) : (
-          <>
-            {applyError && <Text style={{ color: "red" }}>{applyError}</Text>}
-            {templates.length === 0 ? (
-              <Text
-                style={{ textAlign: "center", marginTop: 20, color: "#666" }}
-              >
-                Không tìm thấy lịch trình mẫu nào cho {trip.destination}.
-              </Text>
-            ) : (
-              <ScrollView style={{ maxHeight: 400 }}>
-                {templates.map((t) => (
-                  <TouchableOpacity
-                    key={t.id}
-                    onPress={() => handleApplyTemplate(t.id)}
-                    style={styles.templateItem}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.templateName}>{t.name}</Text>
-                      {t.destination && (
-                        <Text style={styles.templateDestination}>
-                          📍 {t.destination}
-                        </Text>
-                      )}
-                      {t.duration && (
-                        <Text style={styles.templateInfo}>
-                          ⏱️ {t.duration} ngày
-                        </Text>
-                      )}
-                      {t.description && (
-                        <Text style={styles.templateDesc}>{t.description}</Text>
-                      )}
-                    </View>
-                    <Text style={styles.selectIcon}>›</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-            {isApplying && (
-              <Text style={{ textAlign: "center", marginTop: 10 }}>
-                Áp dụng...
-              </Text>
-            )}
-          </>
-        )}
-      </CustomModal>
 
       {/* Modal Thêm/Sửa Hoạt Động */}
       <CustomModal

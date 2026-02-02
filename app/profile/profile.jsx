@@ -15,7 +15,7 @@ const ProfileScreen = () => {
     router.replace("/auth/login");
     return (
       <View style={styles.profileContainer}>
-        <Text>Loading profile...</Text>
+        <Text>Đang tải hồ sơ...</Text>
       </View>
     );
   }
@@ -31,9 +31,9 @@ const ProfileScreen = () => {
         style={styles.profileHeader}
       >
         <TouchableOpacity onPress={() => router.back(-1)}>
-          <Text style={styles.backButtonTextWhite}>← Back</Text>
+          <Text style={styles.backButtonTextWhite}>← Quay lại</Text>
         </TouchableOpacity>
-        <Text style={styles.profileTitle}>Profile</Text>
+        <Text style={styles.profileTitle}>Hồ sơ</Text>
         <View style={{ width: 50 }} />
       </LinearGradient>
 
@@ -58,7 +58,7 @@ const ProfileScreen = () => {
               end={{ x: 1, y: 0 }}
               style={styles.upgradeBadge}
             >
-              <Text style={styles.upgradeBadgeText}>⭐ Upgrade to Premium</Text>
+              <Text style={styles.upgradeBadgeText}>⭐ Nâng cấp Premium</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -66,48 +66,48 @@ const ProfileScreen = () => {
         <View style={styles.profileMenu}>
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>⚙️</Text>
-            <Text style={styles.menuText}>Settings</Text>
+            <Text style={styles.menuText}>Cài đặt</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>💳</Text>
-            <Text style={styles.menuText}>Payment Methods</Text>
+            <Text style={styles.menuText}>Phương thức thanh toán</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>🔔</Text>
-            <Text style={styles.menuText}>Notifications</Text>
+            <Text style={styles.menuText}>Thông báo</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>❤️</Text>
-            <Text style={styles.menuText}>Saved Places</Text>
+            <Text style={styles.menuText}>Địa điểm đã lưu</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>📖</Text>
-            <Text style={styles.menuText}>Travel History</Text>
+            <Text style={styles.menuText}>Lịch sử chuyến đi</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
           {/* <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>💰</Text>
-            <Text style={styles.menuText}>Budget</Text>
+            <Text style={styles.menuText}>Ngân sách</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity> */}
 
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>❓</Text>
-            <Text style={styles.menuText}>Help & Support</Text>
+            <Text style={styles.menuText}>Trợ giúp & Hỗ trợ</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
             <Text style={styles.menuIcon}>📄</Text>
-            <Text style={styles.menuText}>Privacy Policy</Text>
+            <Text style={styles.menuText}>Chính sách bảo mật</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
 
@@ -116,11 +116,11 @@ const ProfileScreen = () => {
             onPress={handleLogout}
           >
             <Text style={styles.menuIcon}>🚪</Text>
-            <Text style={[styles.menuText, styles.logoutText]}>Logout</Text>
+            <Text style={[styles.menuText, styles.logoutText]}>Đăng xuất</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.versionText}>Version 1.0.0</Text>
+        <Text style={styles.versionText}>Phiên bản 1.0.0</Text>
         <View style={{ height: 50 }} />
       </ScrollView>
     </View>

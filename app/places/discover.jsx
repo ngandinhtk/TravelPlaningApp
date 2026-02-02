@@ -1,467 +1,373 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import {
-  addPlace,
-  getAllPlaces,
-  getPlacesByProvince,
-  getProvincesList,
-  searchPlacesViaGoogle,
-  seedPlaces,
-} from "../../services/placeService";
 
-const DiscoverPlacesScreen = () => {
+const DiscoverScreen = () => {
   const router = useRouter();
-  const [provinces, setProvinces] = useState([]);
-  const [selectedProvince, setSelectedProvince] = useState("All");
-  const [places, setPlaces] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [seeding, setSeeding] = useState(false);
-  const [isShowingGoogleResults, setIsShowingGoogleResults] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("Tất cả");
 
-  useEffect(() => {
-    const fetchProvinces = async () => {
-      const list = await getProvincesList();
-      setProvinces(["All", ...list]);
-    };
-    fetchProvinces();
-  }, []);
+  const categories = [
+    "Tất cả",
+    "Thịnh hành",
+    "Mùa này đi đâu",
+    "Giá rẻ",
+    "Hidden Gems",
+  ];
 
-  const fetchPlaces = async () => {
-    setLoading(true);
-    try {
-      setIsShowingGoogleResults(false); // Reset trạng thái khi tải từ DB
-      let data = [];
-      if (selectedProvince === "All") {
-        data = await getAllPlaces();
-      } else {
-        data = await getPlacesByProvince(selectedProvince);
-      }
-      setPlaces(data);
-    } catch (error) {
-      console.error("Failed to load places:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Mock data for trending destinations
+  const trendingDestinations = [
+    {
+      id: 1,
+      name: "Hội An",
+      image:
+        "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2000&auto=format&fit=crop",
+      rating: 4.8,
+      reviews: 1234,
+    },
+    {
+      id: 2,
+      name: "Hạ Long",
+      image:
+        "https://images.unsplash.com/photo-1528127220108-5362b6b6864d?q=80&w=2000&auto=format&fit=crop",
+      rating: 4.7,
+      reviews: 890,
+    },
+    {
+      id: 3,
+      name: "Sapa",
+      image:
+        "https://images.unsplash.com/photo-1565355858-6225c5695020?q=80&w=2000&auto=format&fit=crop",
+      rating: 4.6,
+      reviews: 750,
+    },
+    {
+      id: 4,
+      name: "Đà Lạt",
+      image:
+        "https://images.unsplash.com/photo-1625409678382-74b452771503?q=80&w=2000&auto=format&fit=crop",
+      rating: 4.9,
+      reviews: 2100,
+    },
+  ];
 
-  useEffect(() => {
-    fetchPlaces();
-  }, [selectedProvince]);
-
-  // Nếu đang hiển thị kết quả Google, ta hiển thị toàn bộ danh sách trả về
-  // Ngược lại, áp dụng bộ lọc tìm kiếm local cho database
-  const filteredPlaces = isShowingGoogleResults
-    ? places
-    : places.filter(
-        (place) =>
-          place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          place.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-
-  const getCategoryEmoji = (category) => {
-    const map = {
-      History: "🏛️",
-      Beach: "🏖️",
-      Mountain: "🏔️",
-      Food: "🍜",
-      Culture: "🎨",
-      Nature: "🌲",
-      Hotel: "🏨",
-      "Google Place": "📍",
-    };
-    return map[category] || "📍";
-  };
-
-  const handleSeedData = async () => {
-    setSeeding(true);
-    const success = await seedPlaces();
-    if (success) {
-      alert("Đã khởi tạo dữ liệu mẫu thành công!");
-      fetchPlaces(); // Reload list
-    }
-    setSeeding(false);
-  };
-
-  const handleGoogleSearch = async () => {
-    if (selectedProvince === "All") {
-      alert("Vui lòng chọn một tỉnh thành cụ thể để tìm kiếm trên Google.");
-      return;
-    }
-    setLoading(true);
-    try {
-      const googlePlaces = await searchPlacesViaGoogle(
-        searchQuery,
-        selectedProvince,
-      );
-      if (googlePlaces.length > 0) {
-        setPlaces(googlePlaces); // Hiển thị kết quả từ Google (không lưu vào DB ngay để tránh rác)
-        setIsShowingGoogleResults(true); // Đánh dấu là đang hiển thị kết quả Google
-      } else {
-        alert(
-          "Không tìm thấy kết quả nào từ Google hoặc chưa cấu hình API Key.",
-        );
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePlacePress = async (place) => {
-    if (place.id) {
-      router.push(`/places/${place.id}`);
-    } else {
-      // Nếu là địa điểm từ Google (chưa có ID), lưu vào DB trước khi xem chi tiết
-      try {
-        setLoading(true);
-        const newId = await addPlace(place);
-        router.push(`/places/${newId}`);
-      } catch (error) {
-        console.error("Error saving place:", error);
-        alert("Có lỗi khi mở địa điểm này.");
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
-  const renderProvinceItem = ({ item }) => (
-    <TouchableOpacity
-      style={[
-        styles.provinceChip,
-        selectedProvince === item && styles.provinceChipActive,
-      ]}
-      onPress={() => setSelectedProvince(item)}
-    >
-      <Text
-        style={[
-          styles.provinceText,
-          selectedProvince === item && styles.provinceTextActive,
-        ]}
-      >
-        {item === "All" ? "Tất cả" : item}
-      </Text>
-    </TouchableOpacity>
-  );
-  const handleBack = () => {
-    router.back();
-  };
-  const renderPlaceItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.placeCard}
-      onPress={() => handlePlacePress(item)}
-    >
-      <Image
-        source={{ uri: item.imageUrl || "https://via.placeholder.com/400x200" }}
-        style={styles.placeImage}
-        resizeMode="cover"
-      />
-      <View style={styles.placeContent}>
-        <View style={styles.placeHeader}>
-          <Text style={styles.placeName}>{item.name}</Text>
-          {item.rating && (
-            <View style={styles.ratingBadge}>
-              <Text style={styles.ratingText}>⭐ {item.rating}</Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.placeMetaRow}>
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryText}>
-              {getCategoryEmoji(item.category)} {item.category}
-            </Text>
-          </View>
-          <Text style={styles.placeProvince}>📍 {item.province}</Text>
-        </View>
-        <Text style={styles.placeDescription} numberOfLines={2}>
-          {item.description}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+  // Mock data for community trips
+  const communityTrips = [
+    {
+      id: 1,
+      title: "Đà Lạt 3N2Đ - Săn Mây & Cafe",
+      author: "Minh Anh",
+      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
+      likes: 245,
+      days: 3,
+      budget: "3.5tr",
+      image:
+        "https://images.unsplash.com/photo-1544885935-98dd03b09034?q=80&w=2000&auto=format&fit=crop",
+    },
+    {
+      id: 2,
+      title: "Food Tour Hải Phòng 24h",
+      author: "Tuấn Hưng",
+      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+      likes: 189,
+      days: 1,
+      budget: "1.5tr",
+      image:
+        "https://images.unsplash.com/photo-1599707367072-cd6cf6cb521e?q=80&w=2000&auto=format&fit=crop",
+    },
+    {
+      id: 3,
+      title: "Khám phá hang động Quảng Bình",
+      author: "Sarah Nguyễn",
+      avatar: "https://randomuser.me/api/portraits/women/68.jpg",
+      likes: 562,
+      days: 4,
+      budget: "6.0tr",
+      image:
+        "https://images.unsplash.com/photo-1534057376219-580b4a782a4c?q=80&w=2000&auto=format&fit=crop",
+    },
+  ];
 
   return (
     <View style={styles.container}>
       <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
-        <TouchableOpacity onPress={handleBack}>
-          <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>Khám Phá Hấp Dẫn</Text>
+        <Text style={styles.headerTitle}>Khám phá</Text>
         <View style={{ width: 40 }} />
       </LinearGradient>
 
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Tìm kiếm địa điểm, trải nghiệm..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor="#999"
-        />
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Tìm điểm đến, lịch trình..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor="#999"
+            />
+          </View>
+        </View>
 
-      <View style={styles.filterContainer}>
-        <FlatList
-          data={provinces}
-          renderItem={renderProvinceItem}
-          keyExtractor={(item) => item}
+        {/* Categories */}
+        <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.provinceList}
-        />
-      </View>
-
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#667eea" />
-        </View>
-      ) : (
-        <FlatList
-          data={filteredPlaces}
-          renderItem={renderPlaceItem}
-          keyExtractor={(item, index) =>
-            item.id || item.googleId || index.toString()
-          }
-          contentContainerStyle={styles.placesList}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Không tìm thấy địa điểm nào.</Text>
-
-              {/* <TouchableOpacity 
-                style={styles.seedButton} 
-                onPress={handleSeedData}
-                disabled={seeding}
+          style={styles.categoriesContainer}
+        >
+          {categories.map((cat, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.categoryChip,
+                activeCategory === cat && styles.categoryChipActive,
+              ]}
+              onPress={() => setActiveCategory(cat)}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  activeCategory === cat && styles.categoryTextActive,
+                ]}
               >
-                {seeding ? <ActivityIndicator color="#FFF" /> : <Text style={styles.seedButtonText}>📥 Nhập dữ liệu từ Google</Text>}
-              </TouchableOpacity>
-              <Text style={styles.helperText}>(Lưu kết quả tìm kiếm vào Database)</Text> */}
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-              {/* Nút tìm kiếm bằng Google API */}
-              {selectedProvince !== "All" && (
-                <TouchableOpacity
-                  style={[
-                    styles.seedButton,
-                    { backgroundColor: "#DB4437", marginTop: 10 },
-                  ]}
-                  onPress={handleGoogleSearch}
-                >
-                  <Text style={styles.seedButtonText}>
-                    🔍 Tìm trên Google Maps
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          }
-          ListFooterComponent={
-            selectedProvince !== "All" &&
-            filteredPlaces.length > 0 && (
-              <View style={styles.footerContainer}>
-                <Text style={styles.footerText}>
-                  Chưa tìm thấy địa điểm ưng ý?
+        {/* Trending Destinations */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Điểm đến thịnh hành 🔥</Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAll}>Xem tất cả</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {trendingDestinations.map((item) => (
+              <TouchableOpacity key={item.id} style={styles.destinationCard}>
+                <Image
+                  source={{ uri: item.image }}
+                  style={styles.destinationImage}
+                />
+                <View style={styles.destinationOverlay}>
+                  <Text style={styles.destinationName}>{item.name}</Text>
+                  <View style={styles.ratingContainer}>
+                    <Text style={styles.ratingText}>⭐ {item.rating}</Text>
+                    <Text style={styles.reviewText}> ({item.reviews})</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Community Trips */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Cộng đồng chia sẻ 👥</Text>
+            <TouchableOpacity>
+              <Text style={styles.seeAll}>Xem tất cả</Text>
+            </TouchableOpacity>
+          </View>
+          {communityTrips.map((trip) => (
+            <TouchableOpacity key={trip.id} style={styles.tripCard}>
+              <Image source={{ uri: trip.image }} style={styles.tripImage} />
+              <View style={styles.tripContent}>
+                <Text style={styles.tripTitle} numberOfLines={2}>
+                  {trip.title}
                 </Text>
-                <TouchableOpacity
-                  style={[styles.seedButton, { backgroundColor: "#DB4437" }]}
-                  onPress={handleGoogleSearch}
-                >
-                  <Text style={styles.seedButtonText}>
-                    🔍 Tìm thêm trên Google Maps
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.tripMeta}>
+                  <Text style={styles.tripMetaText}>📅 {trip.days} ngày</Text>
+                  <Text style={styles.tripMetaText}>💰 {trip.budget}</Text>
+                </View>
+                <View style={styles.authorContainer}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      flex: 1,
+                    }}
+                  >
+                    <Image
+                      source={{ uri: trip.avatar }}
+                      style={styles.authorAvatar}
+                    />
+                    <Text style={styles.authorName} numberOfLines={1}>
+                      {trip.author}
+                    </Text>
+                  </View>
+                  <View style={styles.likesContainer}>
+                    <Text style={styles.likesText}>❤️ {trip.likes}</Text>
+                  </View>
+                </View>
               </View>
-            )
-          }
-        />
-      )}
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
+  container: { flex: 1, backgroundColor: "#F8F9FA" },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 15,
     paddingTop: 50,
     paddingBottom: 20,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  backButtonTextWhite: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  searchContainer: {
-    padding: 15,
-    backgroundColor: "#fff",
-  },
-  searchInput: {
-    backgroundColor: "#F0F2F5",
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 16,
-  },
-  filterContainer: {
-    backgroundColor: "#fff",
-    paddingBottom: 10,
-  },
-  provinceList: {
-    paddingHorizontal: 15,
-  },
-  provinceChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.2)",
+  },
+  backButtonText: { color: "#FFF", fontSize: 24, fontWeight: "bold" },
+  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#FFF" },
+  content: { flex: 1 },
+  searchContainer: {
+    padding: 20,
+    backgroundColor: "#FFF",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+    marginTop: -10,
+  },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#F0F2F5",
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+  },
+  searchIcon: { fontSize: 18, marginRight: 10 },
+  searchInput: { flex: 1, fontSize: 16, color: "#333" },
+  categoriesContainer: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  categoryChip: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: "#FFF",
+    borderRadius: 25,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: "transparent",
+    borderColor: "#E0E0E0",
   },
-  provinceChipActive: {
-    backgroundColor: "#E0E7FF",
-    borderColor: "#667eea",
+  categoryChipActive: { backgroundColor: "#667eea", borderColor: "#667eea" },
+  categoryText: { color: "#666", fontWeight: "600" },
+  categoryTextActive: { color: "#FFF" },
+  section: { marginTop: 25, paddingHorizontal: 20 },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
   },
-  provinceText: {
-    fontSize: 14,
-    color: "#666",
-    fontWeight: "500",
-  },
-  provinceTextActive: {
-    color: "#667eea",
-    fontWeight: "700",
-  },
-  placesList: {
-    padding: 15,
-  },
-  placeCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    marginBottom: 20,
+  sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#333" },
+  seeAll: { color: "#667eea", fontWeight: "600" },
+  destinationCard: {
+    width: 160,
+    height: 220,
+    borderRadius: 16,
+    marginRight: 15,
     overflow: "hidden",
+    backgroundColor: "#FFF",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  placeImage: {
-    width: "100%",
-    height: 180,
+  destinationImage: { width: "100%", height: "100%" },
+  destinationOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 12,
+    backgroundColor: "rgba(0,0,0,0.4)",
   },
-  placeContent: {
-    padding: 15,
-  },
-  placeHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 5,
-  },
-  placeMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  placeName: {
-    fontSize: 18,
+  destinationName: {
+    color: "#FFF",
+    fontSize: 16,
     fontWeight: "bold",
-    color: "#1A1A1A",
-    flex: 1,
-    marginRight: 10,
+    marginBottom: 4,
   },
-  ratingBadge: {
-    backgroundColor: "#FFF9C4",
+  ratingContainer: { flexDirection: "row", alignItems: "center" },
+  ratingText: { color: "#FFD700", fontSize: 12, fontWeight: "bold" },
+  reviewText: { color: "#FFF", fontSize: 10, opacity: 0.8 },
+  tripCard: {
+    flexDirection: "row",
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    marginBottom: 15,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  tripImage: { width: 120, height: 120 },
+  tripContent: { flex: 1, padding: 12, justifyContent: "space-between" },
+  tripTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  tripMeta: { flexDirection: "row", marginBottom: 8 },
+  tripMetaText: {
+    fontSize: 12,
+    color: "#666",
+    marginRight: 12,
+    backgroundColor: "#F0F2F5",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
-    marginLeft: 5,
   },
-  ratingText: {
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "#FBC02D",
-  },
-  categoryBadge: {
-    backgroundColor: "#F0F2F5",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginRight: 10,
-  },
-  categoryText: {
-    fontSize: 12,
-    color: "#666",
-  },
-  placeProvince: {
-    fontSize: 14,
-    color: "#667eea",
-    fontWeight: "500",
-  },
-  placeDescription: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
+  authorContainer: {
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
-  emptyContainer: {
-    alignItems: "center",
-    marginTop: 50,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: "#999",
-  },
-  seedButton: {
-    marginTop: 20,
-    backgroundColor: "#667eea",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  seedButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-  },
-  footerContainer: {
-    padding: 20,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  footerText: {
-    color: "#666",
-    marginBottom: 10,
-  },
-  helperText: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 5,
-  },
+  authorAvatar: { width: 24, height: 24, borderRadius: 12, marginRight: 8 },
+  authorName: { fontSize: 12, color: "#666", flex: 1 },
+  likesContainer: { flexDirection: "row", alignItems: "center" },
+  likesText: { fontSize: 12, color: "#666" },
 });
 
-export default DiscoverPlacesScreen;
+export default DiscoverScreen;

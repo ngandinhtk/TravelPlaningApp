@@ -246,7 +246,7 @@ const HomeScreen = () => {
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search destinations..."
+            placeholder="Tìm điểm đến..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#999"
@@ -276,7 +276,7 @@ const HomeScreen = () => {
             style={styles.actionButtonGradient}
           >
             <Text style={styles.createTripIcon}>✨</Text>
-            <Text style={styles.createTripText}>New Trip</Text>
+            <Text style={styles.createTripText}>Tạo chuyến</Text>
           </LinearGradient>
         </TouchableOpacity>
 
@@ -291,7 +291,7 @@ const HomeScreen = () => {
             style={styles.actionButtonGradient}
           >
             <Text style={styles.createTripIcon}>🌏</Text>
-            <Text style={styles.createTripText}>Discover</Text>
+            <Text style={styles.createTripText}>Khám phá</Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -302,9 +302,9 @@ const HomeScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Your Trips</Text>
+          <Text style={styles.sectionTitle}>Chuyến đi của bạn</Text>
           <TouchableOpacity onPress={() => router.push("trip/all-trips")}>
-            <Text style={styles.seeAll}>See All</Text>
+            <Text style={styles.seeAll}>Xem tất cả</Text>
           </TouchableOpacity>
         </View>
         {isTripsLoading ? (
@@ -366,7 +366,7 @@ const HomeScreen = () => {
 
         {/* Recommended Destinations */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Trending Destinations</Text>
+          <Text style={styles.sectionTitle}>Điểm đến thịnh hành</Text>
         </View>
 
         <ScrollView
@@ -395,11 +395,11 @@ const HomeScreen = () => {
         {/* AI Intelligence Section */}
         {!isAuthLoading && user && (
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>🧠 Your AI Intelligence</Text>
+            <Text style={styles.sectionTitle}>🧠 Trí tuệ AI của bạn</Text>
             <TouchableOpacity
               onPress={() => router.push("/admin/intelligence")}
             >
-              <Text style={styles.seeAll}>View Details</Text>
+              <Text style={styles.seeAll}>Xem chi tiết</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -421,7 +421,7 @@ const HomeScreen = () => {
           onClose={() => setShowFeedbackModal(false)}
           userId={user.uid}
           itemType="home_interaction"
-          title="What do you think?"
+          title="Bạn cảm thấy thế nào?"
         />
       )}
     </View>
@@ -453,9 +453,9 @@ const HeaderContent = ({ user, router }) => (
   <>
     <View>
       <Text style={styles.greeting}>
-        Hello, {user?.displayName || "there"}! 👋
+        Xin chào, {user?.displayName || "bạn"}! 👋
       </Text>
-      <Text style={styles.subGreeting}>Where to next?</Text>
+      <Text style={styles.subGreeting}>Bạn muốn đi đâu tiếp theo?</Text>
     </View>
     <TouchableOpacity onPress={() => router.push("profile/profile")}>
       <Image
@@ -499,16 +499,16 @@ const StatsContent = ({ trips }) => {
     <>
       <View style={styles.statCard}>
         <Text style={[styles.statNumber]}>{totalDestinations}</Text>
-        <Text style={styles.statLabel}>Destinations</Text>
+        <Text style={styles.statLabel}>Điểm đến</Text>
       </View>
       <View style={styles.statCard}>
         <Text style={styles.statNumber}>{trips.length}</Text>
-        <Text style={styles.statLabel}>Trips</Text>
+        <Text style={styles.statLabel}>Chuyến đi</Text>
       </View>
 
       <View style={styles.statCard}>
         <Text style={styles.statNumber}>{totalDays}</Text>
-        <Text style={styles.statLabel}>Days</Text>
+        <Text style={styles.statLabel}>Ngày</Text>
       </View>
     </>
   );
@@ -551,9 +551,9 @@ const TripsContent = ({ trips, onViewTrip }) =>
   trips.length === 0 ? (
     <View style={styles.emptyState}>
       <Text style={styles.emptyIcon}>🗺️</Text>
-      <Text style={styles.emptyText}>No trips yet</Text>
+      <Text style={styles.emptyText}>Chưa có chuyến đi nào</Text>
       <Text style={styles.emptySubtext}>
-        Create your first trip to get started!
+        Tạo chuyến đi đầu tiên để bắt đầu!
       </Text>
     </View>
   ) : (
@@ -575,7 +575,7 @@ const TripsContent = ({ trips, onViewTrip }) =>
           <View style={styles.tripMeta}>
             <Text style={styles.tripMetaItem}>👥 {trip.travelers}</Text>
             <Text style={styles.tripMetaItem}>💰 ${trip.budget}</Text>
-            <Text style={styles.tripMetaItem}>📅 {trip.days} days</Text>
+            <Text style={styles.tripMetaItem}>� {trip.days} ngày</Text>
           </View>
         </LinearGradient>
       </TouchableOpacity>

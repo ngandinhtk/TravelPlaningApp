@@ -21,12 +21,12 @@ import { updateTrip } from "../../services/tripService";
 
 // Define categories as per the markdown
 const CATEGORIES = {
-  Accommodation: { color: "#f39c12", icon: "🏨" },
-  Food: { color: "#e74c3c", icon: "🍜" },
-  Transportation: { color: "#3498db", icon: "🚗" },
-  Activities: { color: "#9b59b6", icon: "🎫" },
-  Shopping: { color: "#2ecc71", icon: "💰" },
-  Other: { color: "#95a5a6", icon: "💸" },
+  Accommodation: { color: "#f39c12", icon: "🏨", label: "Chỗ ở" },
+  Food: { color: "#e74c3c", icon: "🍜", label: "Ăn uống" },
+  Transportation: { color: "#3498db", icon: "🚗", label: "Di chuyển" },
+  Activities: { color: "#9b59b6", icon: "🎫", label: "Hoạt động" },
+  Shopping: { color: "#2ecc71", icon: "💰", label: "Mua sắm" },
+  Other: { color: "#95a5a6", icon: "💸", label: "Khác" },
 };
 
 const BudgetScreen = () => {
@@ -214,7 +214,7 @@ const BudgetScreen = () => {
           onPress={() => setNewExpenseCategory(cat)}
         >
           <Text style={styles.categoryChipText}>
-            {CATEGORIES[cat].icon} {cat}
+            {CATEGORIES[cat].icon} {CATEGORIES[cat].label || cat}
           </Text>
         </TouchableOpacity>
       ))}
@@ -261,7 +261,7 @@ const BudgetScreen = () => {
               filterCategory === cat && styles.filterChipTextSelected,
             ]}
           >
-            {CATEGORIES[cat].icon} {cat}
+            {CATEGORIES[cat].icon} {CATEGORIES[cat].label || cat}
           </Text>
         </TouchableOpacity>
       ))}
@@ -275,7 +275,9 @@ const BudgetScreen = () => {
       </View>
       <View style={styles.expenseItemDetails}>
         <Text style={styles.expenseItemDescription}>{item.description}</Text>
-        <Text style={styles.expenseItemCategory}>{item.category}</Text>
+        <Text style={styles.expenseItemCategory}>
+          {CATEGORIES[item.category]?.label || item.category}
+        </Text>
       </View>
       <Text style={styles.expenseItemAmount}>
         -{item.amount.toLocaleString("vi-VN")}
@@ -287,7 +289,7 @@ const BudgetScreen = () => {
     <View style={styles.container}>
       <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
         <TouchableOpacity onPress={handleBack}>
-          <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
+          <Text style={styles.backButtonTextWhite}>&larr; Quay lại</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}> Theo dõi ngân sách </Text>
         <View style={{ width: 40 }} />
@@ -400,7 +402,7 @@ const BudgetScreen = () => {
                       ]}
                     />
                     <Text style={styles.legendText}>
-                      {category} ({percentage}%)
+                      {CATEGORIES[category]?.label || category} ({percentage}%)
                     </Text>
                     <Text style={styles.legendAmount}>
                       {amount.toLocaleString("vi-VN")}đ
@@ -536,7 +538,8 @@ const BudgetScreen = () => {
             <View key={item.category} style={styles.analysisItem}>
               <View style={styles.analysisHeader}>
                 <Text style={styles.analysisCategory}>
-                  {CATEGORIES[item.category].icon} {item.category} (
+                  {CATEGORIES[item.category].icon}{" "}
+                  {CATEGORIES[item.category].label || item.category} (
                   {item.ratio * 100}%)
                 </Text>
                 <Text

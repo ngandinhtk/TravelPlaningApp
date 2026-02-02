@@ -7,11 +7,11 @@ const GeneratingScreen = ({ trip, onComplete }) => {
   const [progress, setProgress] = useState(0);
 
   const statuses = [
-    "Analyzing your preferences...",
-    "Finding the best attractions...",
-    "Optimizing your route...",
-    "Selecting restaurants...",
-    "Finalizing your itinerary...",
+    "Đang phân tích sở thích của bạn...",
+    "Đang tìm các điểm tham quan tốt nhất...",
+    "Đang tối ưu hóa lộ trình...",
+    "Đang chọn nhà hàng...",
+    "Đang hoàn thiện lịch trình...",
   ];
 
   // Derive status from progress (0-20: index 0, 21-40: index 1, etc.)
@@ -41,7 +41,7 @@ const GeneratingScreen = ({ trip, onComplete }) => {
       style={styles.generatingContainer}
     >
       <Text style={styles.generatingIcon}>✨</Text>
-      <Text style={styles.generatingTitle}>Creating Your Perfect Trip</Text>
+      <Text style={styles.generatingTitle}>Đang tạo chuyến đi hoàn hảo</Text>
       <Text style={styles.generatingStatus}>{status}</Text>
 
       <View style={styles.progressBarContainer}>
@@ -53,11 +53,9 @@ const GeneratingScreen = ({ trip, onComplete }) => {
       <Text style={styles.progressText}>{progress}%</Text>
 
       <View style={styles.generatingFeatures}>
-        <Text style={styles.featureText}>
-          🎯 Personalized to your interests
-        </Text>
-        <Text style={styles.featureText}>💰 Optimized for your budget</Text>
-        <Text style={styles.featureText}>🗺️ Smart route planning</Text>
+        <Text style={styles.featureText}>🎯 Cá nhân hóa theo sở thích</Text>
+        <Text style={styles.featureText}>💰 Tối ưu hóa cho ngân sách</Text>
+        <Text style={styles.featureText}>🗺️ Lập lộ trình thông minh</Text>
       </View>
     </LinearGradient>
   );
