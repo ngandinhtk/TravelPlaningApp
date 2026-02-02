@@ -222,7 +222,7 @@ const EditTripScreen = () => {
         style={styles.createTripHeader}
       >
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
+          <Text style={styles.backButtonTextWhite}>&larr; </Text>
         </TouchableOpacity>
         <Text style={styles.createTripTitle}>Chỉnh sửa chuyến đi</Text>
         <View style={{ width: 80 }} />

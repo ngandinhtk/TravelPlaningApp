@@ -77,7 +77,10 @@ const CreateTripScreen = ({ onBack }) => {
   const handleCreateTrip = async () => {
     const destination = destinations
       .filter((d) => d.trim())
-      .map((d) => d.trim().toUpperCase())
+      .map((d) => {
+        const trimmed = d.trim();
+        return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+      })
       .join(" - ");
     // console.log(destination, startDate, endDate);
 
@@ -102,7 +105,10 @@ const CreateTripScreen = ({ onBack }) => {
       // Create itineraries based on destinations and days
       const cleanDestinations = destinations
         .filter((d) => d.trim())
-        .map((d) => d.trim().toUpperCase());
+        .map((d) => {
+          const trimmed = d.trim();
+          return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+        });
       const itineraries = createInitialItineraries(
         cleanDestinations,
         calculatedDays,
@@ -311,7 +317,7 @@ const CreateTripScreen = ({ onBack }) => {
         style={styles.createTripHeader}
       >
         <TouchableOpacity onPress={handleBack}>
-          <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
+          <Text style={styles.backButtonTextWhite}>&larr; </Text>
         </TouchableOpacity>
         <Text style={styles.createTripTitle}>Tạo chuyến đi</Text>
         <Text style={styles.stepIndicator}>Bước {step}/3</Text>

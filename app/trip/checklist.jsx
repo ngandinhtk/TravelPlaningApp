@@ -2,13 +2,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Loading from "../../components/common/Loading";
 import CustomModal from "../../components/common/Modal";
@@ -168,7 +168,7 @@ const ChecklistScreen = () => {
     <View style={styles.container}>
       <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
+          <Text style={styles.backButtonTextWhite}>&larr; </Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hành trang</Text>
         <TouchableOpacity

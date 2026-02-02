@@ -206,7 +206,7 @@ const PackingListScreen = () => {
     <View style={styles.container}>
       <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
         <TouchableOpacity onPress={handleBack}>
-          <Text style={styles.backButtonTextWhite}>&larr; Back</Text>
+          <Text style={styles.backButtonTextWhite}>&larr; </Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
           {activeTab === "packing" ? "Hành Trang" : "Việc Cần Làm"}
