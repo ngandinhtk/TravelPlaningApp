@@ -31,7 +31,7 @@ const ProfileScreen = () => {
         style={styles.profileHeader}
       >
         <TouchableOpacity onPress={() => router.back(-1)}>
-          <Text style={styles.backButtonTextWhite}>← Quay lại</Text>
+          <Text style={styles.backButtonTextWhite}>←</Text>
         </TouchableOpacity>
         <Text style={styles.profileTitle}>Hồ sơ</Text>
         <View style={{ width: 50 }} />

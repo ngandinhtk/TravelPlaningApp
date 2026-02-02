@@ -289,7 +289,7 @@ const BudgetScreen = () => {
     <View style={styles.container}>
       <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
         <TouchableOpacity onPress={handleBack}>
-          <Text style={styles.backButtonTextWhite}>&larr; Quay lại</Text>
+          <Text style={styles.backButtonTextWhite}>&larr; </Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}> Theo dõi ngân sách </Text>
         <View style={{ width: 40 }} />

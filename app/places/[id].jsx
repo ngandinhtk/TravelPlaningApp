@@ -72,7 +72,7 @@ const PlaceDetailScreen = () => {
       <View style={styles.centered}>
         <Text style={styles.errorText}>Không tìm thấy thông tin địa điểm.</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backLink}>Quay lại</Text>
+          <Text style={styles.backLink}></Text>
         </TouchableOpacity>
       </View>
     );

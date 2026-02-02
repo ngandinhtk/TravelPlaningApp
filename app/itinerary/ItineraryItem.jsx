@@ -1,7 +1,7 @@
 import { Clock, MapPin } from "lucide-react-native";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-const ItineraryItem = ({ item, onPress, onLongPress }) => {
+const ItineraryItem = ({ item, onPress, onLongPress, disabled, style }) => {
   const getCategoryColor = (category) => {
     const colors = {
       Food: "#FF9F43",
@@ -15,10 +15,11 @@ const ItineraryItem = ({ item, onPress, onLongPress }) => {
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, style]}
       onPress={onPress}
       onLongPress={onLongPress}
       activeOpacity={0.7}
+      disabled={disabled}
     >
       <View
         style={[

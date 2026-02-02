@@ -9,38 +9,28 @@ import {
   Edit,
   FileText,
   MapPin,
+  MessageCircle,
   Plane,
-  Plus,
   Trash2,
-  Users,
+  Users
 } from "lucide-react-native";
 import { useState } from "react";
 import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import Loading from "../../components/common/Loading";
 import CustomModal from "../../components/common/Modal";
 import { useTrip } from "../../context/TripContext";
-import { deleteTrip, updateTrip } from "../../services/tripService";
+import { deleteTrip } from "../../services/tripService";
 
 const TripDetailScreen = () => {
-  const { trip, setTrip } = useTrip(); // Lấy toàn bộ đối tượng trip từ Context
+  const { trip } = useTrip(); // Lấy toàn bộ đối tượng trip từ Context
   const router = useRouter();
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [activityModalVisible, setActivityModalVisible] = useState(false);
-  const [editingActivity, setEditingActivity] = useState(null);
-  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
-  const [activityForm, setActivityForm] = useState({
-    time: "",
-    title: "",
-    location: "",
-    description: "",
-  });
 
   if (!trip) {
     return <Loading />;
@@ -68,53 +58,6 @@ const TripDetailScreen = () => {
     }
   };
   // console.log(templates);
-
-  const handleAddActivity = (dayIndex) => {
-    setSelectedDayIndex(dayIndex);
-    setEditingActivity(null);
-    setActivityForm({ time: "", title: "", location: "", description: "" });
-    setActivityModalVisible(true);
-  };
-
-  const handleEditActivity = (dayIndex, activityIndex, activity) => {
-    setSelectedDayIndex(dayIndex);
-    setEditingActivity({ dayIndex, activityIndex });
-    setActivityForm({
-      time: activity.time || "",
-      title: typeof activity === "string" ? activity : activity.title || "",
-      location: activity.location || "",
-      description: activity.description || "",
-    });
-    setActivityModalVisible(true);
-  };
-
-  const handleSaveActivity = async () => {
-    if (!activityForm.title.trim()) return;
-
-    const newItinerary = [...(trip.itinerary || [])];
-    const day = { ...newItinerary[selectedDayIndex] };
-    const activities = [...(day.activities || [])];
-
-    const newActivityData = {
-      ...activityForm,
-    };
-
-    if (editingActivity) {
-      activities[editingActivity.activityIndex] = newActivityData;
-    } else {
-      activities.push(newActivityData);
-    }
-
-    day.activities = activities;
-    newItinerary[selectedDayIndex] = day;
-
-    // Optimistic update
-    setTrip({ ...trip, itinerary: newItinerary });
-    setActivityModalVisible(false);
-
-    // Save to Firebase
-    await updateTrip(trip.id, { itinerary: newItinerary });
-  };
 
   return (
     <View style={styles.itineraryContainer}>
@@ -251,7 +194,7 @@ const TripDetailScreen = () => {
             </View>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryLabel}>Thời lượng</Text>
+            <Text style={styles.summaryLabel}>Thời gian chuyến đi</Text>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Calendar size={16} color="#1A1A1A" />
               <Text style={[styles.summaryValue, { marginLeft: 6 }]}>
@@ -320,24 +263,12 @@ const TripDetailScreen = () => {
                   <Text style={styles.dayTitleText}>
                     {dayItem.title || `Ngày ${dayItem.day}`}
                   </Text>
-                  <TouchableOpacity
-                    onPress={() => handleAddActivity(index)}
-                    style={styles.addActivityBtn}
-                  >
-                    <Plus size={20} color="#667eea" />
-                  </TouchableOpacity>
                 </View>
 
                 <View style={styles.activitiesList}>
                   {dayItem.activities &&
                     dayItem.activities.map((activity, actIndex) => (
-                      <TouchableOpacity
-                        key={actIndex}
-                        style={styles.activityRow}
-                        onPress={() =>
-                          handleEditActivity(index, actIndex, activity)
-                        }
-                      >
+                      <View key={actIndex} style={styles.activityRow}>
                         <View style={styles.timelineContainer}>
                           <View style={styles.timelineLine} />
                           <View style={styles.activityDot} />
@@ -374,7 +305,7 @@ const TripDetailScreen = () => {
                             <Text style={styles.activityText}>{activity}</Text>
                           )}
                         </View>
-                      </TouchableOpacity>
+                      </View>
                     ))}
                 </View>
               </View>
@@ -446,6 +377,16 @@ const TripDetailScreen = () => {
               </View>
               <Text style={styles.actionLabel}>Mời</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.push("/trip/chat")}
+              style={styles.actionItem}
+            >
+              <View style={[styles.iconCircle, { backgroundColor: "#eef0ff" }]}>
+                <MessageCircle color="#667eea" size={24} />
+              </View>
+              <Text style={styles.actionLabel}>Chat</Text>
+            </TouchableOpacity>
             {/* 
             <TouchableOpacity
               onPress={openTemplateModal}
@@ -470,56 +411,6 @@ const TripDetailScreen = () => {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-
-      {/* Modal Thêm/Sửa Hoạt Động */}
-      <CustomModal
-        visible={activityModalVisible}
-        title={editingActivity ? "Chỉnh sửa hoạt động" : "Thêm hoạt động mới"}
-        onClose={() => setActivityModalVisible(false)}
-        onConfirm={handleSaveActivity}
-        confirmText="Lưu"
-      >
-        <View style={styles.formContainer}>
-          <Text style={styles.inputLabel}>
-            Tên hoạt động <Text style={{ color: "red" }}>*</Text>
-          </Text>
-          <TextInput
-            style={styles.input}
-            value={activityForm.title}
-            onChangeText={(t) => setActivityForm({ ...activityForm, title: t })}
-            placeholder="Ví dụ: Ăn tối, Check-in..."
-          />
-
-          <Text style={styles.inputLabel}>Thời gian</Text>
-          <TextInput
-            style={styles.input}
-            value={activityForm.time}
-            onChangeText={(t) => setActivityForm({ ...activityForm, time: t })}
-            placeholder="Ví dụ: 08:00 - 10:00"
-          />
-
-          <Text style={styles.inputLabel}>Địa điểm</Text>
-          <TextInput
-            style={styles.input}
-            value={activityForm.location}
-            onChangeText={(t) =>
-              setActivityForm({ ...activityForm, location: t })
-            }
-            placeholder="Tên địa điểm, địa chỉ..."
-          />
-
-          <Text style={styles.inputLabel}>Mô tả / Ghi chú</Text>
-          <TextInput
-            style={[styles.input, { height: 80, textAlignVertical: "top" }]}
-            value={activityForm.description}
-            onChangeText={(t) =>
-              setActivityForm({ ...activityForm, description: t })
-            }
-            multiline
-            placeholder="Chi tiết hoạt động..."
-          />
-        </View>
-      </CustomModal>
     </View>
   );
 };

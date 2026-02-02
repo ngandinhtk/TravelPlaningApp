@@ -455,7 +455,7 @@ const HeaderContent = ({ user, router }) => (
       <Text style={styles.greeting}>
         Xin chào, {user?.displayName || "bạn"}! 👋
       </Text>
-      <Text style={styles.subGreeting}>Bạn muốn đi đâu tiếp theo?</Text>
+      <Text style={styles.subGreeting}>Điểm đến tiếp theo của bạn?</Text>
     </View>
     <TouchableOpacity onPress={() => router.push("profile/profile")}>
       <Image

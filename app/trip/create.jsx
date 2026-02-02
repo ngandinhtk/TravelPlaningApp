@@ -471,7 +471,7 @@ const CreateTripScreen = ({ onBack }) => {
                   end={{ x: 1, y: 0 }}
                   style={styles.gradientButton}
                 >
-                  <Text style={styles.secondaryButtonText}>Quay lại</Text>
+                  <Text style={styles.secondaryButtonText}></Text>
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -535,7 +535,7 @@ const CreateTripScreen = ({ onBack }) => {
                   end={{ x: 1, y: 0 }}
                   style={styles.gradientButton}
                 >
-                  <Text style={styles.secondaryButtonText}>Quay lại</Text>
+                  <Text style={styles.secondaryButtonText}></Text>
                 </LinearGradient>
               </TouchableOpacity>
 

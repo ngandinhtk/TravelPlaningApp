@@ -1,21 +1,31 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, Download, Plus } from "lucide-react-native";
+import { ArrowLeft, Download, Plus, Trash2 } from "lucide-react-native";
 // import {   } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import DraggableFlatList, {
+  ScaleDecorator,
+} from "react-native-draggable-flatlist";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import CustomModal from "../../components/common/Modal";
 import { useUser } from "../../context/UserContext";
 import { showToast } from "../../lib/showToast";
-import { applyTemplateToTrip, getTrip, getTripTemplates, updateTrip } from "../../services/tripService";
+import {
+  applyTemplateToTrip,
+  getTrip,
+  getTripTemplates,
+  updateTrip,
+} from "../../services/tripService";
 import ItineraryItem from "../itinerary/ItineraryItem";
 
 const ItineraryScreen = () => {
@@ -28,6 +38,17 @@ const ItineraryScreen = () => {
   const [selectedDay, setSelectedDay] = useState(1);
   const [itinerary, setItinerary] = useState([]);
 
+  // Activity Form State
+  const [isActivityModalVisible, setIsActivityModalVisible] = useState(false);
+  const [editingActivityId, setEditingActivityId] = useState(null);
+  const [activityForm, setActivityForm] = useState({
+    title: "",
+    time: "",
+    location: "",
+    category: "Sightseeing",
+    notes: "",
+  });
+
   // Template states
   const [isTemplateModalVisible, setIsTemplateModalVisible] = useState(false);
   const [templates, setTemplates] = useState([]);
@@ -35,6 +56,8 @@ const ItineraryScreen = () => {
   const [isApplying, setIsApplying] = useState(false);
   const [applyError, setApplyError] = useState(null);
   const [previousTripState, setPreviousTripState] = useState(null);
+
+  const categories = ["Sightseeing", "Food", "Transport", "Hotel", "Other"];
 
   useEffect(() => {
     const fetchTripData = async () => {
@@ -74,33 +97,108 @@ const ItineraryScreen = () => {
   }, [id]);
 
   const handleAddActivity = () => {
-    // TODO: Mở modal hoặc điều hướng đến trang chọn địa điểm
-    // Đây là mock data để test tính năng
-    const newActivity = {
-      id: Date.now().toString(),
-      title: "Hoạt động mới",
-      time: "09:00",
-      location: "Địa điểm chưa chọn",
+    setEditingActivityId(null);
+    setActivityForm({
+      title: "",
+      time: "",
+      location: "",
       category: "Sightseeing",
-      notes: "Chạm để chỉnh sửa",
+      notes: "",
+    });
+    setIsActivityModalVisible(true);
+  };
+
+  const handleEditActivity = (activity) => {
+    setEditingActivityId(activity.id);
+    setActivityForm({
+      title: activity.title || "",
+      time: activity.time || "",
+      location: activity.location || "",
+      category: activity.category || "Sightseeing",
+      notes: activity.notes || "",
+    });
+    setIsActivityModalVisible(true);
+  };
+
+  const handleSaveActivity = async () => {
+    if (!activityForm.title.trim()) {
+      Alert.alert("Lỗi", "Vui lòng nhập tên hoạt động");
+      return;
+    }
+
+    const newActivity = {
+      id: editingActivityId || Date.now().toString(),
+      ...activityForm,
     };
 
     const updatedItinerary = itinerary.map((dayItem) => {
       if (dayItem.day === selectedDay) {
-        return {
-          ...dayItem,
-          activities: [...(dayItem.activities || []), newActivity],
-        };
+        let newActivities = [...(dayItem.activities || [])];
+        if (editingActivityId) {
+          newActivities = newActivities.map((act) =>
+            act.id === editingActivityId ? newActivity : act,
+          );
+        } else {
+          newActivities.push(newActivity);
+        }
+        // Sort by time string simple comparison
+        newActivities.sort((a, b) =>
+          (a.time || "").localeCompare(b.time || ""),
+        );
+        return { ...dayItem, activities: newActivities };
       }
       return dayItem;
     });
 
     setItinerary(updatedItinerary);
+    setIsActivityModalVisible(false);
 
-    // Lưu vào Firestore
-    updateTrip(id, { itinerary: updatedItinerary }).catch((err) =>
-      console.error(err),
-    );
+    try {
+      await updateTrip(id, { itinerary: updatedItinerary });
+      showToast(
+        editingActivityId ? "Đã cập nhật hoạt động" : "Đã thêm hoạt động",
+      );
+    } catch (error) {
+      console.error("Error saving activity:", error);
+      Alert.alert("Lỗi", "Không thể lưu thay đổi");
+    }
+  };
+
+  const handleDeleteActivity = (activityId) => {
+    const idToDelete =
+      typeof activityId === "string" ? activityId : editingActivityId;
+    if (!idToDelete) return;
+
+    Alert.alert("Xóa hoạt động", "Bạn có chắc chắn muốn xóa hoạt động này?", [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Xóa",
+        style: "destructive",
+        onPress: async () => {
+          const updatedItinerary = itinerary.map((dayItem) => {
+            if (dayItem.day === selectedDay) {
+              return {
+                ...dayItem,
+                activities: (dayItem.activities || []).filter(
+                  (act) => act.id !== idToDelete,
+                ),
+              };
+            }
+            return dayItem;
+          });
+
+          setItinerary(updatedItinerary);
+          setIsActivityModalVisible(false);
+
+          try {
+            await updateTrip(id, { itinerary: updatedItinerary });
+            showToast("Đã xóa hoạt động");
+          } catch (error) {
+            console.error("Error deleting activity:", error);
+          }
+        },
+      },
+    ]);
   };
 
   const openTemplateModal = async () => {
@@ -205,6 +303,24 @@ const ItineraryScreen = () => {
   const currentDayActivities =
     itinerary.find((i) => i.day === selectedDay)?.activities || [];
 
+  const handleDragEnd = async ({ data }) => {
+    const updatedItinerary = itinerary.map((dayItem) => {
+      if (dayItem.day === selectedDay) {
+        return { ...dayItem, activities: data };
+      }
+      return dayItem;
+    });
+
+    setItinerary(updatedItinerary);
+
+    try {
+      await updateTrip(id, { itinerary: updatedItinerary });
+    } catch (error) {
+      console.error("Error updating itinerary order:", error);
+      showToast("Lỗi khi lưu thứ tự mới");
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -278,34 +394,128 @@ const ItineraryScreen = () => {
       </LinearGradient>
 
       {/* Activities List */}
-      <FlatList
-        data={currentDayActivities}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <ItineraryItem
-            item={item}
-            onPress={() => {
-              /* TODO: Edit activity */
-            }}
-          />
-        )}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>
-              Chưa có hoạt động nào cho ngày {selectedDay}
-            </Text>
-            <Text style={styles.emptySubText}>
-              Nhấn nút + để thêm hoạt động
-            </Text>
-          </View>
-        }
-      />
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <DraggableFlatList
+          data={currentDayActivities}
+          onDragEnd={handleDragEnd}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item, drag, isActive }) => (
+            <ScaleDecorator>
+              <ItineraryItem
+                item={item}
+                onPress={() => handleEditActivity(item)}
+                onLongPress={drag}
+                disabled={isActive}
+                style={{ opacity: isActive ? 0.5 : 1 }}
+              />
+            </ScaleDecorator>
+          )}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>
+                Chưa có hoạt động nào cho ngày {selectedDay}
+              </Text>
+              <Text style={styles.emptySubText}>
+                Nhấn nút + để thêm hoạt động
+              </Text>
+            </View>
+          }
+        />
+      </GestureHandlerRootView>
 
       {/* Floating Action Button */}
       <TouchableOpacity style={styles.fab} onPress={handleAddActivity}>
         <Plus color="#FFF" size={24} />
       </TouchableOpacity>
+
+      {/* Add/Edit Activity Modal */}
+      <CustomModal
+        visible={isActivityModalVisible}
+        title={editingActivityId ? "Chỉnh sửa hoạt động" : "Thêm hoạt động mới"}
+        onClose={() => setIsActivityModalVisible(false)}
+        onConfirm={handleSaveActivity}
+        confirmText="Lưu"
+      >
+        <View style={styles.formContainer}>
+          <Text style={styles.inputLabel}>Tên hoạt động *</Text>
+          <TextInput
+            style={styles.input}
+            value={activityForm.title}
+            onChangeText={(t) => setActivityForm({ ...activityForm, title: t })}
+            placeholder="Ví dụ: Ăn tối, Tham quan..."
+          />
+
+          <View style={styles.row}>
+            <View style={{ flex: 1, marginRight: 10 }}>
+              <Text style={styles.inputLabel}>Thời gian</Text>
+              <TextInput
+                style={styles.input}
+                value={activityForm.time}
+                onChangeText={(t) =>
+                  setActivityForm({ ...activityForm, time: t })
+                }
+                placeholder="08:00"
+              />
+            </View>
+            <View style={{ flex: 2 }}>
+              <Text style={styles.inputLabel}>Địa điểm</Text>
+              <TextInput
+                style={styles.input}
+                value={activityForm.location}
+                onChangeText={(t) =>
+                  setActivityForm({ ...activityForm, location: t })
+                }
+                placeholder="Tên địa điểm..."
+              />
+            </View>
+          </View>
+
+          <Text style={styles.inputLabel}>Danh mục</Text>
+          <View style={styles.categoryContainer}>
+            {categories.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[
+                  styles.categoryChip,
+                  activityForm.category === cat && styles.categoryChipActive,
+                ]}
+                onPress={() =>
+                  setActivityForm({ ...activityForm, category: cat })
+                }
+              >
+                <Text
+                  style={[
+                    styles.categoryText,
+                    activityForm.category === cat && styles.categoryTextActive,
+                  ]}
+                >
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.inputLabel}>Ghi chú</Text>
+          <TextInput
+            style={[styles.input, { height: 80, textAlignVertical: "top" }]}
+            value={activityForm.notes}
+            onChangeText={(t) => setActivityForm({ ...activityForm, notes: t })}
+            multiline
+            placeholder="Ghi chú thêm..."
+          />
+
+          {editingActivityId && (
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={handleDeleteActivity}
+            >
+              <Trash2 size={20} color="#ff4757" />
+              <Text style={styles.deleteButtonText}>Xóa hoạt động này</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </CustomModal>
 
       {/* Template Modal */}
       <CustomModal
@@ -484,6 +694,56 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   selectIcon: { fontSize: 24, color: "#667eea", marginLeft: 8 },
+  formContainer: { paddingVertical: 10 },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 6,
+    marginTop: 10,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: "#f9f9f9",
+  },
+  row: { flexDirection: "row" },
+  categoryContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  categoryChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: "#f0f0f0",
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  categoryChipActive: {
+    backgroundColor: "#eef0ff",
+    borderColor: "#667eea",
+  },
+  categoryText: { fontSize: 12, color: "#666" },
+  categoryTextActive: { color: "#667eea", fontWeight: "600" },
+  deleteButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: "#ffe5e5",
+    borderRadius: 8,
+  },
+  deleteButtonText: {
+    color: "#ff4757",
+    fontWeight: "600",
+    marginLeft: 8,
+  },
 });
 
 export default ItineraryScreen;
