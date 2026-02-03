@@ -3,6 +3,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Animated,
+  ArrowLeft,
   ScrollView,
   StyleSheet,
   Text,
@@ -172,7 +173,8 @@ const AllTripsScreen = () => {
     <View style={styles.container}>
       <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButton}>&larr; </Text>
+          {/* <ArrowLeft color="#FFF" size={24} /> */}
+          <ArrowLeft color="#FFF" size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tất cả chuyến đi</Text>
         <View style={{ width: 50 }} />

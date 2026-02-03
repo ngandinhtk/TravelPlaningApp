@@ -8,11 +8,10 @@ import {
   DollarSign,
   Edit,
   FileText,
-  MapPin,
   MessageCircle,
   Plane,
   Trash2,
-  Users
+  Users,
 } from "lucide-react-native";
 import { useState } from "react";
 import {
@@ -111,7 +110,7 @@ const TripDetailScreen = () => {
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <DollarSign size={16} color="#1A1A1A" />
                 <Text style={[styles.summaryValue, { marginLeft: 6 }]}>
-                  ${trip.budget}
+                  {trip.budget}
                 </Text>
               </View>
               <Text
@@ -218,7 +217,7 @@ const TripDetailScreen = () => {
         </View>
 
         {/* Itinerary Section - Lịch trình chi tiết */}
-        <View style={styles.itinerarySection}>
+        {/* <View style={styles.itinerarySection}>
           <View
             style={{
               flexDirection: "row",
@@ -233,7 +232,7 @@ const TripDetailScreen = () => {
             <View
               style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
             >
-              {/* {trip.itinerary && trip.itinerary.length > 0 && (
+              {trip.itinerary && trip.itinerary.length > 0 && (
                 <TouchableOpacity
                   onPress={openTemplateModal}
                   style={styles.applyTemplateBtn}
@@ -249,7 +248,7 @@ const TripDetailScreen = () => {
                     Áp dụng
                   </Text>
                 </TouchableOpacity>
-              )} */}
+              )}
             </View>
           </View>
 
@@ -320,7 +319,7 @@ const TripDetailScreen = () => {
               </Text>
             </View>
           )}
-        </View>
+        </View> */}
 
         {/* Quick Actions Grid */}
         <View style={styles.actionsSection}>

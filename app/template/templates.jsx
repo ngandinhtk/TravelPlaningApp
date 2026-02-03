@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  ArrowLeft,
   FlatList,
   ScrollView,
   StyleSheet,
@@ -483,7 +484,7 @@ const TemplateListScreen = () => {
     <View style={styles.container}>
       <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButton}>&larr; </Text>
+          <ArrowLeft color="#FFF" size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Lịch Trình Gợi Ý</Text>
         <View style={{ width: 50 }} />

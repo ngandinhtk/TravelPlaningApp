@@ -1,4 +1,7 @@
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { doc, getDoc } from "firebase/firestore";
+import { ArrowLeft, Star } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -9,59 +12,85 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-import { LinearGradient } from "expo-linear-gradient";
 import FeedbackModal from "../../components/common/FeedbackModal";
+import { useIntelligence } from "../../context/IntelligenceContext";
 import { useUser } from "../../context/UserContext";
-import { SAMPLE_PLACES_DATA } from "../../services/placeService";
+import { db } from "../../services/firebase";
 
 const PlaceDetailScreen = () => {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { user } = useUser();
+  const { submitUserFeedback } = useIntelligence(); // Using the function from context
 
   const [place, setPlace] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showFeedback, setShowFeedback] = useState(false);
+  const [isFeedbackModalVisible, setFeedbackModalVisible] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
-    const loadPlaceData = () => {
+    const fetchPlace = async () => {
+      if (!id) return;
       setLoading(true);
-      // LƯU Ý: Trong ứng dụng thực tế, bạn sẽ dùng `id` để fetch dữ liệu từ Firestore.
-      // Ở đây, chúng ta tạm thời tìm trong dữ liệu mẫu `SAMPLE_PLACES_DATA`.
-      // Chúng ta sẽ tìm place dựa trên `id` (giả định id là tên của địa điểm)
-      const foundPlace = SAMPLE_PLACES_DATA.find((p) => p.name === id);
+      try {
+        const docRef = doc(db, "places", id);
+        const docSnap = await getDoc(docRef);
 
-      if (foundPlace) {
-        setPlace(foundPlace);
-      } else {
-        // Nếu không tìm thấy trong dữ liệu mẫu, bạn có thể thêm logic
-        // để fetch từ Firestore tại đây.
-        console.warn(`Place with id "${id}" not found in sample data.`);
+        if (docSnap.exists()) {
+          setPlace({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          console.log("No such document!");
+          // Optional: Handle not found state
+        }
+      } catch (error) {
+        console.error("Error fetching place:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    if (id) {
-      loadPlaceData();
-    }
+    fetchPlace();
   }, [id]);
 
-  const getCategoryEmoji = (category) => {
-    const map = {
-      History: "🏛️",
-      Beach: "🏖️",
-      Mountain: "🏔️",
-      Food: "🍜",
-      Culture: "🎨",
-      Nature: "🌲",
-    };
-    return map[category] || "📍";
+  const handleOpenFeedbackModal = () => {
+    setFeedbackModalVisible(true);
+  };
+
+  const handleCloseFeedbackModal = () => {
+    setFeedbackModalVisible(false);
+  };
+
+  const handleFeedbackSubmit = async ({ rating, review }) => {
+    if (!user) {
+      alert("Bạn cần đăng nhập để gửi đánh giá.");
+      return;
+    }
+
+    try {
+      // The submitUserFeedback function from context would handle the API call
+      await submitUserFeedback(
+        user.uid,
+        "place", // itemType
+        place.id, // itemId
+        rating,
+        review,
+        place.category,
+      );
+
+      setSuccessMessage("Cảm ơn bạn đã gửi đánh giá!");
+      handleCloseFeedbackModal();
+
+      // Hide success message after a few seconds
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (error) {
+      console.error("Failed to submit feedback:", error);
+      alert("Gửi đánh giá thất bại. Vui lòng thử lại.");
+    }
   };
 
   if (loading) {
     return (
-      <View style={styles.centered}>
+      <View style={styles.center}>
         <ActivityIndicator size="large" color="#667eea" />
       </View>
     );
@@ -69,175 +98,161 @@ const PlaceDetailScreen = () => {
 
   if (!place) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>Không tìm thấy thông tin địa điểm.</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backLink}></Text>
-        </TouchableOpacity>
+      <View style={styles.center}>
+        <Text>Không tìm thấy thông tin địa điểm.</Text>
       </View>
     );
   }
 
   return (
-    <>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <Image source={{ uri: place.imageUrl }} style={styles.image} />
-        <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.6)"]}
-          style={styles.imageOverlay}
-        />
+    <View style={styles.container}>
+      <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <ArrowLeft color="#FFF" size={24} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          {place.name}
+        </Text>
+        <View style={{ width: 24 }} />
+      </LinearGradient>
 
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-        </View>
-
+      <ScrollView>
+        <Image source={{ uri: place.image }} style={styles.headerImage} />
         <View style={styles.contentContainer}>
-          <Text style={styles.placeName}>{place.name}</Text>
+          <Text style={styles.title}>{place.name}</Text>
 
-          <View style={styles.metaRow}>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaEmoji}>⭐</Text>
-              <Text style={styles.metaText}>{place.rating} (Đánh giá)</Text>
+          <View style={styles.metaContainer}>
+            <View style={styles.ratingContainer}>
+              <Star size={18} color="#FFD700" fill="#FFD700" />
+              <Text style={styles.ratingText}>{place.rating}</Text>
+              <Text style={styles.reviewsText}>({place.reviews} đánh giá)</Text>
             </View>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaEmoji}>
-                {getCategoryEmoji(place.category)}
-              </Text>
-              <Text style={styles.metaText}>{place.category}</Text>
-            </View>
-            <View style={styles.metaItem}>
-              <Text style={styles.metaEmoji}>📍</Text>
-              <Text style={styles.metaText}>{place.province}</Text>
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>{place.category}</Text>
             </View>
           </View>
 
           <Text style={styles.description}>{place.description}</Text>
 
+          {successMessage ? (
+            <Text style={styles.successText}>{successMessage}</Text>
+          ) : null}
+
           <TouchableOpacity
-            style={styles.feedbackButton}
-            onPress={() => setShowFeedback(true)}
+            style={styles.reviewButton}
+            onPress={handleOpenFeedbackModal}
           >
-            <Text style={styles.feedbackButtonText}>✍️ Viết đánh giá</Text>
+            <Text style={styles.reviewButtonText}>Viết đánh giá</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* Tích hợp FeedbackModal */}
       <FeedbackModal
-        isVisible={showFeedback}
-        onClose={() => setShowFeedback(false)}
-        userId={user?.uid}
-        itemType="place"
-        itemId={id} // Sử dụng id từ URL
-        category={place.category}
+        isVisible={isFeedbackModalVisible}
+        onClose={handleCloseFeedbackModal}
+        onSubmit={handleFeedbackSubmit}
         title={`Bạn thấy ${place.name} thế nào?`}
       />
-    </>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
   },
-  centered: {
+  center: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  errorText: {
-    fontSize: 16,
-    color: "#666",
-    marginBottom: 10,
-  },
-  backLink: {
-    fontSize: 16,
-    color: "#667eea",
-    fontWeight: "600",
-  },
-  image: {
-    width: "100%",
-    height: 350,
-  },
-  imageOverlay: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 350,
-  },
   header: {
-    position: "absolute",
-    top: 40,
-    left: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    paddingTop: 50,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    flex: 1,
+    textAlign: "center",
+    marginHorizontal: 10,
   },
   backButton: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
+    padding: 5,
   },
-  backButtonText: {
-    color: "#fff",
-    fontSize: 24,
-    fontWeight: "bold",
+  headerImage: {
+    width: "100%",
+    height: 250,
   },
   contentContainer: {
     padding: 20,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    marginTop: -20,
   },
-  placeName: {
-    fontSize: 28,
+  title: {
+    fontSize: 24,
     fontWeight: "bold",
-    color: "#1A1A1A",
-    marginBottom: 15,
+    marginBottom: 12,
   },
-  metaRow: {
+  metaContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: "#F8F9FA",
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 20,
+    alignItems: "center",
+    marginBottom: 16,
   },
-  metaItem: {
+  ratingContainer: {
+    flexDirection: "row",
     alignItems: "center",
   },
-  metaEmoji: {
-    fontSize: 20,
+  ratingText: {
+    marginLeft: 6,
+    fontSize: 16,
+    fontWeight: "bold",
   },
-  metaText: {
-    fontSize: 12,
+  reviewsText: {
+    marginLeft: 8,
+    fontSize: 14,
     color: "#666",
-    marginTop: 4,
+  },
+  categoryBadge: {
+    backgroundColor: "#eef0ff",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+  },
+  categoryText: {
+    color: "#667eea",
+    fontSize: 14,
+    fontWeight: "600",
   },
   description: {
     fontSize: 16,
+    lineHeight: 24,
     color: "#333",
-    lineHeight: 26,
-    marginBottom: 25,
   },
-  feedbackButton: {
+  reviewButton: {
+    marginTop: 30,
     backgroundColor: "#667eea",
-    paddingVertical: 15,
+    paddingVertical: 16,
     borderRadius: 12,
     alignItems: "center",
-    marginBottom: 20,
   },
-  feedbackButtonText: {
-    color: "#fff",
+  reviewButtonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  successText: {
+    marginTop: 20,
+    color: "green",
     fontSize: 16,
+    textAlign: "center",
     fontWeight: "bold",
   },
 });

@@ -1,7 +1,9 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { doc, setDoc } from "firebase/firestore";
 import { useState } from "react";
 import {
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -10,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { db } from "../../services/firebase";
 
 const DiscoverScreen = () => {
   const router = useRouter();
@@ -27,36 +30,52 @@ const DiscoverScreen = () => {
   // Mock data for trending destinations
   const trendingDestinations = [
     {
-      id: 1,
+      id: "hoi-an",
       name: "Hội An",
       image:
         "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2000&auto=format&fit=crop",
       rating: 4.8,
       reviews: 1234,
+      category: "Lịch sử",
+      description:
+        "Hội An là một thành phố trực thuộc tỉnh Quảng Nam, Việt Nam. Phố cổ Hội An từng là một thương cảng quốc tế sầm uất, gồm những di sản kiến trúc đã có từ hàng trăm năm trước, được UNESCO công nhận là di sản văn hóa thế giới từ năm 1999.",
+      province: "Quảng Nam",
     },
     {
-      id: 2,
+      id: "ha-long",
       name: "Hạ Long",
       image:
         "https://images.unsplash.com/photo-1528127220108-5362b6b6864d?q=80&w=2000&auto=format&fit=crop",
       rating: 4.7,
       reviews: 890,
+      category: "Thiên nhiên",
+      description:
+        "Vịnh Hạ Long là một vịnh nhỏ thuộc phần bờ tây vịnh Bắc Bộ tại khu vực biển Đông Bắc Việt Nam, bao gồm vùng biển đảo thuộc thành phố Hạ Long, thành phố Cẩm Phả và một phần của huyện đảo Vân Đồn của tỉnh Quảng Ninh.",
+      province: "Quảng Ninh",
     },
     {
-      id: 3,
+      id: "sapa",
       name: "Sapa",
       image:
         "https://images.unsplash.com/photo-1565355858-6225c5695020?q=80&w=2000&auto=format&fit=crop",
       rating: 4.6,
       reviews: 750,
+      category: "Vùng cao",
+      description:
+        "Sa Pa là một thị xã vùng cao của tỉnh Lào Cai, Việt Nam. Nằm ở phía Tây Bắc của Việt Nam, thị xã Sa Pa ở độ cao 1.600 mét so với mực nước biển, cách thành phố Lào Cai 33 km và 317 km tính từ Hà Nội.",
+      province: "Lào Cai",
     },
     {
-      id: 4,
+      id: "da-lat",
       name: "Đà Lạt",
       image:
         "https://images.unsplash.com/photo-1625409678382-74b452771503?q=80&w=2000&auto=format&fit=crop",
       rating: 4.9,
       reviews: 2100,
+      category: "Thành phố",
+      description:
+        "Đà Lạt là tỉnh lỵ của tỉnh Lâm Đồng, nằm trên cao nguyên Lâm Viên, ở độ cao 1.500 m so với mực nước biển. Với nhiều cảnh quan đẹp, Đà Lạt là một trong những thành phố du lịch nổi tiếng nhất của Việt Nam.",
+      province: "Lâm Đồng",
     },
   ];
 
@@ -97,6 +116,40 @@ const DiscoverScreen = () => {
     },
   ];
 
+  const handleSeedData = async () => {
+    Alert.alert(
+      "Xác nhận Seed",
+      "Hành động này sẽ ghi đè dữ liệu các địa điểm đã có. Bạn có chắc chắn muốn tiếp tục?",
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Seed Data",
+          onPress: async () => {
+            console.log("Seeding data to 'places' collection...");
+            try {
+              for (const place of trendingDestinations) {
+                const { id, ...placeData } = place;
+                const docRef = doc(db, "places", id);
+                await setDoc(docRef, placeData);
+                console.log(`Document written for ${id}`);
+              }
+              Alert.alert(
+                "Thành công",
+                "Đã seed dữ liệu địa điểm thành công vào Firestore.",
+              );
+            } catch (error) {
+              console.error("Error seeding data: ", error);
+              Alert.alert(
+                "Lỗi",
+                "Seed dữ liệu thất bại. Kiểm tra console để biết chi tiết.",
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <View style={styles.container}>
       <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
@@ -111,6 +164,13 @@ const DiscoverScreen = () => {
       </LinearGradient>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
+        {/* Seeding Button (For Development) */}
+        <TouchableOpacity onPress={handleSeedData} style={styles.seedButton}>
+          <Text style={styles.seedButtonText}>
+            🌱 Seed Firestore Places (Dev)
+          </Text>
+        </TouchableOpacity>
+
         {/* Search Bar */}
         <View style={styles.searchContainer}>
           <View style={styles.searchBar}>
@@ -162,7 +222,11 @@ const DiscoverScreen = () => {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {trendingDestinations.map((item) => (
-              <TouchableOpacity key={item.id} style={styles.destinationCard}>
+              <TouchableOpacity
+                key={item.id}
+                style={styles.destinationCard}
+                onPress={() => router.push(`/places/${item.id}`)}
+              >
                 <Image
                   source={{ uri: item.image }}
                   style={styles.destinationImage}
@@ -368,6 +432,20 @@ const styles = StyleSheet.create({
   authorName: { fontSize: 12, color: "#666", flex: 1 },
   likesContainer: { flexDirection: "row", alignItems: "center" },
   likesText: { fontSize: 12, color: "#666" },
+  seedButton: {
+    backgroundColor: "#fff3cd",
+    borderColor: "#ffeeba",
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 15,
+    marginHorizontal: 20,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  seedButtonText: {
+    color: "#856404",
+    fontWeight: "bold",
+  },
 });
 
 export default DiscoverScreen;
