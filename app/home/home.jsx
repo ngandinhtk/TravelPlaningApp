@@ -17,7 +17,11 @@ import CustomModal from "../../components/common/Modal";
 import { useIntelligence } from "../../context/IntelligenceContext";
 import { useTrip } from "../../context/TripContext";
 import { useUser } from "../../context/UserContext";
-import { getTrips, getTripTemplates } from "../../services/tripService";
+import {
+  calculateTripStatus,
+  getTrips,
+  getTripTemplates,
+} from "../../services/tripService";
 import { getUserProfile } from "../../services/userService";
 const SkeletonPlaceholder = ({ width, height, style }) => {
   const pulseAnim = useRef(new Animated.Value(0)).current;
@@ -547,8 +551,26 @@ const TripsSkeleton = () => (
   </>
 );
 
-const TripsContent = ({ trips, onViewTrip }) =>
-  trips.length === 0 ? (
+const TripsContent = ({ trips, onViewTrip }) => {
+  // Helper function to get status badge color and Vietnamese text
+  const getStatusDisplay = (trip) => {
+    const status = calculateTripStatus(trip);
+    const statusMap = {
+      Upcoming: { text: "Sắp tới", color: "#667eea", bgColor: "#E8EFFE" },
+      Ongoing: { text: "Đang diễn ra", color: "#F5A623", bgColor: "#FEF3E8" },
+      Completed: {
+        text: "Đã hoàn thành",
+        color: "#6FA65A",
+        bgColor: "#E8F5E8",
+      },
+      Archived: { text: "Lưu trữ", color: "#999", bgColor: "#F0F0F0" },
+    };
+    return (
+      statusMap[status] || { text: status, color: "#999", bgColor: "#F0F0F0" }
+    );
+  };
+
+  return trips.length === 0 ? (
     <View style={styles.emptyState}>
       <Text style={styles.emptyIcon}>🗺️</Text>
       <Text style={styles.emptyText}>Chưa có chuyến đi nào</Text>
@@ -557,30 +579,45 @@ const TripsContent = ({ trips, onViewTrip }) =>
       </Text>
     </View>
   ) : (
-    trips.slice(0, 3).map((trip, index) => (
-      <TouchableOpacity
-        key={index}
-        style={styles.tripCard}
-        onPress={() => onViewTrip(trip)}
-      >
-        <LinearGradient
-          colors={["#ffffff", "#f8f9fa"]}
-          style={styles.tripCardGradient}
+    trips.slice(0, 3).map((trip, index) => {
+      const statusDisplay = getStatusDisplay(trip);
+      return (
+        <TouchableOpacity
+          key={index}
+          style={styles.tripCard}
+          onPress={() => onViewTrip(trip)}
         >
-          <View style={styles.tripCardHeader}>
-            <Text style={styles.tripDestination}>{trip.destination}</Text>
-            <Text style={styles.tripStatus}>{trip.status}</Text>
-          </View>
-          <Text style={styles.tripDates}>{trip.dates}</Text>
-          <View style={styles.tripMeta}>
-            <Text style={styles.tripMetaItem}>👥 {trip.travelers}</Text>
-            <Text style={styles.tripMetaItem}>💰 ${trip.budget}</Text>
-            <Text style={styles.tripMetaItem}>� {trip.days} ngày</Text>
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
-    ))
+          <LinearGradient
+            colors={["#ffffff", "#f8f9fa"]}
+            style={styles.tripCardGradient}
+          >
+            <View style={styles.tripCardHeader}>
+              <Text style={styles.tripDestination}>{trip.destination}</Text>
+              <View
+                style={[
+                  styles.tripStatusBadge,
+                  { backgroundColor: statusDisplay.bgColor },
+                ]}
+              >
+                <Text
+                  style={[styles.tripStatus, { color: statusDisplay.color }]}
+                >
+                  {statusDisplay.text}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.tripDates}>{trip.dates}</Text>
+            <View style={styles.tripMeta}>
+              <Text style={styles.tripMetaItem}>👥 {trip.travelers}</Text>
+              <Text style={styles.tripMetaItem}>💰 ${trip.budget}</Text>
+              <Text style={styles.tripMetaItem}>📅 {trip.days} ngày</Text>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+      );
+    })
   );
+};
 
 // Vui lòng thêm styles từ tệp gốc của bạn vào đây
 const styles = StyleSheet.create({
@@ -762,6 +799,13 @@ const styles = StyleSheet.create({
   tripStatus: {
     fontSize: 12,
     color: "#666",
+  },
+  tripStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
   },
   tripDates: {
     fontSize: 14,

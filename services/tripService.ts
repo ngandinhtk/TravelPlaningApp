@@ -14,6 +14,48 @@ import {
 import { db } from "../services/firebase";
 const tripsCollection = collection(db, "trips");
 
+// Utility function to calculate trip status based on dates
+export const calculateTripStatus = (trip: any): string => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Parse dates string format: "07/02/2026 - 10/02/2026"
+    const dateString = trip.dates || "";
+    const [startStr, endStr] = dateString.split(" - ");
+
+    if (!startStr || !endStr) {
+      return trip.status || "planning";
+    }
+
+    // Parse date strings (dd/mm/yyyy)
+    const parseDateString = (dateStr: string) => {
+      const [day, month, year] = dateStr.trim().split("/");
+      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    };
+
+    const startDate = parseDateString(startStr);
+    const endDate = parseDateString(endStr);
+
+    // If stored status is archived, keep it
+    if (trip.status === "Archived" || trip.status === "archived") {
+      return "Archived";
+    }
+
+    // Determine status based on dates
+    if (today > endDate) {
+      return "Completed"; // Đã hoàn thành
+    } else if (today >= startDate && today <= endDate) {
+      return "Ongoing"; // Đang diễn ra
+    } else {
+      return "Upcoming"; // Sắp tới
+    }
+  } catch (error) {
+    console.warn("Error calculating trip status:", error);
+    return trip.status || "planning";
+  }
+};
+
 const templatesCollection = collection(db, "templates");
 
 // Get all trips for a specific user

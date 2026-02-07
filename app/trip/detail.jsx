@@ -113,12 +113,12 @@ const TripDetailScreen = () => {
                   {trip.budget}
                 </Text>
               </View>
-              <Text
+              <TouchableOpacity
                 onPress={() => router.push("/budget/budget")}
-                style={{ color: "blue", textDecorationLine: "none" }}
+                style={styles.viewButton}
               >
-                Xem{" "}
-              </Text>
+                <Text style={styles.viewButtonText}>Xem</Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -171,16 +171,16 @@ const TripDetailScreen = () => {
                   /{trip.todoList ? trip.todoList.length : 0} tasks
                 </Text>
               </View>
-              <Text
+              <TouchableOpacity
                 onPress={() =>
                   router.push({
                     pathname: "/trip/checklist",
                   })
                 }
-                style={{ color: "blue", textDecorationLine: "none" }}
+                style={styles.viewButton}
               >
-                Quản lý
-              </Text>
+                <Text style={styles.viewButtonText}>Quản lý</Text>
+              </TouchableOpacity>
             </View>
           </View>
           <View style={styles.summaryItem}>
@@ -793,6 +793,17 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: "#667eea",
     marginLeft: 8,
+  },
+  viewButton: {
+    backgroundColor: "#eef0ff",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  viewButtonText: {
+    color: "#667eea",
+    fontSize: 12,
+    fontWeight: "600",
   },
 });
 
