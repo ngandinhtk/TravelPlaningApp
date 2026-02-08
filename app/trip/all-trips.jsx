@@ -1,9 +1,9 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
-  ArrowLeft,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,10 +12,11 @@ import {
 } from "react-native";
 import { useTrip } from "../../context/TripContext";
 import { useUser } from "../../context/UserContext";
-import { getTrips } from "../../services/tripService";
+import { calculateTripStatus, getTrips } from "../../services/tripService";
 
-const pulseAnim = new Animated.Value(0);
 const SkeletonPlaceholder = ({ width, height, style }) => {
+  const pulseAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     const sharedAnimation = Animated.loop(
       Animated.sequence([
@@ -33,7 +34,7 @@ const SkeletonPlaceholder = ({ width, height, style }) => {
     );
     sharedAnimation.start();
     return () => sharedAnimation.stop();
-  }, []);
+  }, [pulseAnim]);
 
   const backgroundColor = pulseAnim.interpolate({
     inputRange: [0, 1],
@@ -46,6 +47,106 @@ const SkeletonPlaceholder = ({ width, height, style }) => {
     />
   );
 };
+
+const TripsList = ({ trips, onViewTrip }) => {
+  const getStatusDisplay = (trip) => {
+    const status = calculateTripStatus(trip);
+    const statusMap = {
+      Upcoming: { text: "Sắp tới", color: "#667eea", bgColor: "#E8EFFE" },
+      Ongoing: { text: "Đang diễn ra", color: "#F5A623", bgColor: "#FEF3E8" },
+      Completed: {
+        text: "Đã hoàn thành",
+        color: "#6FA65A",
+        bgColor: "#E8F5E8",
+      },
+      Archived: { text: "Lưu trữ", color: "#999", bgColor: "#F0F0F0" },
+    };
+    return (
+      statusMap[status] || { text: status, color: "#999", bgColor: "#F0F0F0" }
+    );
+  };
+
+  return trips.length === 0 ? (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyIcon}>🗺️</Text>
+      <Text style={styles.emptyText}>Không tìm thấy chuyến đi nào</Text>
+      <Text style={styles.emptySubtext}>
+        Tạo chuyến đi đầu tiên để bắt đầu!
+      </Text>
+    </View>
+  ) : (
+    trips.map((trip) => {
+      const statusDisplay = getStatusDisplay(trip);
+      return (
+        <TouchableOpacity
+          key={trip.id}
+          style={styles.tripCard}
+          onPress={() => onViewTrip(trip)}
+        >
+          <LinearGradient
+            colors={["#ffffff", "#f8f9fa"]}
+            style={styles.tripCardGradient}
+          >
+            <View style={styles.tripCardHeader}>
+              <Text style={styles.tripDestination}>{trip.destination}</Text>
+              <View
+                style={[
+                  styles.tripStatusBadge,
+                  { backgroundColor: statusDisplay.bgColor },
+                ]}
+              >
+                <Text
+                  style={[styles.tripStatus, { color: statusDisplay.color }]}
+                >
+                  {statusDisplay.text}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.tripDates}>{trip.dates}</Text>
+            <View style={styles.tripMeta}>
+              <Text style={styles.tripMetaItem}>👥 {trip.travelers}</Text>
+              <Text style={styles.tripMetaItem}>💰 ${trip.budget}</Text>
+              <Text style={styles.tripMetaItem}>📅 {trip.days} ngày</Text>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+      );
+    })
+  );
+};
+
+const TripsListSkeleton = () => (
+  <View style={styles.listContainer}>
+    {[...Array(5)].map((_, index) => (
+      <View
+        key={index}
+        style={[styles.tripCard, { backgroundColor: "#FFFFFF", padding: 16 }]}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 12,
+          }}
+        >
+          <SkeletonPlaceholder width={120} height={20} />
+          <SkeletonPlaceholder width={60} height={14} />
+        </View>
+        <SkeletonPlaceholder
+          width={"70%"}
+          height={16}
+          style={{ marginBottom: 16 }}
+        />
+        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+          <SkeletonPlaceholder width={50} height={14} />
+          <SkeletonPlaceholder width={70} height={14} />
+          <SkeletonPlaceholder width={60} height={14} />
+        </View>
+      </View>
+    ))}
+  </View>
+);
 
 const AllTripsScreen = () => {
   const router = useRouter();
@@ -99,76 +200,6 @@ const AllTripsScreen = () => {
     }
   };
 
-  const TripsList = ({ trips, onViewTrip }) =>
-    trips.length === 0 ? (
-      <View style={styles.emptyState}>
-        <Text style={styles.emptyIcon}>🗺️</Text>
-        <Text style={styles.emptyText}>Không tìm thấy chuyến đi nào</Text>
-        <Text style={styles.emptySubtext}>
-          Tạo chuyến đi đầu tiên để bắt đầu!
-        </Text>
-      </View>
-    ) : (
-      trips.map((trip) => (
-        <TouchableOpacity
-          key={trip.id}
-          style={styles.tripCard}
-          onPress={() => onViewTrip(trip)}
-        >
-          <LinearGradient
-            colors={["#ffffff", "#f8f9fa"]}
-            style={styles.tripCardGradient}
-          >
-            <View style={styles.tripCardHeader}>
-              <Text style={styles.tripDestination}>{trip.destination}</Text>
-              <Text style={styles.tripStatus}>{trip.status}</Text>
-            </View>
-            <Text style={styles.tripDates}>{trip.dates}</Text>
-            <View style={styles.tripMeta}>
-              <Text style={styles.tripMetaItem}>👥 {trip.travelers}</Text>
-              <Text style={styles.tripMetaItem}>💰 ${trip.budget}</Text>
-              <Text style={styles.tripMetaItem}>📅 {trip.days} ngày</Text>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-      ))
-    );
-
-  const TripsListSkeleton = () => (
-    <View style={styles.listContainer}>
-      {[...Array(5)].map((_, index) => (
-        <View
-          key={index}
-          style={[styles.tripCard, { backgroundColor: "#FFFFFF", padding: 16 }]}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 12,
-            }}
-          >
-            <SkeletonPlaceholder width={120} height={20} />
-            <SkeletonPlaceholder width={60} height={14} />
-          </View>
-          <SkeletonPlaceholder
-            width={"70%"}
-            height={16}
-            style={{ marginBottom: 16 }}
-          />
-          <View
-            style={{ flexDirection: "row", justifyContent: "space-between" }}
-          >
-            <SkeletonPlaceholder width={50} height={14} />
-            <SkeletonPlaceholder width={70} height={14} />
-            <SkeletonPlaceholder width={60} height={14} />
-          </View>
-        </View>
-      ))}
-    </View>
-  );
-
   return (
     <View style={styles.container}>
       <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
@@ -181,9 +212,7 @@ const AllTripsScreen = () => {
       </LinearGradient>
 
       {isLoading ? (
-        trips.length > 10 ? (
-          <TripsListSkeleton />
-        ) : null
+        <TripsListSkeleton />
       ) : (
         <ScrollView style={styles.listContainer}>
           <TripsList trips={currentTrips} onViewTrip={onViewTrip} />
@@ -260,7 +289,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   tripDestination: { fontSize: 18, fontWeight: "bold", color: "#1A1A1A" },
-  tripStatus: { fontSize: 12, color: "#666" },
+  tripStatus: { fontSize: 12, fontWeight: "600" },
+  tripStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   tripDates: { fontSize: 14, color: "#666", marginBottom: 12 },
   tripMeta: { flexDirection: "row", justifyContent: "space-between" },
   tripMetaItem: { fontSize: 12, color: "#666" },

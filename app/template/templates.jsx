@@ -28,6 +28,7 @@ import {
 } from "../../services/tripService";
 
 import { showToast } from "../../lib/showToast";
+import { seedTemplates } from "../../services/seedService";
 
 const SAMPLE_TEMPLATES = [
   {
@@ -224,26 +225,26 @@ const TemplateListScreen = () => {
     setTemplates(result);
   }, [searchQuery, selectedRegion, allTemplates]);
 
-  // const handleSeedData = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const result = await seedTemplates();
-  //     Alert.alert(result.success ? "Thành công" : "Thông báo", result.message);
-  //     if (result.success) {
-  //       const fetched = await getTripTemplates(50);
-  //       setAllTemplates(fetched);
-  //       setTemplates(fetched);
-  //       const locationSet = new Set(
-  //         fetched.map((t) => t.destination || t.region).filter((r) => !!r),
-  //       );
-  //       setRegions(["All", ...Array.from(locationSet)]);
-  //     }
-  //   } catch (error) {
-  //     Alert.alert("Lỗi", "Không thể thêm dữ liệu mẫu.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const handleSeedData = async () => {
+    setLoading(true);
+    try {
+      const result = await seedTemplates();
+      Alert.alert(result.success ? "Thành công" : "Thông báo", result.message);
+      if (result.success) {
+        const fetched = await getTripTemplates(50);
+        setAllTemplates(fetched);
+        setTemplates(fetched);
+        const locationSet = new Set(
+          fetched.map((t) => t.destination || t.region).filter((r) => !!r),
+        );
+        setRegions(["All", ...Array.from(locationSet)]);
+      }
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể thêm dữ liệu mẫu.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSelectRegion = (region) => {
     setSelectedRegion(region);
@@ -487,7 +488,25 @@ const TemplateListScreen = () => {
           <ArrowLeft color="#FFF" size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Lịch Trình Gợi Ý</Text>
-        <View style={{ width: 50 }} />
+        {__DEV__ ? (
+          <TouchableOpacity
+            onPress={() => {
+              Alert.alert(
+                "Seed mẫu dữ liệu",
+                "Thêm các lịch trình mẫu vào Firestore?",
+                [
+                  { text: "Hủy", style: "cancel" },
+                  { text: "Chắc chắn", onPress: handleSeedData },
+                ],
+              );
+            }}
+            style={{ paddingHorizontal: 8 }}
+          >
+            <Text style={{ color: "#fff", fontWeight: "700" }}>Seed</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 50 }} />
+        )}
       </LinearGradient>
 
       {/* Search Bar */}

@@ -1,9 +1,15 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { doc, setDoc } from "firebase/firestore";
+import {
+  ArrowLeft,
+  Calendar,
+  DollarSign,
+  Heart,
+  Search,
+  Star,
+} from "lucide-react-native";
 import { useState } from "react";
 import {
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -12,198 +18,138 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { db } from "../../services/firebase";
+import CustomModal from "../../components/common/Modal";
 
 const DiscoverScreen = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("Tất cả");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [selectedDestination, setSelectedDestination] = useState(null);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [savedDestinations, setSavedDestinations] = useState([]);
 
-  const categories = [
-    "Tất cả",
-    "Thịnh hành",
-    "Mùa này đi đâu",
-    "Giá rẻ",
-    "Hidden Gems",
-  ];
+  const toggleSave = (id) => {
+    if (savedDestinations.includes(id)) {
+      setSavedDestinations(savedDestinations.filter((item) => item !== id));
+    } else {
+      setSavedDestinations([...savedDestinations, id]);
+    }
+  };
 
-  // Mock data for trending destinations
-  const trendingDestinations = [
-    {
-      id: "hoi-an",
-      name: "Hội An",
-      image:
-        "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2000&auto=format&fit=crop",
-      rating: 4.8,
-      reviews: 1234,
-      category: "Lịch sử",
-      description:
-        "Hội An là một thành phố trực thuộc tỉnh Quảng Nam, Việt Nam. Phố cổ Hội An từng là một thương cảng quốc tế sầm uất, gồm những di sản kiến trúc đã có từ hàng trăm năm trước, được UNESCO công nhận là di sản văn hóa thế giới từ năm 1999.",
-      province: "Quảng Nam",
-    },
-    {
-      id: "ha-long",
-      name: "Hạ Long",
-      image:
-        "https://images.unsplash.com/photo-1528127220108-5362b6b6864d?q=80&w=2000&auto=format&fit=crop",
-      rating: 4.7,
-      reviews: 890,
-      category: "Thiên nhiên",
-      description:
-        "Vịnh Hạ Long là một vịnh nhỏ thuộc phần bờ tây vịnh Bắc Bộ tại khu vực biển Đông Bắc Việt Nam, bao gồm vùng biển đảo thuộc thành phố Hạ Long, thành phố Cẩm Phả và một phần của huyện đảo Vân Đồn của tỉnh Quảng Ninh.",
-      province: "Quảng Ninh",
-    },
-    {
-      id: "sapa",
-      name: "Sapa",
-      image:
-        "https://images.unsplash.com/photo-1565355858-6225c5695020?q=80&w=2000&auto=format&fit=crop",
-      rating: 4.6,
-      reviews: 750,
-      category: "Vùng cao",
-      description:
-        "Sa Pa là một thị xã vùng cao của tỉnh Lào Cai, Việt Nam. Nằm ở phía Tây Bắc của Việt Nam, thị xã Sa Pa ở độ cao 1.600 mét so với mực nước biển, cách thành phố Lào Cai 33 km và 317 km tính từ Hà Nội.",
-      province: "Lào Cai",
-    },
-    {
-      id: "da-lat",
-      name: "Đà Lạt",
-      image:
-        "https://images.unsplash.com/photo-1625409678382-74b452771503?q=80&w=2000&auto=format&fit=crop",
-      rating: 4.9,
-      reviews: 2100,
-      category: "Thành phố",
-      description:
-        "Đà Lạt là tỉnh lỵ của tỉnh Lâm Đồng, nằm trên cao nguyên Lâm Viên, ở độ cao 1.500 m so với mực nước biển. Với nhiều cảnh quan đẹp, Đà Lạt là một trong những thành phố du lịch nổi tiếng nhất của Việt Nam.",
-      province: "Lâm Đồng",
-    },
-  ];
+  const categories = ["All", "Nature", "City", "Food", "Adventure", "Culture"];
 
-  // Mock data for community trips
-  const communityTrips = [
+  // Mock Data
+  const destinations = [
     {
       id: 1,
-      title: "Đà Lạt 3N2Đ - Săn Mây & Cafe",
-      author: "Minh Anh",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      likes: 245,
-      days: 3,
-      budget: "3.5tr",
+      name: "Kyoto, Japan",
       image:
-        "https://images.unsplash.com/photo-1544885935-98dd03b09034?q=80&w=2000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=500&auto=format&fit=crop&q=60",
+      rating: 4.8,
+      category: "Culture",
+      description: "Ancient temples and traditional tea houses.",
+      price: "$1,200",
+      bestTime: "Spring/Autumn",
+      highlights: ["Kinkaku-ji", "Bamboo Forest", "Gion District"],
     },
     {
       id: 2,
-      title: "Food Tour Hải Phòng 24h",
-      author: "Tuấn Hưng",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-      likes: 189,
-      days: 1,
-      budget: "1.5tr",
+      name: "Bali, Indonesia",
       image:
-        "https://images.unsplash.com/photo-1599707367072-cd6cf6cb521e?q=80&w=2000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=500&auto=format&fit=crop&q=60",
+      rating: 4.7,
+      category: "Nature",
+      description: "Tropical paradise with beaches and rice terraces.",
+      price: "$800",
+      bestTime: "April - October",
+      highlights: ["Uluwatu Temple", "Nusa Penida", "Ubud Monkey Forest"],
     },
     {
       id: 3,
-      title: "Khám phá hang động Quảng Bình",
-      author: "Sarah Nguyễn",
-      avatar: "https://randomuser.me/api/portraits/women/68.jpg",
-      likes: 562,
-      days: 4,
-      budget: "6.0tr",
+      name: "Paris, France",
       image:
-        "https://images.unsplash.com/photo-1534057376219-580b4a782a4c?q=80&w=2000&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=500&auto=format&fit=crop&q=60",
+      rating: 4.9,
+      category: "City",
+      description: "The city of lights, art, and romance.",
+      price: "$1,500",
+      bestTime: "June - August",
+      highlights: ["Eiffel Tower", "Louvre Museum", "Montmartre"],
+    },
+    {
+      id: 4,
+      name: "Hanoi, Vietnam",
+      image:
+        "https://images.unsplash.com/photo-1555921015-5532091f6026?w=500&auto=format&fit=crop&q=60",
+      rating: 4.6,
+      category: "Food",
+      description: "Street food paradise and rich history.",
+      price: "$600",
+      bestTime: "October - December",
+      highlights: ["Old Quarter", "Ha Long Bay", "Train Street"],
     },
   ];
 
-  const handleSeedData = async () => {
-    Alert.alert(
-      "Xác nhận Seed",
-      "Hành động này sẽ ghi đè dữ liệu các địa điểm đã có. Bạn có chắc chắn muốn tiếp tục?",
-      [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Seed Data",
-          onPress: async () => {
-            console.log("Seeding data to 'places' collection...");
-            try {
-              for (const place of trendingDestinations) {
-                const { id, ...placeData } = place;
-                const docRef = doc(db, "places", id);
-                await setDoc(docRef, placeData);
-                console.log(`Document written for ${id}`);
-              }
-              Alert.alert(
-                "Thành công",
-                "Đã seed dữ liệu địa điểm thành công vào Firestore.",
-              );
-            } catch (error) {
-              console.error("Error seeding data: ", error);
-              Alert.alert(
-                "Lỗi",
-                "Seed dữ liệu thất bại. Kiểm tra console để biết chi tiết.",
-              );
-            }
-          },
-        },
-      ],
-    );
+  const filteredDestinations =
+    activeCategory === "All"
+      ? destinations
+      : destinations.filter((d) => d.category === activeCategory);
+
+  const handleCardPress = (item) => {
+    setSelectedDestination(item);
+    setModalVisible(true);
   };
 
   return (
     <View style={styles.container}>
       <LinearGradient colors={["#667eea", "#764ba2"]} style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Khám phá</Text>
-        <View style={{ width: 40 }} />
-      </LinearGradient>
-
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
-        {/* Seeding Button (For Development) */}
-        <TouchableOpacity onPress={handleSeedData} style={styles.seedButton}>
-          <Text style={styles.seedButtonText}>
-            🌱 Seed Firestore Places (Dev)
-          </Text>
-        </TouchableOpacity>
-
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <View style={styles.searchBar}>
-            <Text style={styles.searchIcon}>🔍</Text>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Tìm điểm đến, lịch trình..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor="#999"
-            />
-          </View>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            <ArrowLeft color="#FFF" size={24} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Khám phá</Text>
+          <TouchableOpacity
+            onPress={() => router.push("/places/saved")}
+            style={styles.savedButton}
+          >
+            <Heart color="#FFF" size={24} />
+          </TouchableOpacity>
         </View>
 
-        {/* Categories */}
+        <View style={styles.searchContainer}>
+          <Search color="#666" size={20} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Tìm điểm đến mơ ước..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#999"
+          />
+        </View>
+      </LinearGradient>
+
+      <View style={styles.categoryContainer}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={styles.categoriesContainer}
+          contentContainerStyle={styles.categoryList}
         >
-          {categories.map((cat, index) => (
+          {categories.map((cat) => (
             <TouchableOpacity
-              key={index}
+              key={cat}
               style={[
                 styles.categoryChip,
-                activeCategory === cat && styles.categoryChipActive,
+                activeCategory === cat && styles.activeCategoryChip,
               ]}
               onPress={() => setActiveCategory(cat)}
             >
               <Text
                 style={[
                   styles.categoryText,
-                  activeCategory === cat && styles.categoryTextActive,
+                  activeCategory === cat && styles.activeCategoryText,
                 ]}
               >
                 {cat}
@@ -211,84 +157,133 @@ const DiscoverScreen = () => {
             </TouchableOpacity>
           ))}
         </ScrollView>
+      </View>
 
-        {/* Trending Destinations */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Điểm đến thịnh hành 🔥</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAll}>Xem tất cả</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {trendingDestinations.map((item) => (
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.sectionTitle}>Điểm đến nổi bật</Text>
+        <View style={styles.grid}>
+          {filteredDestinations.map((item) => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.card}
+              onPress={() => handleCardPress(item)}
+            >
+              <Image source={{ uri: item.image }} style={styles.cardImage} />
               <TouchableOpacity
-                key={item.id}
-                style={styles.destinationCard}
-                onPress={() => router.push(`/places/${item.id}`)}
+                style={styles.bookmarkButton}
+                onPress={() => toggleSave(item.id)}
               >
-                <Image
-                  source={{ uri: item.image }}
-                  style={styles.destinationImage}
+                <Heart
+                  size={20}
+                  color={
+                    savedDestinations.includes(item.id) ? "#ff4757" : "#FFF"
+                  }
+                  fill={
+                    savedDestinations.includes(item.id)
+                      ? "#ff4757"
+                      : "transparent"
+                  }
                 />
-                <View style={styles.destinationOverlay}>
-                  <Text style={styles.destinationName}>{item.name}</Text>
-                  <View style={styles.ratingContainer}>
-                    <Text style={styles.ratingText}>⭐ {item.rating}</Text>
-                    <Text style={styles.reviewText}> ({item.reviews})</Text>
-                  </View>
-                </View>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Community Trips */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Cộng đồng chia sẻ 👥</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAll}>Xem tất cả</Text>
-            </TouchableOpacity>
-          </View>
-          {communityTrips.map((trip) => (
-            <TouchableOpacity key={trip.id} style={styles.tripCard}>
-              <Image source={{ uri: trip.image }} style={styles.tripImage} />
-              <View style={styles.tripContent}>
-                <Text style={styles.tripTitle} numberOfLines={2}>
-                  {trip.title}
+              <View style={styles.cardOverlay} />
+              <View style={styles.cardContent}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.cardTitle}>{item.name}</Text>
+                  <View style={styles.ratingContainer}>
+                    <Star fill="#FFD700" color="#FFD700" size={12} />
+                    <Text style={styles.ratingText}>{item.rating}</Text>
+                  </View>
+                </View>
+                <Text style={styles.cardDesc} numberOfLines={1}>
+                  {item.description}
                 </Text>
-                <View style={styles.tripMeta}>
-                  <Text style={styles.tripMetaText}>📅 {trip.days} ngày</Text>
-                  <Text style={styles.tripMetaText}>💰 {trip.budget}</Text>
-                </View>
-                <View style={styles.authorContainer}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      flex: 1,
-                    }}
-                  >
-                    <Image
-                      source={{ uri: trip.avatar }}
-                      style={styles.authorAvatar}
-                    />
-                    <Text style={styles.authorName} numberOfLines={1}>
-                      {trip.author}
-                    </Text>
-                  </View>
-                  <View style={styles.likesContainer}>
-                    <Text style={styles.likesText}>❤️ {trip.likes}</Text>
-                  </View>
-                </View>
               </View>
             </TouchableOpacity>
           ))}
         </View>
 
+        <Text style={styles.sectionTitle}>Cộng đồng chia sẻ</Text>
+        {/* Mock Community Trips */}
+        <View style={styles.communityCard}>
+          <View style={styles.communityHeader}>
+            <Image
+              source={{
+                uri: "https://randomuser.me/api/portraits/women/44.jpg",
+              }}
+              style={styles.avatar}
+            />
+            <View>
+              <Text style={styles.userName}>Sarah Chen</Text>
+              <Text style={styles.tripTime}>2 giờ trước</Text>
+            </View>
+          </View>
+          <Text style={styles.communityTripTitle}>
+            Chuyến đi 5 ngày tại Đà Nẵng - Hội An
+          </Text>
+          <Text style={styles.communityTripDesc}>
+            Lịch trình chi tiết ăn chơi, check-in những điểm hot nhất...
+          </Text>
+          <Image
+            source={{
+              uri: "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=500&auto=format&fit=crop&q=60",
+            }}
+            style={styles.communityImage}
+          />
+          <View style={styles.communityActions}>
+            <Text style={styles.actionText}>❤️ 245</Text>
+            <Text style={styles.actionText}>💬 42</Text>
+            <Text style={styles.actionText}>✈️ Clone Trip</Text>
+          </View>
+        </View>
+
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <CustomModal
+        visible={isModalVisible}
+        title={selectedDestination?.name}
+        onClose={() => setModalVisible(false)}
+      >
+        {selectedDestination && (
+          <View>
+            <Image
+              source={{ uri: selectedDestination.image }}
+              style={styles.modalImage}
+            />
+            <View style={styles.modalMeta}>
+              <View style={styles.modalMetaItem}>
+                <Star size={16} color="#FFD700" fill="#FFD700" />
+                <Text style={styles.modalMetaText}>
+                  {selectedDestination.rating}
+                </Text>
+              </View>
+              <View style={styles.modalMetaItem}>
+                <DollarSign size={16} color="#667eea" />
+                <Text style={styles.modalMetaText}>
+                  {selectedDestination.price}
+                </Text>
+              </View>
+              <View style={styles.modalMetaItem}>
+                <Calendar size={16} color="#667eea" />
+                <Text style={styles.modalMetaText}>
+                  {selectedDestination.bestTime}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.modalDescription}>
+              {selectedDestination.description}
+            </Text>
+            <Text style={styles.modalSectionTitle}>Điểm nổi bật:</Text>
+            <View style={styles.highlightsContainer}>
+              {selectedDestination.highlights.map((highlight, index) => (
+                <View key={index} style={styles.highlightBadge}>
+                  <Text style={styles.highlightText}>{highlight}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+      </CustomModal>
     </View>
   );
 };
@@ -299,152 +294,206 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 20,
     paddingHorizontal: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 15,
   },
   backButton: {
     width: 40,
     height: 40,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 20,
     backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 20,
   },
-  backButtonText: { color: "#FFF", fontSize: 24, fontWeight: "bold" },
   headerTitle: { fontSize: 20, fontWeight: "bold", color: "#FFF" },
-  content: { flex: 1 },
   searchContainer: {
-    padding: 20,
-    backgroundColor: "#FFF",
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-    marginTop: -10,
-  },
-  searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F0F2F5",
+    backgroundColor: "#FFF",
     borderRadius: 12,
     paddingHorizontal: 15,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
-  searchIcon: { fontSize: 18, marginRight: 10 },
+  searchIcon: { marginRight: 10 },
   searchInput: { flex: 1, fontSize: 16, color: "#333" },
-  categoriesContainer: {
-    paddingHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 10,
-  },
+  categoryContainer: { marginVertical: 15 },
+  categoryList: { paddingHorizontal: 20 },
   categoryChip: {
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 8,
     backgroundColor: "#FFF",
-    borderRadius: 25,
+    borderRadius: 20,
     marginRight: 10,
     borderWidth: 1,
     borderColor: "#E0E0E0",
   },
-  categoryChipActive: { backgroundColor: "#667eea", borderColor: "#667eea" },
+  activeCategoryChip: { backgroundColor: "#667eea", borderColor: "#667eea" },
   categoryText: { color: "#666", fontWeight: "600" },
-  categoryTextActive: { color: "#FFF" },
-  section: { marginTop: 25, paddingHorizontal: 20 },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  activeCategoryText: { color: "#FFF" },
+  content: { flex: 1, paddingHorizontal: 20 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 15,
+    marginTop: 10,
   },
-  sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#333" },
-  seeAll: { color: "#667eea", fontWeight: "600" },
-  destinationCard: {
-    width: 160,
-    height: 220,
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  card: {
+    width: "48%",
+    height: 200,
     borderRadius: 16,
-    marginRight: 15,
+    marginBottom: 15,
     overflow: "hidden",
-    backgroundColor: "#FFF",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: "#f0f0f0",
+    position: "relative",
   },
-  destinationImage: { width: "100%", height: "100%" },
-  destinationOverlay: {
+  cardImage: { width: "100%", height: "100%" },
+  cardOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.3)",
+  },
+  cardContent: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
     padding: 12,
-    backgroundColor: "rgba(0,0,0,0.4)",
   },
-  destinationName: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "bold",
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 4,
   },
-  ratingContainer: { flexDirection: "row", alignItems: "center" },
-  ratingText: { color: "#FFD700", fontSize: 12, fontWeight: "bold" },
-  reviewText: { color: "#FFF", fontSize: 10, opacity: 0.8 },
-  tripCard: {
+  cardTitle: {
+    color: "#FFF",
+    fontWeight: "bold",
+    fontSize: 16,
+    flex: 1,
+    marginRight: 4,
+  },
+  ratingContainer: {
     flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  ratingText: {
+    color: "#FFF",
+    fontSize: 10,
+    fontWeight: "bold",
+    marginLeft: 2,
+  },
+  cardDesc: { color: "rgba(255,255,255,0.9)", fontSize: 12 },
+  communityCard: {
     backgroundColor: "#FFF",
     borderRadius: 16,
+    padding: 15,
     marginBottom: 15,
-    overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
-  tripImage: { width: 120, height: 120 },
-  tripContent: { flex: 1, padding: 12, justifyContent: "space-between" },
-  tripTitle: {
+  communityHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
+  userName: { fontWeight: "bold", color: "#333" },
+  tripTime: { fontSize: 12, color: "#999" },
+  communityTripTitle: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
-    marginBottom: 4,
+    marginBottom: 5,
   },
-  tripMeta: { flexDirection: "row", marginBottom: 8 },
-  tripMetaText: {
-    fontSize: 12,
-    color: "#666",
-    marginRight: 12,
-    backgroundColor: "#F0F2F5",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+  communityTripDesc: { fontSize: 14, color: "#666", marginBottom: 10 },
+  communityImage: {
+    width: "100%",
+    height: 150,
+    borderRadius: 12,
+    marginBottom: 10,
   },
-  authorContainer: {
+  communityActions: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
+    marginTop: 5,
   },
-  authorAvatar: { width: 24, height: 24, borderRadius: 12, marginRight: 8 },
-  authorName: { fontSize: 12, color: "#666", flex: 1 },
-  likesContainer: { flexDirection: "row", alignItems: "center" },
-  likesText: { fontSize: 12, color: "#666" },
-  seedButton: {
-    backgroundColor: "#fff3cd",
-    borderColor: "#ffeeba",
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 15,
-    marginHorizontal: 20,
-    marginTop: 10,
-    alignItems: "center",
+  actionText: { color: "#666", fontWeight: "500" },
+  modalImage: {
+    width: "100%",
+    height: 200,
+    borderRadius: 12,
+    marginBottom: 15,
   },
-  seedButtonText: {
-    color: "#856404",
+  modalMeta: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 15,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  modalMetaItem: { flexDirection: "row", alignItems: "center" },
+  modalMetaText: { marginLeft: 5, fontWeight: "600", color: "#333" },
+  modalDescription: {
+    fontSize: 16,
+    color: "#444",
+    lineHeight: 24,
+    marginBottom: 15,
+  },
+  modalSectionTitle: {
+    fontSize: 16,
     fontWeight: "bold",
+    color: "#333",
+    marginBottom: 10,
+  },
+  highlightsContainer: { flexDirection: "row", flexWrap: "wrap" },
+  highlightBadge: {
+    backgroundColor: "#eef0ff",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  highlightText: {
+    color: "#667eea",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  bookmarkButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    padding: 8,
+    borderRadius: 20,
+    zIndex: 10,
+  },
+  savedButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 20,
   },
 });
 

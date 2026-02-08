@@ -307,8 +307,11 @@ const HomeScreen = () => {
       >
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Chuyến đi của bạn</Text>
-          <TouchableOpacity onPress={() => router.push("trip/all-trips")}>
-            <Text style={styles.seeAll}>Xem tất cả</Text>
+          <TouchableOpacity
+            onPress={() => router.push("trip/all-trips")}
+            style={styles.seeAllButton}
+          >
+            <Text style={styles.seeAllText}>Xem tất cả</Text>
           </TouchableOpacity>
         </View>
         {isTripsLoading ? (
@@ -321,8 +324,11 @@ const HomeScreen = () => {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Gợi ý lịch trình</Text>
-          <TouchableOpacity onPress={() => router.push("template/templates")}>
-            <Text style={styles.seeAll}>Xem tất cả</Text>
+          <TouchableOpacity
+            onPress={() => router.push("template/templates")}
+            style={styles.seeAllButton}
+          >
+            <Text style={styles.seeAllText}>Xem tất cả</Text>
           </TouchableOpacity>
         </View>
         <ScrollView
@@ -402,8 +408,9 @@ const HomeScreen = () => {
             <Text style={styles.sectionTitle}>🧠 Trí tuệ AI của bạn</Text>
             <TouchableOpacity
               onPress={() => router.push("/admin/intelligence")}
+              style={styles.seeAllButton}
             >
-              <Text style={styles.seeAll}>Xem chi tiết</Text>
+              <Text style={styles.seeAllText}>Xem chi tiết</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -755,9 +762,16 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#1A1A1A",
   },
-  seeAll: {
+  seeAllButton: {
+    backgroundColor: "#eef0ff",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  seeAllText: {
     color: "#667eea",
-    fontSize: 14,
+    fontSize: 12,
+    fontWeight: "600",
   },
   emptyState: {
     alignItems: "center",
@@ -783,7 +797,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   tripCardGradient: {
-    padding: 16,
+    padding: 6,
   },
   tripCardHeader: {
     flexDirection: "row",
