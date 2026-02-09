@@ -2,6 +2,12 @@
 
 Tài liệu này mô tả cấu trúc thư mục và file cần thiết để triển khai các tính năng Phase 1 (MVP) kết hợp với hệ thống Compounding Intelligence.
 
+## 💡 Strategic Decision: MVP First, AI Second
+
+After reviewing `travel-app-features-no-ai.md`, the decision is to prioritize a robust, non-AI-dependent MVP. We will focus on building the core features (templates, map, budget) with an excellent user experience first.
+
+Data tracking for user actions will be implemented, but the complex AI learning and recommendation features from `CompoundingIntelligence` will be layered on top in a later phase. This approach builds a solid foundation and gathers necessary data before introducing advanced AI.
+
 ## 📂 Project Structure Overview
 
 ```text
@@ -62,30 +68,31 @@ my-first-app/
 
 - **Files**: `app/(tabs)/trips/index.jsx`, `services/tripService.ts`
 - **Task**: Hiển thị danh sách chuyến đi, tạo chuyến đi mới.
-- **AI Integration**: Track `trip_created`, `trip_viewed`.
+- **Data Collection**: Track `trip_created`, `trip_viewed` for future AI analysis.
 
 ### 2. Places Database & Map
 
 - **Files**: `app/places/*`, `app/(tabs)/map/index.jsx`, `services/placeService.ts`
 - **Task**: Database địa điểm (Mock data hoặc API), hiển thị trên bản đồ.
-- **AI Integration**: Track `place_viewed`, `place_searched`. Thêm `FeedbackModal` vào `places/[id].jsx`.
+- **Data Collection**: Track `place_viewed`, `place_searched`. The `FeedbackModal` in `places/[id].jsx` is crucial for collecting user ratings, a key dataset.
 
 ### 3. Template System
 
 - **Files**: `app/templates/*`, `services/templateService.ts`
 - **Task**: Cho phép user chọn template để clone thành trip của mình.
-- **AI Integration**: Track `template_viewed`, `template_used`.
+- **Data Collection**: Track `template_viewed`, `template_used` to understand template popularity.
 
 ### 4. Itinerary Builder
 
 - **Files**: `app/trip/[id]/itinerary.jsx`
 - **Task**: Kéo thả hoặc thêm/xóa địa điểm vào các ngày.
+- **Data Collection**: Track `activity_added`, `activity_removed`.
 
 ### 5. Budget Tracker
 
 - **Files**: `app/trip/[id]/budget.jsx`, `services/budgetService.ts`
 - **Task**: Nhập chi phí, biểu đồ tròn đơn giản.
-- **AI Integration**: Track `budget_updated`.
+- **Data Collection**: Track `budget_updated`.
 
 ---
 

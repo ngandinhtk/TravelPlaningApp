@@ -23,13 +23,23 @@ import {
 } from "react-native";
 import Loading from "../../components/common/Loading";
 import CustomModal from "../../components/common/Modal";
+import InviteCollaboratorModal from "../../components/trip/InviteCollaboratorModal";
 import { useTrip } from "../../context/TripContext";
-import { deleteTrip } from "../../services/tripService";
+import { useUser } from "../../context/UserContext";
+import {
+  calculateTripStatus,
+  deleteTrip,
+  getTrip,
+  updateTrip,
+} from "../../services/tripService";
 
 const TripDetailScreen = () => {
-  const { trip } = useTrip(); // Lấy toàn bộ đối tượng trip từ Context
+  const { trip, setTrip } = useTrip(); // Lấy toàn bộ đối tượng trip từ Context
+  const { user } = useUser();
   const router = useRouter();
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isInviteModalVisible, setIsInviteModalVisible] = useState(false);
+  const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
 
   if (!trip) {
     return <Loading />;
@@ -58,6 +68,49 @@ const TripDetailScreen = () => {
   };
   // console.log(templates);
 
+  const handleTripUpdate = async () => {
+    try {
+      const updatedTrip = await getTrip(trip.id);
+      setTrip(updatedTrip);
+    } catch (error) {
+      console.error("Failed to refresh trip:", error);
+    }
+  };
+
+  const handleUpdateStatus = async (newStatus) => {
+    try {
+      await updateTrip(trip.id, { status: newStatus });
+      setTrip({ ...trip, status: newStatus });
+      setIsStatusModalVisible(false);
+    } catch (error) {
+      console.error("Error updating status:", error);
+    }
+  };
+
+  const getStatusDisplay = (currentTrip) => {
+    const status = calculateTripStatus(currentTrip);
+    const statusMap = {
+      Upcoming: { text: "Sắp tới", color: "#667eea", bgColor: "#E8EFFE" },
+      Ongoing: { text: "Đang diễn ra", color: "#F5A623", bgColor: "#FEF3E8" },
+      Completed: {
+        text: "Đã hoàn thành",
+        color: "#6FA65A",
+        bgColor: "#E8F5E8",
+      },
+      Archived: { text: "Lưu trữ", color: "#999", bgColor: "#F0F0F0" },
+      planning: {
+        text: "Đang lên kế hoạch",
+        color: "#667eea",
+        bgColor: "#E8EFFE",
+      },
+    };
+    return (
+      statusMap[status] || { text: status, color: "#999", bgColor: "#F0F0F0" }
+    );
+  };
+
+  const statusDisplay = getStatusDisplay(trip);
+
   return (
     <View style={styles.itineraryContainer}>
       <CustomModal
@@ -71,6 +124,40 @@ const TripDetailScreen = () => {
           hoàn tác.
         </Text>
       </CustomModal>
+
+      <CustomModal
+        visible={isStatusModalVisible}
+        title="Cập nhật trạng thái"
+        onClose={() => setIsStatusModalVisible(false)}
+      >
+        <View>
+          <TouchableOpacity
+            style={styles.statusOption}
+            onPress={() => handleUpdateStatus("planning")}
+          >
+            <Text style={styles.statusOptionText}>📅 Tự động (Theo ngày)</Text>
+            <Text style={styles.statusOptionSub}>
+              Trạng thái sẽ tự đổi dựa trên ngày đi
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.statusOption}
+            onPress={() => handleUpdateStatus("Archived")}
+          >
+            <Text style={styles.statusOptionText}>🗄️ Lưu trữ (Archived)</Text>
+            <Text style={styles.statusOptionSub}>Ẩn khỏi danh sách chính</Text>
+          </TouchableOpacity>
+        </View>
+      </CustomModal>
+
+      <InviteCollaboratorModal
+        visible={isInviteModalVisible}
+        onClose={() => setIsInviteModalVisible(false)}
+        trip={trip}
+        currentUserId={user?.uid}
+        onUpdate={handleTripUpdate}
+      />
 
       <LinearGradient
         colors={["#667eea", "#764ba2"]}
@@ -203,7 +290,25 @@ const TripDetailScreen = () => {
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Trạng thái</Text>
-            <Text style={styles.summaryValue}>{trip.status}</Text>
+            <TouchableOpacity onPress={() => setIsStatusModalVisible(true)}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: statusDisplay.bgColor },
+                ]}
+              >
+                <Text
+                  style={[styles.statusText, { color: statusDisplay.color }]}
+                >
+                  {statusDisplay.text}
+                </Text>
+                <Edit
+                  size={12}
+                  color={statusDisplay.color}
+                  style={{ marginLeft: 6 }}
+                />
+              </View>
+            </TouchableOpacity>
           </View>
           <View style={[styles.summaryItem, { borderBottomWidth: 0 }]}>
             <Text style={styles.summaryLabel}>Ghi chú</Text>
@@ -368,7 +473,7 @@ const TripDetailScreen = () => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => router.push("/trip/invite")}
+              onPress={() => setIsInviteModalVisible(true)}
               style={styles.actionItem}
             >
               <View style={[styles.iconCircle, { backgroundColor: "#eef0ff" }]}>
@@ -804,6 +909,32 @@ const styles = StyleSheet.create({
     color: "#667eea",
     fontSize: 12,
     fontWeight: "600",
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  statusOption: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  statusOptionText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  statusOptionSub: {
+    fontSize: 12,
+    color: "#999",
+    marginTop: 2,
   },
 });
 

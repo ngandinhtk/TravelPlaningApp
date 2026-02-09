@@ -1,6 +1,8 @@
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
@@ -47,12 +49,37 @@ export const getPlacesByProvince = async (province: string) => {
   }
 };
 
+// Get a single place by ID (supports both Firestore IDs and local mock IDs)
+export const getPlaceById = async (id: string) => {
+  // Handle local mock data (ids starting with "local-")
+  if (id.startsWith("local-")) {
+    const index = parseInt(id.split("-")[1]);
+    if (SAMPLE_PLACES_DATA[index]) {
+      return { ...SAMPLE_PLACES_DATA[index], id };
+    }
+  }
+
+  // Handle Firestore data
+  const docRef = doc(db, "places", id);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return { id: docSnap.id, ...docSnap.data() };
+  }
+  throw new Error("Place not found");
+};
+
 // Get places recommended for a specific month
 export const getSeasonalPlaces = async (month: number) => {
   // Simulate network delay
   await new Promise((resolve) => setTimeout(resolve, 500));
 
-  return SAMPLE_PLACES_DATA.filter((place) => {
+  // Map data to include a temporary ID for navigation
+  const placesWithIds = SAMPLE_PLACES_DATA.map((p, i) => ({
+    ...p,
+    id: p.id || `local-${i}`,
+  }));
+
+  return placesWithIds.filter((place) => {
     if (place.recommendedMonths) {
       return place.recommendedMonths.includes(month);
     }

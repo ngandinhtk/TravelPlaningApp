@@ -1,15 +1,16 @@
 import {
   addDoc,
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
   getDoc,
   getDocs,
   limit,
-  orderBy,
   query,
   updateDoc,
-  where,
+  where
 } from "firebase/firestore";
 import { db } from "../services/firebase";
 const tripsCollection = collection(db, "trips");
@@ -19,6 +20,11 @@ export const calculateTripStatus = (trip: any): string => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    // Handle case where dates might be missing or different format
+    if (!trip.dates) {
+      return trip.status || "planning";
+    }
 
     // Parse dates string format: "07/02/2026 - 10/02/2026"
     const dateString = trip.dates || "";
@@ -61,34 +67,41 @@ const templatesCollection = collection(db, "templates");
 // Get all trips for a specific user
 export const getTrips = async (userId: any) => {
   try {
-    // Tạo một truy vấn để lấy các chuyến đi có 'userId' khớp và sắp xếp theo ngày tạo mới nhất
-    const q = query(
-      tripsCollection,
-      where("userId", "==", userId),
-      orderBy("createdAt", "desc"),
-    );
-    const querySnapshot = await getDocs(q);
-    // Trả về một mảng các chuyến đi, bao gồm cả ID của document
-    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  } catch (error: any) {
-    // Nếu truy vấn orderBy thất bại (có thể do không có index), fetch tất cả và sắp xếp phía client
-    console.warn(
-      "Error with orderBy query, sorting client-side:",
-      error.message,
-    );
-    const q = query(tripsCollection, where("userId", "==", userId));
-    const querySnapshot = await getDocs(q);
-    const trips = querySnapshot.docs.map((doc) => ({
+    // 1. Get trips owned by user
+    const ownedQuery = query(tripsCollection, where("userId", "==", userId));
+    const ownedSnapshot = await getDocs(ownedQuery);
+    const ownedTrips = ownedSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
 
-    // Sắp xếp theo createdAt (mới nhất trước), nếu không có thì sắp xếp theo id
-    return trips.sort((a: any, b: any) => {
+    // 2. Get trips where user is a collaborator
+    const sharedQuery = query(
+      tripsCollection,
+      where("collaborators", "array-contains", userId),
+    );
+    const sharedSnapshot = await getDocs(sharedQuery);
+    const sharedTrips = sharedSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    // 3. Merge lists (handling potential duplicates if any)
+    const allTripsMap = new Map();
+    [...ownedTrips, ...sharedTrips].forEach((trip: any) =>
+      allTripsMap.set(trip.id, trip),
+    );
+    const allTrips = Array.from(allTripsMap.values());
+
+    // 4. Sort client-side by createdAt desc
+    return allTrips.sort((a: any, b: any) => {
       const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return bDate - aDate;
     });
+  } catch (error: any) {
+    console.error("Error fetching trips:", error);
+    return [];
   }
 };
 
@@ -259,4 +272,50 @@ export const applyTemplateToTrip = async (
   // Update trip with mapped fields
   await updateDoc(tripDocRef, updateFields);
   return { success: true };
+};
+
+// Add a collaborator to a trip by email
+export const addCollaborator = async (tripId: string, email: string) => {
+  // 1. Find user by email
+  const usersCollection = collection(db, "users");
+  const q = query(usersCollection, where("email", "==", email));
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    throw new Error("Không tìm thấy người dùng với email này.");
+  }
+
+  const userDoc = querySnapshot.docs[0];
+  const userData = userDoc.data();
+  const userId = userDoc.id;
+
+  const tripRef = doc(db, "trips", tripId);
+
+  // 2. Add to trip
+  // We store both the ID in 'collaborators' for querying
+  // And 'collaboratorDetails' for display purposes
+  await updateDoc(tripRef, {
+    collaborators: arrayUnion(userId),
+    collaboratorDetails: arrayUnion({
+      uid: userId,
+      email: userData.email,
+      displayName: userData.displayName || userData.email,
+      photoURL: userData.photoURL || null,
+    }),
+  });
+
+  return { uid: userId, ...userData };
+};
+
+// Remove a collaborator
+export const removeCollaborator = async (
+  tripId: string,
+  userId: string,
+  userDetails: any,
+) => {
+  const tripRef = doc(db, "trips", tripId);
+  await updateDoc(tripRef, {
+    collaborators: arrayRemove(userId),
+    collaboratorDetails: arrayRemove(userDetails),
+  });
 };

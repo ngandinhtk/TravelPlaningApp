@@ -374,6 +374,9 @@ const HomeScreen = () => {
           ))}
         </ScrollView>
 
+        {/* Seasonal Recommendations Section */}
+        {/* <SeasonalRecommendations /> */}
+
         {/* Recommended Destinations */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Điểm đến thịnh hành</Text>
