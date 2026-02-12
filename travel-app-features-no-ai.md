@@ -1,55 +1,53 @@
-# 🗺️ Travel Planning App - Tính năng thay thế AI
-## 1. Thay thế AI Generator bằng gì?
+# 🗺️ Travel Planning App - Lite & Low Cost Edition
 
-### ❌ Thay vì: AI tự động tạo lịch trình
-### ✅ Thay bằng:
+## 1. Philosophy: "Lightweight, Fast, & Free"
 
-#### **Option A: Template-based Planning (Khuyến nghị)**
-```
-User chọn:
-├── Điểm đến: "Đà Lạt"
-├── Số ngày: 3 ngày 2 đêm
-├── Loại hình: "Nghỉ dưỡng & Ẩm thực"
-└── Ngân sách: 3-5 triệu
+### 🎯 Goal
 
-→ App hiển thị 3-5 templates có sẵn
-→ User chọn template thích
-→ Customize theo ý thích
-```
+Build an "Official Version" that costs **$0** to run and is extremely lightweight for users (small app size, works offline).
 
-**Ví dụ templates:**
-- "Đà Lạt 3N2Đ - Romantic Trip"
-- "Đà Lạt 3N2Đ - Family Adventure"
-- "Đà Lạt 3N2Đ - Budget Backpacker"
-- "Đà Lạt 3N2Đ - Food Tour"
+### ❌ Removed (High Cost / Heavy):
 
-#### **Option B: Drag & Drop Builder**
-```
-User tự kéo thả các địa điểm vào timeline:
+- **Google Places API**: Expensive ($17/1000 requests).
+- **Real-time Sync**: Heavy on database reads/writes.
+- **AI/ML Features**: High complexity and processing power.
+- **Cloud Storage for Images**: Bandwidth costs.
 
-Day 1:
-├── 08:00 - 10:00: [Kéo địa điểm vào đây]
-├── 10:00 - 12:00: [Kéo địa điểm vào đây]
-└── 12:00 - 14:00: [Kéo địa điểm vào đây]
+### ✅ Replaced with (Low Cost / Light):
 
-Sidebar: Danh sách địa điểm phổ biến
-├── 🏰 Dinh Bảo Đại
-├── 🌸 Thung lũng Tình Yêu
-├── 🌲 Langbiang
-└── 🍓 Chợ Đà Lạt
+- **User Manual Entry**: Users type place names (Free).
+- **Local-First Architecture**: Data lives on device (AsyncStorage/SQLite).
+- **Hardcoded Templates**: JSON files for top destinations (Free).
+- **Native Maps**: Use Apple Maps/Google Maps SDK for display only (Free tier).
+
+---
+
+## 2. The "Lite" Feature Set
+
+### 🚀 **Core Features (MVP)**
+
+#### **1. Offline Trip Manager**
+
+```text
+✅ Create Trips Locally
+├── Store all data on device (AsyncStorage/SQLite)
+├── No internet required
+├── "My Trips" list
+└── Basic CRUD (Create, Read, Update, Delete)
 ```
 
-#### **Option C: Community Templates**
-```
-User xem và copy lịch trình của người khác:
+#### **2. Manual Itinerary Builder**
 
-"Đà Lạt 3 ngày - Honeymoon"
-👤 By: @traveler123
-⭐ 4.8 stars (234 reviews)
-💰 Budget: 4.5 triệu
-👥 Đã có 1,234 người dùng
+```text
+✅ "You are the Guide"
+├── User manually types: "Dinner at Pizza 4P's"
+├── User sets time: "19:00"
+├── User adds note: "Book table in advance"
+└── Drag & drop reordering
 
-[Copy Template] [View Details]
+💡 Why this lowers cost:
+- No need to fetch place details from an API.
+- No complex database queries.
 ```
 
 ---
@@ -59,6 +57,7 @@ User xem và copy lịch trình của người khác:
 ### 🎯 **Tier 1: Must-Have Features (MVP)**
 
 #### **1. Trip Management**
+
 ```
 ✅ Tạo chuyến đi mới
 ├── Nhập thông tin cơ bản (điểm đến, ngày tháng)
@@ -76,6 +75,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 #### **2. Itinerary Builder (Timeline)**
+
 ```
 ✅ Tạo lịch trình theo ngày
 ├── Chia theo từng ngày (Day 1, Day 2...)
@@ -94,6 +94,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 #### **3. Places Database (Nổi bật!)**
+
 ```
 ✅ Database địa điểm du lịch Việt Nam
 ├── Chia theo tỉnh thành
@@ -116,6 +117,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 **Cách làm Places Database:**
+
 - Tự thu thập data (Google Maps, Wikipedia)
 - Crawl từ website du lịch
 - Dùng Google Places API
@@ -123,6 +125,7 @@ User xem và copy lịch trình của người khác:
 - Trending lịch trình từ các travel agency khác
 
 #### **4. Map Integration (Rất quan trọng!)**
+
 ```
 ✅ Hiển thị tất cả địa điểm trên bản đồ
 ├── Pin các địa điểm trong lịch trình
@@ -139,6 +142,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 #### **5. Budget Tracker**
+
 ```
 ✅ Lập ngân sách chuyến đi
 ├── Tổng ngân sách
@@ -158,6 +162,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 #### **6. Checklist & Packing List**
+
 ```
 ✅ To-do list chuẩn bị
 ├── Đặt vé máy bay ☐
@@ -182,6 +187,7 @@ User xem và copy lịch trình của người khác:
 ### 🚀 **Tier 2: Advanced Features**
 
 #### **7. Collaborative Planning**
+
 ```
 ✅ Mời bạn bè cùng lên kế hoạch
 ├── Share trip via link
@@ -198,6 +204,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 #### **8. Discovery & Inspiration**
+
 ```
 ✅ Explore destinations
 ├── Trending destinations
@@ -214,6 +221,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 #### **9. Reviews & Ratings**
+
 ```
 ✅ Review địa điểm
 ├── Rate 1-5 stars
@@ -230,6 +238,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 #### **10. Weather Integration**
+
 ```
 ✅ Weather forecast
 ├── 7-day forecast cho điểm đến
@@ -239,6 +248,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 #### **11. Currency Converter**
+
 ```
 ✅ Chuyển đổi tiền tệ
 ├── VND ↔️ USD, EUR, JPY...
@@ -248,6 +258,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 #### **12. Transportation Info**
+
 ```
 ✅ Thông tin đi lại
 ├── Gợi ý phương tiện:
@@ -265,6 +276,7 @@ User xem và copy lịch trình của người khác:
 ### 🎨 **Tier 3: Nice-to-Have Features**
 
 #### **13. Offline Mode**
+
 ```
 ✅ Download trip offline
 ├── Save maps offline
@@ -274,6 +286,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 #### **14. Photo Management**
+
 ```
 ✅ Trip photo gallery
 ├── Organize by day
@@ -283,6 +296,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 #### **15. Notifications & Reminders**
+
 ```
 ✅ Smart reminders
 ├── "Pack bags" 2 days before
@@ -292,6 +306,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 #### **16. Analytics & Stats**
+
 ```
 ✅ Travel stats
 ├── Countries visited
@@ -302,6 +317,7 @@ User xem và copy lịch trình của người khác:
 ```
 
 #### **17. Social Features**
+
 ```
 ✅ Social sharing
 ├── Share trip to Instagram/Facebook
@@ -317,13 +333,16 @@ User xem và copy lịch trình của người khác:
 ### 🏆 **Top 5 Killer Features:**
 
 #### **#1: Smart Template System** ⭐⭐⭐⭐⭐
+
 **Tại sao nổi bật:**
+
 - Giải quyết "blank canvas problem" (user không biết bắt đầu từ đâu)
 - Tiết kiệm thời gian hơn AI (chọn template 1 phút)
 - Dễ customize hơn
 - Quality control tốt hơn (templates được test)
 
 **Implementation:**
+
 ```javascript
 const templates = [
   {
@@ -444,42 +463,54 @@ const templates = [
 
 #### **Option A: Focus on Vietnam**
 ```
+
 "Vietnam's Best Travel Planning App"
+
 - Comprehensive Vietnam places database
 - Vietnamese language first
 - Local tips & hidden gems
 - VND budget tracking
 - Vietnamese food recommendations
+
 ```
 
 #### **Option B: Focus on Groups**
 ```
+
 "Plan trips together, easily"
+
 - Best collaborative features
 - Group voting system
 - Fair cost splitting
 - Group chat built-in
 - Shared photo albums
+
 ```
 
 #### **Option C: Focus on Budget**
 ```
+
 "Travel more, spend less"
+
 - Smart budget optimization
 - Find cheapest options
 - Track every expense
 - Savings goals
 - Budget challenges
+
 ```
 
 #### **Option D: Focus on Templates**
 ```
+
 "1000+ curated trip templates"
+
 - Professional travel guides
 - Tested itineraries
 - Updated regularly
 - For every budget
 - Every travel style
+
 ```
 
 ---
@@ -514,6 +545,7 @@ const templates = [
 ## 8. Technical Stack (Non-AI version)
 
 ```
+
 Frontend: React Native
 Backend: Firebase / Node.js
 Database: Firestore
@@ -530,6 +562,7 @@ No AI needed:
 ✅ Templates stored in database
 ✅ User-generated content
 ✅ Basic algorithms for recommendations
+
 ```
 
 ---
@@ -552,3 +585,4 @@ No AI needed:
 - Wanderlog (manual planning)
 
 **AI là "nice to have", không phải "must have"!** 🚀
+```

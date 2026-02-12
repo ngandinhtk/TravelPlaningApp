@@ -1,12 +1,12 @@
-# 🏗️ Phase 1 (MVP) Architecture & Folder Structure
+# 🏗️ Phase 1 (Lite MVP) Architecture & Folder Structure
 
-Tài liệu này mô tả cấu trúc thư mục và file cần thiết để triển khai các tính năng Phase 1 (MVP) kết hợp với hệ thống Compounding Intelligence.
+Tài liệu này mô tả cấu trúc thư mục và file cần thiết để triển khai các tính năng Phase 1 (Lite MVP) - Tối ưu chi phí và hiệu năng.
 
-## 💡 Strategic Decision: MVP First, AI Second
+## 💡 Strategic Decision: Local-First & Low Cost
 
-After reviewing `travel-app-features-no-ai.md`, the decision is to prioritize a robust, non-AI-dependent MVP. We will focus on building the core features (templates, map, budget) with an excellent user experience first.
+After reviewing `travel-app-features-no-ai.md`, the decision is to prioritize a **Lite, Local-First MVP**. We will focus on building core features that run offline and require zero API costs.
 
-Data tracking for user actions will be implemented, but the complex AI learning and recommendation features from `CompoundingIntelligence` will be layered on top in a later phase. This approach builds a solid foundation and gathers necessary data before introducing advanced AI.
+Complex AI and expensive cloud synchronizations are removed for this phase to ensure the app is lightweight and free to operate.
 
 ## 📂 Project Structure Overview
 
@@ -27,18 +27,12 @@ my-first-app/
 │   │       ├── checklist.jsx   # ✅ Checklist (Existing)
 │   │       └── settings.jsx    # Edit/Delete Trip
 │   ├── places/                 # 🏙️ Places Database (Feature #3)
-│   │   ├── index.jsx           # Search & Filter Places
-│   │   └── [id].jsx            # Place Detail + FeedbackModal
+│   │   ├── index.jsx           # Manual Entry / Local Search
+│   │   └── [id].jsx            # Place Detail
 │   └── templates/              # 📋 Template System (Feature #2)
 │       ├── index.jsx           # Browse Templates
 │       └── [id].jsx            # Template Detail -> Clone Trip
-│   ├── admin/
-│   │   ├── intelligence.jsx    # 🧠 AI Dashboard (Internal/Admin)
-│   │   └── compoundingIntelligenceNextSteps.js # 🧪 Beta AI Features Logic
 ├── components/
-│   ├── common/
-│   │   ├── FeedbackModal.tsx   # 🧠 AI Feedback Collection
-│   │   └── IntelligenceCard.tsx # 🧠 AI Dashboard Widget
 │   ├── trip/
 │   │   ├── TripCard.jsx
 │   │   └── ItineraryItem.jsx
@@ -48,18 +42,14 @@ my-first-app/
 │       └── ExpenseChart.jsx
 ├── context/
 │   ├── AppProviders.jsx        # Wrapper for all contexts
-│   ├── UserContext.jsx         # 👤 User Auth State
-│   ├── IntelligenceContext.jsx # 🧠 AI Logic
+│   ├── UserContext.jsx         # 👤 User Auth State (Optional/Local)
 │   └── TripContext.jsx
-│   └── OfflineContext.jsx      # 🔌 Offline Mode & Sync (Phase 3)
 └── services/
-    ├── firebase.js             # 🔥 Firebase Config
-    ├── compoundingIntelligenceService.ts # 🧠 AI Service
-    ├── tripService.ts          # CRUD Trips
-    ├── placeService.ts         # Places Data
+    ├── storageService.ts       # 💾 Local Storage (AsyncStorage/SQLite)
+    ├── tripService.ts          # CRUD Trips (Local)
+    ├── placeService.ts         # Places Data (Static/Manual)
     ├── templateService.ts      # Templates
     └── budgetService.ts        # Budget Logic
-    └── offlineService.ts       # 💾 Local Storage & Sync Queue (Phase 3)
 ```
 
 ## 🚀 Implementation Roadmap

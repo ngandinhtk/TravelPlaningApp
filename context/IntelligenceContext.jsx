@@ -1,80 +1,39 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { intelligenceService } from "../services/compoundingIntelligenceService";
+import { createContext, useContext } from "react";
+import { compoundingIntelligenceService } from "../services/compoundingIntelligenceService";
 
-const IntelligenceContext = createContext(null);
+const IntelligenceContext = createContext(undefined);
 
-export const IntelligenceProvider = ({ children, userId }) => {
-  const [intelligenceScore, setIntelligenceScore] = useState(0);
-  const [learningLevel, setLearningLevel] = useState("Novice");
-  const [recommendations, setRecommendations] = useState([]);
-
-  useEffect(() => {
-    if (userId) {
-      refreshData();
+export const IntelligenceProvider = ({ children }) => {
+  /**
+   * Tracks a user action.
+   * This is the primary method for collecting behavioral data for the Compounding Intelligence system.
+   *
+   * @param {string} userId - The ID of the user performing the action.
+   * @param {string} action - The name of the action (e.g., 'trip_viewed').
+   * @param {string} [category] - The category of the action (e.g., 'trip').
+   * @param {object} [value] - A value object with details about the action.
+   * @param {object} [metadata] - Extra metadata about the context of the action.
+   */
+  const trackAction = async (userId, action, category, value, metadata) => {
+    try {
+      await compoundingIntelligenceService.trackUserBehavior({
+        userId,
+        action,
+        category,
+        value,
+        metadata,
+      });
+    } catch (error) {
+      console.error("Failed to track action:", error);
     }
-  }, [userId]);
-
-  const refreshData = async () => {
-    if (!userId) return;
-    const data = await intelligenceService.getUserIntelligenceScore(userId);
-    setIntelligenceScore(data.score);
-    setLearningLevel(data.level);
-
-    const recs =
-      await intelligenceService.getPersonalizedRecommendations(userId);
-    setRecommendations(recs);
   };
 
-  const trackAction = async (action, category, value, metadata) => {
-    if (!userId) return;
-    await intelligenceService.trackUserBehavior(
-      userId,
-      action,
-      category,
-      value,
-      metadata,
-    );
-  };
-
-  const submitUserFeedback = async (
-    itemType,
-    rating,
-    comment,
-    tripId,
-    itemId,
-    category,
-  ) => {
-    if (!userId) return;
-    await intelligenceService.submitFeedback(
-      userId,
-      itemType,
-      rating,
-      comment,
-      tripId,
-      itemId,
-      category,
-    );
-    // Refresh score after feedback as it contributes heavily to the score
-    await refreshData();
-  };
-
-  const getIntelligenceScore = async () => {
-    if (!userId) return null;
-    return await intelligenceService.getUserIntelligenceScore(userId);
+  const value = {
+    trackAction,
   };
 
   return (
-    <IntelligenceContext.Provider
-      value={{
-        intelligenceScore,
-        learningLevel,
-        recommendations,
-        trackAction,
-        submitUserFeedback,
-        getIntelligenceScore,
-        getRecommendations: () => recommendations,
-      }}
-    >
+    <IntelligenceContext.Provider value={value}>
       {children}
     </IntelligenceContext.Provider>
   );
@@ -82,7 +41,7 @@ export const IntelligenceProvider = ({ children, userId }) => {
 
 export const useIntelligence = () => {
   const context = useContext(IntelligenceContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error(
       "useIntelligence must be used within an IntelligenceProvider",
     );
