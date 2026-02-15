@@ -374,6 +374,37 @@ const HomeScreen = () => {
           ))}
         </ScrollView>
 
+        {/* Community Trips Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Cộng đồng chia sẻ</Text>
+        </View>
+        <TouchableOpacity onPress={() => router.push("/community")}>
+          <LinearGradient
+            colors={["#4facfe", "#00f2fe"]}
+            style={{
+              marginHorizontal: 0,
+              marginBottom: 20,
+              padding: 20,
+              borderRadius: 16,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <View>
+              <Text
+                style={{ color: "white", fontSize: 18, fontWeight: "bold" }}
+              >
+                Khám phá chuyến đi
+              </Text>
+              <Text style={{ color: "white", opacity: 0.9 }}>
+                Xem các chuyến đi từ cộng đồng
+              </Text>
+            </View>
+            <Text style={{ fontSize: 30 }}>🌏</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
         {/* Seasonal Recommendations Section */}
         {/* <SeasonalRecommendations /> */}
 

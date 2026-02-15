@@ -10,7 +10,7 @@ import {
   limit,
   query,
   updateDoc,
-  where
+  where,
 } from "firebase/firestore";
 import { db } from "../services/firebase";
 const tripsCollection = collection(db, "trips");
@@ -181,7 +181,7 @@ export const getAllTrips = async () => {
     });
     return trips;
   } catch (error) {
-    console.error("Error fetching all tríp:", error);
+    console.error("Error fetching all trips:", error);
     throw error;
   }
 };
@@ -318,4 +318,57 @@ export const removeCollaborator = async (
     collaborators: arrayRemove(userId),
     collaboratorDetails: arrayRemove(userDetails),
   });
+};
+
+// --- Community & Public Trips ---
+
+// Get public trips (Community trips)
+export const getCommunityTrips = async (limitCount = 20) => {
+  try {
+    const q = query(
+      tripsCollection,
+      where("isPublic", "==", true),
+      limit(limitCount),
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error fetching community trips:", error);
+    return [];
+  }
+};
+
+// Toggle trip visibility
+export const toggleTripVisibility = async (
+  tripId: string,
+  isPublic: boolean,
+) => {
+  const tripRef = doc(db, "trips", tripId);
+  await updateDoc(tripRef, { isPublic });
+};
+
+// Clone a public trip to user's personal trips
+export const clonePublicTrip = async (originalTrip: any, userId: string) => {
+  // Remove ID and specific user fields, reset status
+  const {
+    id,
+    userId: oldUserId,
+    createdAt,
+    updatedAt,
+    isPublic,
+    collaborators,
+    collaboratorDetails,
+    ...tripData
+  } = originalTrip;
+
+  const newTrip = {
+    ...tripData,
+    userId,
+    name: `Copy of ${tripData.destination}`,
+    isPublic: false, // Cloned trips are private by default
+    clonedFrom: id,
+    status: "planning",
+    createdAt: new Date().toISOString(),
+  };
+  return await addTrip(newTrip);
 };

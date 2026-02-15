@@ -1,5 +1,7 @@
 import { IntelligenceProvider } from "./IntelligenceContext";
-// Import other providers here in the future, e.g., UserProvider, TripProvider
+import { TripProvider } from "./TripContext";
+import { UserProvider } from "./UserContext";
+// Import other providers here in the future
 
 /**
  * A wrapper component for all application-wide context providers.
@@ -8,11 +10,9 @@ import { IntelligenceProvider } from "./IntelligenceContext";
 export const AppProviders = ({ children }) => {
   return (
     <IntelligenceProvider>
-      {/* <UserProvider>
-        <TripProvider> */}
-      {children}
-      {/* </TripProvider>
-      </UserProvider> */}
+      <UserProvider>
+        <TripProvider>{children}</TripProvider>
+      </UserProvider>
     </IntelligenceProvider>
   );
 };
